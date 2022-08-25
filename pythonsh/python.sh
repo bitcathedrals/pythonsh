@@ -155,6 +155,7 @@ case $1 in
     ;;
     "py-pull")
         git submodule update --remote
+        git add pythonsh && git commit -m "update(pythonsh): pull"
     ;;
 
 #
