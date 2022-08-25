@@ -70,13 +70,8 @@ case $1 in
         pyenv virtualenvs
     ;;
 #
-# all environments
+# python commands
 #
-    "versions")
-        pyenv version
-        pyenv exec python --version
-        pipenv graph
-    ;;
     "test")
         pyenv exec python -m pytest tests
     ;;
@@ -131,8 +126,13 @@ case $1 in
     ;;
 
 #
-# dev environment
+# packages
 #
+    "versions")
+        pyenv version
+        pyenv exec python --version
+        pipenv graph
+    ;;
     "pull")
         pyenv exec python -m pipenv install --skip-lock
         pyenv exec python -m pyenv rehash
@@ -146,10 +146,21 @@ case $1 in
     "list")
         pyenv exec python -m pipenv graph
     ;;
+
+#
+# pythonsh
+#
+    "py-status")
+        git submodule foreach 'git status'
+    ;;
+    "py-pull")
+        git submodule update --remote
+    ;;
+
 #
 # release environment
 #
-    "release-start")
+    "dev-start")
         pyenv exec python -m pyenv -m pip -U pip
         pyenv exec python -m pyenv install -U pipenv
         pyenv exec python -m pipenv install --ignore-pipfile
@@ -161,7 +172,7 @@ case $1 in
         mv Pipfile.lock releases/Pipfile.lock-$VERSION
         cp Pipfile releases/Pipfile-$VERSION
     ;;
-    "release-finish")
+    "dev-finish")
         git push --all
         git push --tags
     ;;
@@ -177,8 +188,8 @@ case $1 in
 
         ssh $BEAST "test -d $PKG_PATH || mkdir $PKG_PATH"
         scp dist/* "$BEAST:$PKG_PATH/"
-        ssh $BEAST "cd $DISTPATH && /bin/bash upload-new-packages.sh"
-        ssh $BEAST "cd $DISTPATH && mv simple/cfconfig/* remote/cfconfig/ && /bin/bash update-packages.sh"
+#        ssh $BEAST "cd $DISTPATH && /bin/bash upload-new-packages.sh"
+#        ssh $BEAST "cd $DISTPATH && mv simple/cfconfig/* remote/cfconfig/ && /bin/bash update-packages.sh"
     ;;
     "deploy-intel")
         pyenv exec python -m build
