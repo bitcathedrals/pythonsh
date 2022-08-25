@@ -1,3 +1,11 @@
 #! /bin/bash
 
-git submodule add git@github.com:coderofmattie/pythonsh.git pythonsh
+case $1 in
+	"clone")
+		git submodule update --init
+	;;
+	"install")
+		git submodule add git@github.com:coderofmattie/pythonsh.git pythonsh
+	;;
+esac
+
