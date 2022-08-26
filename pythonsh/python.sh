@@ -138,7 +138,6 @@ case $1 in
     ;;
     "py-pull")
         git submodule update --remote
-        git add pythonsh && git commit -m "update(pythonsh): pull"
     ;;
 
 #
@@ -167,8 +166,6 @@ case $1 in
 
         ssh $BEAST "test -d $PKG_PATH || mkdir $PKG_PATH"
         scp dist/* "$BEAST:$PKG_PATH/"
-#        ssh $BEAST "cd $DISTPATH && /bin/bash upload-new-packages.sh"
-#        ssh $BEAST "cd $DISTPATH && mv simple/cfconfig/* remote/cfconfig/ && /bin/bash update-packages.sh"
     ;;
     "deploy-intel")
         pyenv exec python -m build
