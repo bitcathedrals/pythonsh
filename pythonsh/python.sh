@@ -1,14 +1,6 @@
 #! /bin/bash
 
-PACKAGE_PYTHON_VERSION="3.10:latest"
-
-VIRTUAL_PREFIX="config"
-
-REGION='us-west-2'
-VERSION=0.7.2
-
-AWS_PROFILE='dev'
-
+source python.sh || exit 1
 
 function add_src {
     site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
@@ -16,8 +8,8 @@ function add_src {
     echo "include_src: setting dev.pth in $site/dev.pth"
 
     test -d $site || mkdir -p $site
-    echo "$PWD/src/" >"$site/dev.pth"
-    echo "$PWD/src/scripts/" >>"$site/dev.pth"
+
+    cat python.paths >"$site/dev.pth"
 }
 
 function remove_src {
@@ -51,6 +43,7 @@ case $1 in
 #
 # virtual environments
 #
+
     "virtual-install")
         pyenv install --skip-existing "$PACKAGE_PYTHON_VERSION"
 
@@ -69,9 +62,11 @@ case $1 in
     "virtual-list")
         pyenv virtualenvs
     ;;
+
 #
 # python commands
 #
+
     "test")
         pyenv exec python -m pytest tests
     ;;
@@ -88,46 +83,28 @@ case $1 in
         shift
         pyenv exec $@ 
     ;;
-    "aws")
-        shift
-        pyenv exec python -m awscli $@
-    ;;
-    "cf")
-        shift
 
+ #
+ # AWS commands
+ #   
+
+    "aws")
         export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
                     $(aws sts assume-role \
-                    --role-arn arn:aws:iam::324189914596:role/devCFconfigBuildRole \
+                    --role-arn $AWS_ROLE \
                     --role-session-name DevCloudFormationSession \
-                    --profile dev \
+                    --profile $AWS_PROFILE \
                     --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
                     --output text))
 
         pyenv exec python -m awscli --region $REGION $@
     ;;
-    "validate")
-        pyenv exec python -m awscli cloudformation validate-template --template-body file://$2 --profile $AWS_PROFILE
-   ;;
 
-    "delete")
-        echo "attempting to delete stack: $2"
-        pyenv exec python -m awscli cloudformation delete-stack --stack-name $2  --profile $AWS_PROFILE
-    ;;
-    "describe")
-        echo "attempting to describe stack: $2"
-        pyenv exec python -m awscli cloudformation describe-stacks --stack-name $2 --profile $AWS_PROFILE
-    ;;
-
-    "build")
-        pyenv exec python -m build
-
-        find . -name '*.egg-info' -type d -print | xargs rm -r 
-        find . -name '__pycache__' -type d -print | xargs rm -r  
-    ;;
 
 #
 # packages
 #
+
     "versions")
         pyenv version
         pyenv exec python --version
@@ -146,6 +123,12 @@ case $1 in
     "list")
         pyenv exec python -m pipenv graph
     ;;
+    "build")
+        pyenv exec python -m build
+
+        find . -name '*.egg-info' -type d -print | xargs rm -r 
+        find . -name '__pycache__' -type d -print | xargs rm -r  
+    ;;
 
 #
 # pythonsh
@@ -162,11 +145,6 @@ case $1 in
 # release environment
 #
     "dev-start")
-        pyenv exec python -m pyenv -m pip -U pip
-        pyenv exec python -m pyenv install -U pipenv
-        pyenv exec python -m pipenv install --ignore-pipfile
-        pyenv rehash
-
         test -d releases || mkdir releases
         pyenv exec python -m pipenv lock
 
