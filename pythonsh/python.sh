@@ -149,6 +149,34 @@ case $1 in
     "sub")
         git submodule update --remote
     ;;
+    "staged")
+        git diff --cached
+    ;;
+    "summary")
+        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+        if echo "$branch" | grep feature
+        then
+            root='develop'
+        else 
+            root=$(git tag | tail -n 1)
+        fi
+
+        git diff "${root}..${branch}" --stat
+    ;;
+    "delta")
+        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+        if echo "$branch" | grep feature
+        then
+            root='develop'
+        else 
+            root=$(git tag | tail -n 1)
+        fi
+
+        git diff "${root}..${branch}"
+    ;;
+
 
 #
 # release environment
