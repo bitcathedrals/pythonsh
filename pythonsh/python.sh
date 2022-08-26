@@ -189,6 +189,59 @@ case $1 in
         test -d $PKG_PATH || mkdir $PKG_PATH
         cp dist/* $PKG_PATH/
     ;;
+    "help")
+        cat <<HELP
+python.sh
+
+[tools commands]
+
+install-tools = install tools from homebrew
+update-tools  = update tools from homebrew
+
+[virtual commands]
+
+virtual-install  = install a pyenv virtual environment
+virtual-destroy  = delete the pyenv virtual environment
+virtual-list     = list virtual environments
+
+[python commands]
+
+test    = run pytests
+paths   = install .pth source paths into the python environment
+python  = execute python in pyenv
+run     = run a command in pyenv
+
+[aws commands]
+
+aws       = execute a aws cli command
+
+[package commands]
+
+versions   = display the versions of python and installed packages
+update     = update installed packages
+update-all = update pip and installed
+list       = list installed packages
+
+build      = build packages
+
+[version control]
+
+status     = vc status
+fetch      = fetch main, develop, and current branch
+pull       = pull current branch and
+sub        = update submodules
+
+[release]
+
+dev-start  = start a release by freezing the Pip files
+dev-finish = push branches and tags to remote
+
+[deploy]
+
+deploy-m1    = deploy packages on the m1 machine
+deploy-intel = deploy packages on the intel machine
+HELP
+    ;;
     *)
         echo "unknown command."
     ;;
