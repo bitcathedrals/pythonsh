@@ -9,7 +9,8 @@ case $1 in
 		shift
 		git submodule add -f git@github.com:coderofmattie/pythonsh.git pythonsh $@
 		echo "    ignore = dirty" >>.gitmodules
-		ln -s pythonsh/pythonsh/python.sh py.sh
+		git restore --staged pythonsh
+		test -e py.sh || ln -s pythonsh/pythonsh/python.sh py.sh
 	;;
 	"remove")
 		git rm pythonsh
