@@ -25,14 +25,61 @@ case $1 in
 #
 # tooling
 #
-    "install-tools")
+    "tools-install")
         brew update
 
         brew install pyenv
         brew install pyenv-virtualenv
         brew install git-flow
     ;;
-    "update-tools")
+    "tools-zshrc")
+       echo "adding shell code to .zshrc, you may need to edit the file."
+
+        cat >>~/.zshrc <<SHELL
+eval "\$(homebrew/bin/brew shellenv)"
+
+export PYENV_ROOT="\$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"
+eval "\$(pyenv init -)"
+
+export EDITOR=$EDITOR
+
+function dev {
+    if test -f python.sh
+    then
+        echo "switching to \${VIRTUAL_PREFIX} dev"
+        source python.sh
+
+        if pyenv virtualenvs | grep '*'
+        then
+            pyenv deactivate
+        fi
+
+        pyenv activate \${VIRTUAL_PREFIX}_dev
+    else
+        echo "cant find python.sh - are you in the project root?"
+    fi;
+}
+
+function release {
+    if test -f python.sh
+    then
+        echo "switching to \${VIRTUAL_PREFIX} release"
+        source python.sh
+
+        if pyenv virtualenvs | grep '*'
+        then
+            pyenv deactivate
+        fi
+
+        pyenv activate \${VIRTUAL_PREFIX}_release
+    else
+        echo "cant find python.sh - are you in the project root?"
+    fi;
+}
+SHELL
+    ;;
+    "tools-upgrade")
         brew update
 
         brew upgrade pyenv
@@ -224,8 +271,9 @@ python.sh
 
 [tools commands]
 
-install-tools = install tools from homebrew
-update-tools  = update tools from homebrew
+tools-install = install tools from homebrew
+tools-update  = update tools from homebrew
+tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
 
 [virtual commands]
 
