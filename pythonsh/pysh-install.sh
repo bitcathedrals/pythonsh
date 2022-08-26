@@ -6,6 +6,6 @@ case $1 in
 	;;
 	"install")
 		git submodule add git@github.com:coderofmattie/pythonsh.git pythonsh
+		ln -s pythonsh/pythonsh/python.sh py.sh
 	;;
 esac
-
