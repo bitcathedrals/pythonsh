@@ -110,11 +110,11 @@ case $1 in
         pyenv exec python --version
         pipenv graph
     ;;
-    "pull")
+    "update")
         pyenv exec python -m pipenv install --skip-lock
         pyenv exec python -m pyenv rehash
     ;;
-    "all")
+    "update-all")
         pyenv exec python -m pip install -U pip
         pyenv exec python -m pip install -U pipenv
         pyenv exec python -m pipenv install --dev --skip-lock
@@ -131,12 +131,21 @@ case $1 in
     ;;
 
 #
-# pythonsh
+# version control
 #
-    "py-status")
+
+    "status")
+        git status
         git submodule foreach 'git status'
     ;;
-    "py-pull")
+    "fetch")
+        git fetch
+        git fetch main
+        git fetch develop
+    "pull")
+        git pull --recurse-submodules
+    ;;
+    "sub")
         git submodule update --remote
     ;;
 

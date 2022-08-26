@@ -122,12 +122,12 @@ versions
 
 show the versions of everything
 
-pull
+update
 
 update packages
 
  
- all
+ update-all
 
  full update of pipenv and all packages
 
@@ -138,6 +138,24 @@ graph packages
 build
 
 build this project as a package, output in dist/
+
+### version control
+
+ status
+
+status of repository
+
+fetch
+
+fetch the current branch and main, and develop
+
+pull
+
+pull the current branch
+
+sub-pull
+
+pull submodules
 
 ### pythonsh commands
 
