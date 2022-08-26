@@ -137,6 +137,7 @@ case $1 in
     "status")
         git status
         git submodule foreach 'git status'
+        git diff --stat
     ;;
     "fetch")
         git fetch
@@ -149,10 +150,38 @@ case $1 in
     "sub")
         git submodule update --remote
     ;;
+    "staged")
+        git diff --cached
+    ;;
+    "summary")
+        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+        if echo "$branch" | grep feature
+        then
+            root='develop'
+        else 
+            root=$(git tag | tail -n 1)
+        fi
+
+        git diff "${root}..${branch}" --stat
+    ;;
+    "delta")
+        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+        if echo "$branch" | grep feature
+        then
+            root='develop'
+        else 
+            root=$(git tag | tail -n 1)
+        fi
+
+        git diff "${root}..${branch}"
+    ;;
 
 #
 # release environment
 #
+
     "dev-start")
         test -d releases || mkdir releases
         pyenv exec python -m pipenv lock
@@ -226,10 +255,11 @@ build      = build packages
 
 [version control]
 
-status     = vc status
+status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch and
 sub        = update submodules
+staged     = show staged changes
 
 [release]
 
