@@ -140,8 +140,9 @@ case $1 in
     ;;
     "fetch")
         git fetch
-        git fetch main
-        git fetch develop
+        git fetch origin main
+        git fetch origin develop
+    ;;
     "pull")
         git pull --recurse-submodules
     ;;
