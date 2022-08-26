@@ -33,7 +33,8 @@ case $1 in
         brew install pyenv
         brew install pyenv-virtualenv
         brew install git-flow
-
+    ;;
+    "tools-shell")
         echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
@@ -258,6 +259,7 @@ python.sh
 
 tools-install = install tools from homebrew
 tools-update  = update tools from homebrew
+tools-shell   = install tools into .zshrc
 
 [virtual commands]
 
