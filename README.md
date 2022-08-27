@@ -31,7 +31,7 @@ For cloning when it has already been installed into  the repo use:
 Then I write a python.sh file like this:
 
 ```bash
-PACKAGE_PYTHON_VERSION="3.10:latest"
+PYTHON_VERSION="3.10:latest"
 
 VIRTUAL_PREFIX="config"
 
@@ -42,7 +42,7 @@ AWS_ROLE=<ARN>
 AWS_PROFILE=<credentials user>
 ````
 
-PACKAGE_PYTHON_VERSION: version is the version of python for installing via pyenv.
+PYTHON_VERSION: version is the version of python for installing via pyenv.
 
 VIRTUAL_PREFIX: the prefix for all the project names such as virtual environment names and package names
 
@@ -66,11 +66,15 @@ type
 
 ### Tooling
 
-install-tools
+tools-install
 
 install pyenv and git-flow via homebrew
 
-update-tools
+tools-zshrc
+
+install homebrew and pyenv commands into .zshrc
+
+tools-update
 
 update pyenv and git-flow 
 
@@ -127,9 +131,9 @@ update
 update packages
 
  
- update-all
+update-all
 
- full update of pipenv and all packages
+full update of pipenv and all packages
 
 list
 
@@ -141,7 +145,7 @@ build this project as a package, output in dist/
 
 ### version control
 
- status
+status
 
 status of repository
 
