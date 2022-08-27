@@ -128,14 +128,6 @@ SHELL
     "virtual-list")
         pyenv virtualenvs
     ;;
-    "dev")
-        pyenv deactivate
-        pyenv activate ${VIRTUAL_PREFIX}_dev
-    ;;
-    "release")
-        pyenv deactivate
-        pyenv activate ${VIRTUAL_PREFIX}_release
-    ;;
 
 #
 # python commands
