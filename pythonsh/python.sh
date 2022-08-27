@@ -292,11 +292,11 @@ SHELL
     "finish")
         git flow release finish $VERSION || exit 1
     ;;
-    "release")
+    "upload")
         git push origin main:main
         git push origin develop:develop
 
-        #git push --tags
+        git push --tags
     ;;
 
 #
@@ -383,7 +383,7 @@ check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config, 
              snapshot Pipfile if present, and start a git flow release with VERSION
 finish     = execute git flow release finish with VERSION
-release    = push main and develop branches and tags to remote
+upload     = push main and develop branches and tags to remote
 
 [deploy]
 
