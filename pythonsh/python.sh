@@ -23,11 +23,12 @@ function remove_src {
 function root_to_branch {
     branch=$(git branch | grep '*' | cut -d ' ' -f 2)
 
-    if echo "$branch" | grep feature
+    if [[ $branch == "develop" ]]
     then
-        root='develop'
-    else 
         root=$(git tag | tail -n 1)
+
+    else 
+        root='develop'       
     fi
 }
 
@@ -127,14 +128,6 @@ SHELL
     "virtual-list")
         pyenv virtualenvs
     ;;
-    "dev")
-        pyenv deactivate
-        pyenv activate ${VIRTUAL_PREFIX}_dev
-    ;;
-    "release")
-        pyenv deactivate
-        pyenv activate ${VIRTUAL_PREFIX}_release
-    ;;
 
 #
 # python commands
@@ -218,7 +211,7 @@ SHELL
         git fetch origin develop
     ;;
     "pull")
-        git pull --recurse-submodules
+        git pull --no-ff
     ;;
     "sub")
         git submodule update --remote
@@ -229,26 +222,48 @@ SHELL
     "summary")
         root_to_branch
 
-        echo "showing summary between $root and $branch"
+        echo ">>>showing summary between $root and $branch"
         git diff "${root}..${branch}" --stat
     ;;
     "delta")
         root_to_branch
 
-        echo "showing delta between $root and $branch"
+        echo ">>>showing delta between $root and $branch"
         git diff "${root}..${branch}"
     ;;
     "log")
         root_to_branch
 
-        echo "showing log between $root and $branch"
+        echo ">>>showing log between $root and $branch"
         git log "${root}..${branch}" --oneline
     ;;
     "graph")
         root_to_branch
  
-        echo "showing history between $root and $branch"       
+        echo ">>>showing history between $root and $branch"       
         git log "${root}..${branch}" --oneline --graph --decorate --all
+    ;;
+    "upstream")
+        root_to_branch
+
+        if [[ $branch == "develop" ]]
+        then
+            root="main"
+        else 
+            root="develop"
+        fi
+
+        git fetch origin main
+        git fetch origin develop
+
+        echo ">>>showing upstream changes from: ${branch}->${root}"
+        git log --no-merges ${root} ^${branch} --oneline
+    ;;
+    "sync")
+        root_to_branch
+        echo ">>>syncing from parent to branch ${root}->${branch}"
+    
+        git merge --no-ff --stat ${root}
     ;;
 
 #
@@ -265,6 +280,18 @@ SHELL
 
         git log main..origin/main --oneline
         git log develop..origin/develop --oneline
+
+        echo "===> checking if working tree is dirty <==="
+
+        if git diff --quiet
+        then
+            echo "working tree clean - proceed!"
+        else
+            echo "working tree dirty - DO NOT RELEASE"
+
+            git status
+            exit 1
+        fi
     ;;
     "start")
         echo -n "please edit python.sh with an updated version in 3 seconds."
@@ -277,7 +304,7 @@ SHELL
         $EDITOR python.sh || exit 1
         source python.sh
 
-        git add python.sh 
+        git add python.sh
         git commit -m "bump to version $VERSION"
 
         if git diff --quiet
@@ -305,14 +332,14 @@ SHELL
 
         git flow release start $VERSION    
     ;;
-    "finish")
+    "release")
         git flow release finish $VERSION || exit 1
     ;;
-    "release")
+    "upload")
         git push origin main:main
         git push origin develop:develop
 
-        #git push --tags
+        git push --tags
     ;;
 
 #
@@ -395,14 +422,16 @@ summary    = show diffstat of summary between feature and develop or last releas
 delta      = show diff between feature and develop or last release and develop
 log        = show log between feature and develop or last release and develop
 graph      = show history between feature and develop or last release and develop
+upstream   = show upstream changes that havent been merged yet
+sync       = merge from the root branch commits not in this branch
 
 [release]
 
 check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config, 
              snapshot Pipfile if present, and start a git flow release with VERSION
-finish     = execute git flow release finish with VERSION
-release    = push main and develop branches and tags to remote
+release    = execute git flow release finish with VERSION
+upload     = push main and develop branches and tags to remote
 
 [deploy]
 

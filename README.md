@@ -31,7 +31,7 @@ For cloning when it has already been installed into  the repo use:
 Then I write a python.sh file like this:
 
 ```bash
-PACKAGE_PYTHON_VERSION="3.10:latest"
+PYTHON_VERSION="3.10:latest"
 
 VIRTUAL_PREFIX="config"
 
@@ -42,7 +42,7 @@ AWS_ROLE=<ARN>
 AWS_PROFILE=<credentials user>
 ````
 
-PACKAGE_PYTHON_VERSION: version is the version of python for installing via pyenv.
+PYTHON_VERSION: version is the version of python for installing via pyenv.
 
 VIRTUAL_PREFIX: the prefix for all the project names such as virtual environment names and package names
 
@@ -66,117 +66,151 @@ type
 
 ### Tooling
 
-install-tools
+#### tools-install
 
 install pyenv and git-flow via homebrew
 
-update-tools
+#### tools-zshrc
+
+install homebrew and pyenv commands into .zshrc
+
+#### tools-update
 
 update pyenv and git-flow 
 
 
 ### virtual environments
 
-virtual-install
+#### virtual-install
 
 ```
 install virtual environments <environment>_dev and <environment_release>
 ```
 
-virtual-destroy
+#### virtual-destroy
 
 delete virtual environments
 
-virtual-list
+#### virtual-list
 
 list virtual environments
 
 
 ### python commands
 
-test
+#### test
 
 run tests
 
-paths
+#### paths
 
 install source paths into the current virtual machine environment
 
-python
+#### python
 
 execute python with remaining arguements passed to the interpreter
 
-run
+#### run
 
 execute a command in the virtual environment
 
 ### AWS commands
 
-aws
+#### aws
 
 run an aws command
 
 ### packages
 
-versions
+#### versions
 
 show the versions of everything
 
-update
+#### update
 
 update packages
 
  
- update-all
+#### update-all
 
- full update of pipenv and all packages
+full update of pipenv and all packages
 
-list
+#### list
 
 graph packages
 
-build
+#### build
 
 build this project as a package, output in dist/
 
 ### version control
 
- status
+#### status
 
 status of repository
 
-fetch
+#### fetch
 
 fetch the current branch and main, and develop
 
-pull
+#### pull
 
 pull the current branch
 
-sub-pull
+#### sub
 
 pull submodules
 
-### pythonsh commands
+#### staged
 
-py-status
+show diff of staged files
 
-return the status of the pythonsh module
+#### summary
 
-py-pull
+show diffstat of the feature branch from develop or from develop to the last tag release
 
-update pythonsh
+#### delta
+
+show the diff of the feature branch from develop or from develop to the last tag release
+
+#### log
+
+show the log of the feature branch from develop or from develop to the last tag release
+
+#### graph
+
+show a graph history from the feature branch from develop or from develop to the last tag release
+
+#### upstream
+
+show a log of the changes from main or develop that haven't been integrated into the current branch
+
+#### sync
+
+merge from the root branch
+
 
 ### release commands
 
-dev-start
+#### check
 
-create a package lock, copy the lock and the Pipfile to releases.
-Make sure that the version was already bumped as this will code the files to the version
+fetch from main and develop, show logs of any commits from upstream not in the develop or main branches.
+Also check that the working tree is clean.
 
-dev-finish
+#### start
 
-push all branches and  tags after a release is finished
+1) start an edit of python.sh to bump the version
+2) reload python.sh and commit it
+3) create a lock file and copy the Pipfile and lock file to releases/ with VERSION appended
+4) start a git flow release with VERSION
+
+#### release
+
+run git flow release finish with VERSION
+
+#### upload
+
+push main and develop and tags to origin
 
 
 ### my deploy commands
