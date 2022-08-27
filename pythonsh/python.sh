@@ -143,11 +143,11 @@ SHELL
     ;;
     "python")
         shift
-        pyenv exec python $@
+        exec pyenv exec python $@
     ;;
     "run")
         shift
-        pyenv exec $@ 
+        exec pyenv exec $@ 
     ;;
 
  #
