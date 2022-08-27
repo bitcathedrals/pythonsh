@@ -185,6 +185,11 @@ show a graph history from the feature branch from develop or from develop to the
 
 show a log of the changes from main or develop that haven't been integrated into the current branch
 
+#### sync
+
+merge from the root branch
+
+
 ### release commands
 
 #### check

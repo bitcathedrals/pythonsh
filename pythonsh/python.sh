@@ -252,6 +252,12 @@ SHELL
         echo ">>>showing upstream changes from: ${branch}->${root}"
         git log --no-merges ${root} ^${branch} --oneline
     ;;
+    "sync")
+        root_to_branch
+        echo ">>>syncing from parent to branch ${root}->${branch}"
+    
+        git merge --no-ff --stat ${root}
+    ;;
 
 #
 # release environment
@@ -407,6 +413,7 @@ delta      = show diff between feature and develop or last release and develop
 log        = show log between feature and develop or last release and develop
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
+sync       = merge from the root branch commits not in this branch
 
 [release]
 
