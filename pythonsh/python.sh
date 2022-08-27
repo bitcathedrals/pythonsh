@@ -25,8 +25,12 @@ function root_to_branch {
 
     if [[ $branch == "develop" ]]
     then
-        root=$(git tag | tail -n 1)
-
+        if [[ $1 == "norelease" ]]
+        then
+            root="main"
+        else 
+            root=$(git tag | tail -n 1)
+        fi
     else 
         root='develop'       
     fi
@@ -251,14 +255,7 @@ SHELL
         git log "${root}..${branch}" --oneline --graph --decorate --all
     ;;
     "upstream")
-        root_to_branch
-
-        if [[ $branch == "develop" ]]
-        then
-            root="main"
-        else 
-            root="develop"
-        fi
+        root_to_branch norelease
 
         git fetch origin main
         git fetch origin develop
@@ -267,9 +264,10 @@ SHELL
         git log --no-merges ${root} ^${branch} --oneline
     ;;
     "sync")
-        root_to_branch
-        echo ">>>syncing from parent to branch ${root}->${branch}"
-    
+        root_to_branch norelease
+        
+        echo ">>>syncing from: ${root}->${branch}"    
+        
         git merge --no-ff --stat ${root}
     ;;
 
