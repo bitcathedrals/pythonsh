@@ -204,7 +204,7 @@ SHELL
         git fetch origin develop
     ;;
     "pull")
-        git pull --recurse-submodules
+        git pull --no-ff
     ;;
     "sub")
         git submodule update --remote
