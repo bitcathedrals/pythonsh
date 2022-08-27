@@ -264,7 +264,7 @@ SHELL
 
         git add python.sh && git commit -m "bump to version $VERSION"
 
-        git diff --quiet
+        if git diff --quiet
         then
             echo "working tree clean - proceeding with release: $VERSION"
         else
