@@ -20,6 +20,17 @@ function remove_src {
     test -f "$site/dev.pth" && rm "$site/dev.pth"
 }
 
+function root_to_branch {
+    branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+    if echo "$branch" | grep feature
+    then
+        root='develop'
+    else 
+        root=$(git tag | tail -n 1)
+    fi
+}
+
 case $1 in
 
 #
@@ -34,8 +45,8 @@ case $1 in
         brew install pyenv-virtualenv
         brew install git-flow
     ;;
-    "tools-shell")
-        echo "adding shell code to .zshrc, you may need to edit the file."
+    "tools-zshrc")
+       echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
 eval "\$(homebrew/bin/brew shellenv)"
@@ -81,7 +92,7 @@ function release {
 }
 SHELL
     ;;
-    "tools-update")
+    "tools-upgrade")
         brew update
 
         brew upgrade pyenv
@@ -199,6 +210,7 @@ SHELL
     "status")
         git status
         git submodule foreach 'git status'
+        git diff --stat
     ;;
     "fetch")
         git fetch
@@ -211,21 +223,102 @@ SHELL
     "sub")
         git submodule update --remote
     ;;
+    "staged")
+        git diff --cached
+    ;;
+    "summary")
+        root_to_branch
+
+        echo "showing summary between $root and $branch"
+        git diff "${root}..${branch}" --stat
+    ;;
+    "delta")
+        root_to_branch
+
+        echo "showing delta between $root and $branch"
+        git diff "${root}..${branch}"
+    ;;
+    "log")
+        root_to_branch
+
+        echo "showing log between $root and $branch"
+        git log "${root}..${branch}" --oneline
+    ;;
+    "graph")
+        root_to_branch
+ 
+        echo "showing history between $root and $branch"       
+        git log "${root}..${branch}" --oneline --graph --decorate --all
+    ;;
 
 #
 # release environment
 #
-    "dev-start")
-        test -d releases || mkdir releases
-        pyenv exec python -m pipenv lock
+    "check")
+        echo "===> remember to pull deps with update if warranted <==="
 
-        mv Pipfile.lock releases/Pipfile.lock-$VERSION
-        cp Pipfile releases/Pipfile-$VERSION
+        echo "===> fetching new commits from remote <==="
+        git fetch origin main 
+        git fetch origin develop
+        
+        echo "===> showing unmerged differences <===="
+
+        git log main..origin/main --oneline
+        git log develop..origin/develop --oneline
     ;;
-    "dev-finish")
-        git push --all
-        git push --tags
+    "start")
+        echo -n "please edit python.sh with an updated version in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+
+        $EDITOR python.sh || exit 1
+        source python.sh
+
+        git add python.sh 
+        git commit -m "bump to version $VERSION"
+
+        if git diff --quiet
+        then
+            echo "working tree clean - proceeding with release: $VERSION"
+        else
+            echo "working tree dirty - terminating release:"
+
+            git status
+            exit 1
+        fi
+
+        test -d releases || mkdir releases
+        test -f Pipfile && pyenv exec python -m pipenv lock
+
+        test -f Pipfile.lock && mv Pipfile.lock releases/Pipfile.lock-$VERSION
+        test -f Pipfile && cp Pipfile releases/Pipfile-$VERSION
+
+        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+
+        git flow release start $VERSION    
     ;;
+    "finish")
+        git flow release finish $VERSION || exit 1
+    ;;
+    "release")
+        git push origin main:main
+        git push origin develop:develop
+
+        #git push --tags
+    ;;
+
+#
+# my machine specific deploy commands
+#
+
     "deploy-m1")
         pyenv exec python -m build
 
@@ -251,7 +344,7 @@ SHELL
         test -d $PKG_PATH || mkdir $PKG_PATH
         cp dist/* $PKG_PATH/
     ;;
-    "help")
+    "help"|""|*)
         cat <<HELP
 python.sh
 
@@ -259,7 +352,7 @@ python.sh
 
 tools-install = install tools from homebrew
 tools-update  = update tools from homebrew
-tools-shell   = install tools into .zshrc
+tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
 
 [virtual commands]
 
@@ -292,23 +385,29 @@ build      = build packages
 
 [version control]
 
-status     = vc status
+status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch and
 sub        = update submodules
+staged     = show staged changes
+
+summary    = show diffstat of summary between feature and develop or last release and develop
+delta      = show diff between feature and develop or last release and develop
+log        = show log between feature and develop or last release and develop
+graph      = show history between feature and develop or last release and develop
 
 [release]
 
-dev-start  = start a release by freezing the Pip files
-dev-finish = push branches and tags to remote
+check      = fetch main, develop from origin and show log of any pending changes
+start      = initiate an EDITOR session to update VERSION in python.sh, reload config, 
+             snapshot Pipfile if present, and start a git flow release with VERSION
+finish     = execute git flow release finish with VERSION
+release    = push main and develop branches and tags to remote
 
 [deploy]
 
 deploy-m1    = deploy packages on the m1 machine
 deploy-intel = deploy packages on the intel machine
 HELP
-    ;;
-    *)
-        echo "unknown command."
     ;;
 esac

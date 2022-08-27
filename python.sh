@@ -1,4 +1,6 @@
-VERSION=0.3.6
+# pythonsh configuration file
+VERSION=0.3.7
+
 
 
 
