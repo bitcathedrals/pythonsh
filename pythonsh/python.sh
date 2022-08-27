@@ -235,6 +235,19 @@ SHELL
         echo "showing history between $root and $branch"       
         git log "${root}..${branch}" --oneline --graph --decorate --all
     ;;
+    "upstream")
+        root_to_branch
+
+        if $branch == "develop"
+        then
+            root="main"
+        else 
+            root="develop"
+        fi
+
+        echo "showing upstream changes from: $root"
+        git log ${branch}..${root} --oneline
+    ;;
 
 #
 # release environment
@@ -389,6 +402,7 @@ summary    = show diffstat of summary between feature and develop or last releas
 delta      = show diff between feature and develop or last release and develop
 log        = show log between feature and develop or last release and develop
 graph      = show history between feature and develop or last release and develop
+upstream   = show upstream changes that havent been merged yet
 
 [release]
 
