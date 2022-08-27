@@ -284,7 +284,7 @@ SHELL
         test -d $PKG_PATH || mkdir $PKG_PATH
         cp dist/* $PKG_PATH/
     ;;
-    "help")
+    "help"|""|*)
         cat <<HELP
 python.sh
 
@@ -343,8 +343,5 @@ dev-finish = push branches and tags to remote
 deploy-m1    = deploy packages on the m1 machine
 deploy-intel = deploy packages on the intel machine
 HELP
-    ;;
-    *)
-        echo "unknown command."
     ;;
 esac
