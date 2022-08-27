@@ -262,6 +262,18 @@ SHELL
         $EDITOR python.sh || exit 1
         source python.sh
 
+        git add python.sh && git commit -m "bump to version $VERSION"
+
+        git diff --quiet
+        then
+            echo "working tree clean - proceeding with release: $VERSION"
+        else
+            echo "working tree dirty - terminating release:"
+
+            git status
+            exit 1
+        fi
+
         test -d releases || mkdir releases
         test -f Pipfile && pyenv exec python -m pipenv lock
 
