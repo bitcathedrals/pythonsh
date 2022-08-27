@@ -38,6 +38,8 @@ case $1 in
 # tooling
 #
     "tools-install")
+        echo "installing brew tools"
+
         brew update
 
         brew install pyenv
@@ -97,14 +99,19 @@ SHELL
         brew upgrade pyenv
         brew upgrade pyenv-virtualenv
         brew upgrade git-flow
-    ;;
 
+        if pyenv virtualenvs | grep '*'
+        then
+           pyenv exec python -m pip install -U pip
+           pyenv exec python -m pip install -U pipenv
+        fi
+    ;;
 #
 # virtual environments
 #
 
     "virtual-install")
-        pyenv install --skip-existing "$PACKAGE_PYTHON_VERSION"
+        pyenv install --skip-existing "$PYTHON_VERSION"
 
         LATEST=$(pyenv versions | grep -E '^ *\d+\.\d+\.\d+$' | sed 's/ *//g')
 
@@ -120,6 +127,14 @@ SHELL
 
     "virtual-list")
         pyenv virtualenvs
+    ;;
+    "dev")
+        pyenv deactivate
+        pyenv activate ${VIRTUAL_PREFIX}_dev
+    ;;
+    "release")
+        pyenv deactivate
+        pyenv activate ${VIRTUAL_PREFIX}_release
     ;;
 
 #
@@ -379,6 +394,9 @@ tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
 virtual-install  = install a pyenv virtual environment
 virtual-destroy  = delete the pyenv virtual environment
 virtual-list     = list virtual environments
+
+dev              = switch to dev environment
+release          = switch to release environment
 
 [python commands]
 
