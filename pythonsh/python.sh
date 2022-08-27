@@ -20,6 +20,17 @@ function remove_src {
     test -f "$site/dev.pth" && rm "$site/dev.pth"
 }
 
+function root_to_branch {
+    branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+
+    if echo "$branch" | grep feature
+    then
+        root='develop'
+    else 
+        root=$(git tag | tail -n 1)
+    fi
+}
+
 case $1 in
 
 #
@@ -201,34 +212,42 @@ SHELL
         git diff --cached
     ;;
     "summary")
-        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+        root_to_branch
 
-        if echo "$branch" | grep feature
-        then
-            root='develop'
-        else 
-            root=$(git tag | tail -n 1)
-        fi
-
+        echo "showing summary between $root and $branch"
         git diff "${root}..${branch}" --stat
     ;;
     "delta")
-        branch=$(git branch | grep '*' | cut -d ' ' -f 2)
+        root_to_branch
 
-        if echo "$branch" | grep feature
-        then
-            root='develop'
-        else 
-            root=$(git tag | tail -n 1)
-        fi
-
+        echo "showing delta between $root and $branch"
         git diff "${root}..${branch}"
+    ;;
+    "log")
+        root_to_branch
+
+        echo "showing log between $root and $branch"
+        git log "${root}..${branch}" --oneline
+    ;;
+    "graph")
+        root_to_branch
+ 
+        echo "showing history between $root and $branch"       
+        git log "${root}..${branch}" --oneline --graph --decorate --all
     ;;
 
 #
 # release environment
 #
+    "pre")
+        git fetch main 
+        git fetch origin
+        
+        echo "===> showing unmerged differences <===="
 
+        git log - -oneline
+
+    ;;
     "dev-start")
         test -d releases || mkdir releases
         pyenv exec python -m pipenv lock
@@ -308,6 +327,11 @@ fetch      = fetch main, develop, and current branch
 pull       = pull current branch and
 sub        = update submodules
 staged     = show staged changes
+
+summary    = show diffstat of summary between feature and develop or last release and develop
+delta      = show diff between feature and develop or last release and develop
+log        = show log between feature and develop or last release and develop
+graph      = show history between feature and develop or last release and develop
 
 [release]
 
