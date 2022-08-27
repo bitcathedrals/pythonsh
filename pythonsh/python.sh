@@ -23,11 +23,12 @@ function remove_src {
 function root_to_branch {
     branch=$(git branch | grep '*' | cut -d ' ' -f 2)
 
-    if echo "$branch" | grep feature
+    if [[ $branch == "develop" ]]
     then
-        root='develop'
-    else 
         root=$(git tag | tail -n 1)
+
+    else 
+        root='develop'       
     fi
 }
 
@@ -214,39 +215,42 @@ SHELL
     "summary")
         root_to_branch
 
-        echo "showing summary between $root and $branch"
+        echo ">>>showing summary between $root and $branch"
         git diff "${root}..${branch}" --stat
     ;;
     "delta")
         root_to_branch
 
-        echo "showing delta between $root and $branch"
+        echo ">>>showing delta between $root and $branch"
         git diff "${root}..${branch}"
     ;;
     "log")
         root_to_branch
 
-        echo "showing log between $root and $branch"
+        echo ">>>showing log between $root and $branch"
         git log "${root}..${branch}" --oneline
     ;;
     "graph")
         root_to_branch
  
-        echo "showing history between $root and $branch"       
+        echo ">>>showing history between $root and $branch"       
         git log "${root}..${branch}" --oneline --graph --decorate --all
     ;;
     "upstream")
         root_to_branch
 
-        if $branch == "develop"
+        if [[ $branch == "develop" ]]
         then
             root="main"
         else 
             root="develop"
         fi
 
-        echo "showing upstream changes from: $root"
-        git log ${branch}..${root} --oneline
+        git fetch origin main
+        git fetch origin develop
+
+        echo ">>>showing upstream changes from: ${branch}->${root}"
+        git log --no-merges ${root} ^${branch} --oneline
     ;;
 
 #
