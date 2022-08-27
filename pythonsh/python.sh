@@ -239,26 +239,58 @@ SHELL
 #
 # release environment
 #
-    "pre")
-        git fetch main 
-        git fetch origin
+    "check")
+        echo "===> remember to pull deps with update if warranted <==="
+
+        echo "===> fetching new commits from remote <==="
+        git fetch origin main 
+        git fetch origin develop
         
         echo "===> showing unmerged differences <===="
 
-        git log - -oneline
-
+        git log main..origin/main --oneline
+        git log develop..origin/develop --oneline
     ;;
-    "dev-start")
+    "start")
+        echo -n "please edit python.sh with an updated version in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+
+        $EDITOR python.sh || exit 1
+        source python.sh
+
         test -d releases || mkdir releases
-        pyenv exec python -m pipenv lock
+        test -f Pipfile && pyenv exec python -m pipenv lock
 
-        mv Pipfile.lock releases/Pipfile.lock-$VERSION
-        cp Pipfile releases/Pipfile-$VERSION
+        test -f Pipfile.lock && mv Pipfile.lock releases/Pipfile.lock-$VERSION
+        test -f Pipfile && cp Pipfile releases/Pipfile-$VERSION
+
+        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+
+        git flow release start $VERSION    
     ;;
-    "dev-finish")
-        git push --all
-        git push --tags
+    "finish")
+        git flow release finish $VERSION || exit 1
     ;;
+    "release")
+        git push origin main:main
+        git push origin develop:develop
+
+        #git push --tags
+    ;;
+
+#
+# my machine specific deploy commands
+#
+
     "deploy-m1")
         pyenv exec python -m build
 
@@ -335,8 +367,11 @@ graph      = show history between feature and develop or last release and develo
 
 [release]
 
-dev-start  = start a release by freezing the Pip files
-dev-finish = push branches and tags to remote
+check      = fetch main, develop from origin and show log of any pending changes
+start      = initiate an EDITOR session to update VERSION in python.sh, reload config, 
+             snapshot Pipfile if present, and start a git flow release with VERSION
+finish     = execute git flow release finish with VERSION
+release    = push main and develop branches and tags to remote
 
 [deploy]
 
