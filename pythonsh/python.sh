@@ -231,6 +231,13 @@ SHELL
         echo ">>>showing delta between $root and $branch"
         git diff "${root}..${branch}"
     ;;
+    "merges")
+        git log --merges --oneline
+    ;;
+    "history")
+        echo ">>>showing history"
+        git log --oneline
+    ;;
     "log")
         root_to_branch
 
@@ -414,16 +421,17 @@ build      = build packages
 
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
-pull       = pull current branch and
+pull       = pull current branch no ff
 sub        = update submodules
 staged     = show staged changes
-
+merges     = show merges only
+history    = show commit history
 summary    = show diffstat of summary between feature and develop or last release and develop
 delta      = show diff between feature and develop or last release and develop
 log        = show log between feature and develop or last release and develop
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
-sync       = merge from the root branch commits not in this branch
+sync       = merge from the root branch commits not in this branch no ff
 
 [release]
 
