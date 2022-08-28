@@ -327,7 +327,7 @@ SHELL
             sleep 1
             echo -n "."
             sleep 1
-            echo -n "."
+            echo "."
             sleep 1
 
             $EDITOR pyproject.toml || exit 1
@@ -357,7 +357,7 @@ SHELL
         sleep 1
         echo -n "."
         sleep 1
-        echo -n "."
+        echo "."
         sleep 1
 
         git flow release start $VERSION
