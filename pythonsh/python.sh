@@ -383,7 +383,7 @@ SHELL
         find . -name '__pycache__' -type d -print | xargs rm -r 
 
         DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/cfconfig"
+        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
         BEAST="michaelmattie@beast.local"
 
         ssh $BEAST "test -d $PKG_PATH || mkdir $PKG_PATH"
@@ -396,7 +396,7 @@ SHELL
         find . -name '__pycache__' -type d -print | xargs rm -r 
 
         DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/cfconfig"
+        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
 
         test -d $PKG_PATH || mkdir $PKG_PATH
         cp dist/* $PKG_PATH/
