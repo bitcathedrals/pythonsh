@@ -344,12 +344,12 @@ SHELL
 
         git add python.sh
 
-        test -f pyproject.tom && git add pyroject.toml
+        test -f pyproject.toml && git add pyroject.toml
 
         test -f $VER_PIP && git add $VER_PIP
         test -f $VER_LOCK && git add $VER_LOCK
 
-        echo ">>>commiting bump to to $VERION"
+        echo ">>>commiting bump to to $VERSION"
 
         git commit -m "bump to version $VERSION"
 
