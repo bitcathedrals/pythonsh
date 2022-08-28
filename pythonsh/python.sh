@@ -62,10 +62,10 @@ eval "\$(pyenv init -)"
 
 export EDITOR=$EDITOR
 
-function dev {
+function switch_dev {
     if test -f python.sh
     then
-        echo "switching to \${VIRTUAL_PREFIX} dev"
+        echo ">>>switching to \${VIRTUAL_PREFIX} dev"
         source python.sh
 
         if pyenv virtualenvs | grep '*'
@@ -79,10 +79,27 @@ function dev {
     fi;
 }
 
-function release {
+function switch_test {
     if test -f python.sh
     then
-        echo "switching to \${VIRTUAL_PREFIX} release"
+        echo ">>>switching to \${VIRTUAL_PREFIX} test"
+        source python.sh
+
+        if pyenv virtualenvs | grep '*'
+        then
+            pyenv deactivate
+        fi
+
+        pyenv activate \${VIRTUAL_PREFIX}_test
+    else
+        echo "cant find python.sh - are you in the project root?"
+    fi;
+}
+
+function switch_release {
+    if test -f python.sh
+    then
+        echo ">>>switching to \${VIRTUAL_PREFIX} release"
         source python.sh
 
         if pyenv virtualenvs | grep '*'
@@ -121,12 +138,15 @@ SHELL
 
         echo "installing $LATEST to $VIRTUAL_PREFIX"
 
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_release"
         pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_dev"
+        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_test"
+        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_release"
+
     ;;
     "virtual-destroy")
-        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
+        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
+        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
 
     "virtual-list")
@@ -199,7 +219,7 @@ SHELL
         find . -name '*.egg-info' -type d -print | xargs rm -r 
         find . -name '__pycache__' -type d -print | xargs rm -r
 
-        test -f Pipfile.lock rm Pipfile.lock 
+        test -f Pipfile.lock && rm Pipfile.lock 
     ;;
 
 #
@@ -327,7 +347,7 @@ SHELL
             sleep 1
             echo -n "."
             sleep 1
-            echo -n "."
+            echo "."
             sleep 1
 
             $EDITOR pyproject.toml || exit 1
@@ -357,7 +377,7 @@ SHELL
         sleep 1
         echo -n "."
         sleep 1
-        echo -n "."
+        echo "."
         sleep 1
 
         git flow release start $VERSION

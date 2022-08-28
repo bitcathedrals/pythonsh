@@ -17,7 +17,7 @@ I then link from the root of the project
 For a new installation into a repository copy pysh-install.sh and run:
 
 ```bash
-./pysh-install.sh install
+./pysh-install.sh public
 ```
 
 For cloning when it has already been installed into  the repo use:
