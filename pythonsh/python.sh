@@ -219,7 +219,7 @@ SHELL
         find . -name '*.egg-info' -type d -print | xargs rm -r 
         find . -name '__pycache__' -type d -print | xargs rm -r
 
-        test -f Pipfile.lock rm Pipfile.lock 
+        test -f Pipfile.lock && rm Pipfile.lock 
     ;;
 
 #
