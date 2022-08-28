@@ -9,7 +9,7 @@ function add_src {
 
     test -d $site || mkdir -p $site
 
-    cat python.paths | sed -e "s,^,$PWD/," >"$site/dev.pth"
+    cat python.paths | sed -e "s,^,$PWD/," | tr -s '\n' >"$site/dev.pth"
 }
 
 function remove_src {
