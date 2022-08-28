@@ -301,7 +301,17 @@ SHELL
         fi
     ;;
     "start")
-        echo -n "please edit python.sh with an updated version in 3 seconds."
+        if git diff --quiet
+        then
+            echo ">>>working tree clean - proceeding with release: $VERSION"
+        else
+            echo "working tree dirty - terminating release:"
+
+            git status
+            exit 1
+        fi
+
+        echo -n ">>>please edit python.sh with an updated version in 3 seconds."
         sleep 1
         echo -n "."
         sleep 1
@@ -311,24 +321,37 @@ SHELL
         $EDITOR python.sh || exit 1
         source python.sh
 
-        git add python.sh
-        git commit -m "bump to version $VERSION"
-
-        if git diff --quiet
+        if [[ -f pyproject.toml ]]
         then
-            echo "working tree clean - proceeding with release: $VERSION"
-        else
-            echo "working tree dirty - terminating release:"
+            echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
+            sleep 1
+            echo -n "."
+            sleep 1
+            echo -n "."
+            sleep 1
 
-            git status
-            exit 1
+            $EDITOR pyproject.toml || exit 1
         fi
 
         test -d releases || mkdir releases
         test -f Pipfile && pyenv exec python -m pipenv lock
 
-        test -f Pipfile.lock && mv Pipfile.lock releases/Pipfile.lock-$VERSION
-        test -f Pipfile && cp Pipfile releases/Pipfile-$VERSION
+        VER_PIP="releases/Pipfile-$VERSION"
+        VER_LOCK="releases/Pipfile.lock-$VERSION"
+        
+        test -f Pipfile.lock && mv Pipfile.lock $VER_LOCK
+        test -f Pipfile && cp Pipfile $VER_PIP
+
+        git add python.sh
+
+        test -f pyproject.tom && git add pyroject.toml
+
+        test -f $VER_PIP && git add $VER_PIP
+        test -f $VER_LOCK && git add $VER_LOCK
+
+        echo ">>>commiting bump to to $VERION"
+
+        git commit -m "bump to version $VERSION"
 
         echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
         sleep 1
@@ -337,7 +360,7 @@ SHELL
         echo -n "."
         sleep 1
 
-        git flow release start $VERSION    
+        git flow release start $VERSION
     ;;
     "release")
         git flow release finish $VERSION || exit 1
