@@ -194,24 +194,27 @@ SHELL
 #
 # packages
 #
-
     "versions")
         pyenv version
         pyenv exec python --version
         pipenv graph
     ;;
     "update")
-        pyenv exec python -m pipenv install --skip-lock
-        pyenv exec python -m pyenv rehash
-    ;;
-    "update-all")
-        pyenv exec python -m pip install -U pip
-        pyenv exec python -m pip install -U pipenv
-        pyenv exec python -m pipenv install --dev --skip-lock
+        pipenv install --skip-lock
         pyenv rehash
     ;;
+    "update-all")
+        export PIPENV_SKIP_LOCK=1
+
+        pipenv install pyenv pipenv
+        pipenv install --dev
+        pipenv rehash
+
+        # check for known security vulnerabilities
+        pipenv check
+    ;;
     "list")
-        pyenv exec python -m pipenv graph
+        pipenv graph
     ;;
     "build")
         pyenv exec python -m build
@@ -219,7 +222,7 @@ SHELL
         find . -name '*.egg-info' -type d -print | xargs rm -r 
         find . -name '__pycache__' -type d -print | xargs rm -r
 
-        test -f Pipfile.lock && rm Pipfile.lock 
+        test -f Pipfile.lock && rm Pipfile.lock
     ;;
 
 #
@@ -354,7 +357,7 @@ SHELL
         fi
 
         test -d releases || mkdir releases
-        test -f Pipfile && pyenv exec python -m pipenv lock
+        test -f Pipfile && pipenv lock
 
         VER_PIP="releases/Pipfile-$VERSION"
         VER_LOCK="releases/Pipfile.lock-$VERSION"
@@ -395,7 +398,6 @@ SHELL
 #
 # my machine specific deploy commands
 #
-
     "deploy-m1")
         pyenv exec python -m build
 
