@@ -1,68 +1,105 @@
-# pythonsh - A python Project Management script
+# pythonsh - A python Project Management Script
 
 ## Goals
 
 pythonsh systematizes the tooling, development, building, release, and deployment of python projects.
 
-It does this with a shell script that performs almost all of the necessary tasks using git-flow, pyenv,
-and basic commands. It has some parts that are specific to my project but the great majority of it
-can be re-used in any project.
+It does this with a shell script that performs almost all of the necessary tasks using git, git-flow, pyenv, and python build - facilitating sophisticated use of key developer tools.
+
+The commands are all simple with almost all of them being single words with no arguments. pythonsh executes all the tools for you.
+
+## History
+
+pythonsh emerged from years of trying to type out git commands that had no equivalent in graphical tools, and various hacked up shell scripts.
+
+I decided to make a comprehensive script in a single place, and that I would distribute it via github and integrate it with git submodules which made it easy to keep up to date.
+
+It hast vastly accelerated my development speed and systematically almost eliminated errors in project tasks.
+
+## Design
+
+pythonsh is designed as a shell script that is easy to use on MacOS and Linux. The script is integrated into the repository as a submodule making it easy to update and integrate.
+
+It uses single word commands and as much as possible it infers the arguments needed by the tools.
+
+### Tools
+
+pythonsh installs pyenv, pyenv-virtual, and git-flow using homebrew for MacOS.
+
+It sets up virtual environment, wraps package installation and management, executes git commands, executes build commands, and executes release commands.
+
+### Assumptions
+
+pythonsh assumes that you
+- initialized the git repo with "git init"
+- initialized the git-flow tool with "git flow init"
+- Have "build" package in your dev dependencies in Pipfile
+- have pyproject.toml if necessary setup correctly, and also the build backend of your choice configured.
 
 ## Installation
 
 The main script is [python.sh](pythonsh/python.sh). I install it as a git submodule
-using the script [pysh-install.sh](pythonsh/pysh-install.sh) with the install option.
-I then link from the root of the project 
+using the script [pysh-install.sh](pythonsh/pysh-install.sh).
+
+It has three commands:
+- "install" = install as a submodule using ssh for write access
+- "public" = install as a submodule with read only access
+- "clone" = initialize it when it's already a submodule but there are no files in it.
+- "remove" = attempt to completely remove pythonsh
+
+In the root of the project it will install a link for conveinance: "py.sh".  
 
 For a new installation into a repository copy pysh-install.sh and run:
 
 ```bash
+curl https://raw.githubusercontent.com/coderofmattie/pythonsh/main/pythonsh/pysh-install.sh
+
+chmod u+x pysh-install.sh
+
 ./pysh-install.sh public
 ```
 
-For cloning when it has already been installed into  the repo use:
+It's a simple script so it's easy to verify that the script is afe.
 
-```bash
-./pysh-install clone
-```
+## pythonsh Configuration
 
-### Project Configuration
+### python.sh
 
-Then I write a python.sh file like this:
+In the root of the repository I write a "python.sh" file like this:
 
 ```bash
 PYTHON_VERSION="3.10:latest"
 
 VIRTUAL_PREFIX="config"
 
-REGION='us-west-2'
 VERSION=0.7.2
 
 AWS_ROLE=<ARN>
 AWS_PROFILE=<credentials user>
 ````
 
-PYTHON_VERSION: version is the version of python for installing via pyenv.
+PYTHON_VERSION: (required for python) version is the version of python for installing via pyenv.
 
-VIRTUAL_PREFIX: the prefix for all the project names such as virtual environment names and package names
+VIRTUAL_PREFIX: (required) the prefix for all the project names such as virtual environment names and package names.
 
-REGION: AWS region
+VERSION: (required) version of the repo.
 
-VERSION: version of the repo.
+AWS_ROLE: (optional): the AWS role used to execute the command
+AWS_PROFILE: the credentials (which should also specify region) to use with the role.
 
-Then I write a python.paths file with the source paths to add to python's load path
+### Python Confiugration
+
+Then I write a python.paths file with the source paths to add to python's load path:
 
 ```bash
 src/
-src/scripts/
 ```
 
-## Use
+Each line should be a directory *containing* a module.
 
-type 
-```bash
-./py.sh <command>
-```
+Also "pyproject.toml" should be added for python projects so that the "build" module can build a package.
+
+Since "pyproject.toml" can use different backends and has many fields to set I won't cover how to setup "pyproject.toml" here.
 
 ### Tooling
 
@@ -70,10 +107,32 @@ type
 - tools-zshrc   = install homebrew and pyenv commands into .zshrc
 - tools-update  = update pyenv and git-flow 
 
+Tooling commands install the necessary tools via homebrew which is a pervasive tool for installing open source software on MacOS.
+
+If you are using Linux you need to install git, git-flow, pyenv, and pyenv-virtualenv
+
+The .zshrc file appends several things to the Zsh login. It adds homebrew, pyenv, and the commands switch_dev, swich_test, and switch_release which switch to the different virtual environments that pythonsh creates.
+
+## Use
+
+```bash
+./py.sh <command>
+```
+
+The "pysh-install.sh" commands create a link of "py.sh" to the python.sh script so you have a short name to type with the commands.
+
+Almost all of the commands are a single command except for:
+- python = execute python in pyenv with the args given
+- run = execute any command in pyenv with the args given
+- aws = execute awscli with the args given using the AWS_REGION, AWS_ROLE, and AWS_PROFILE as specified in the "python.sh" configuration file.
+
 
 ### virtual environments
 
-- virtual-install  = install virtual environments <environment>_dev and <environment>_release
+- virtual-install  = install virtual environments:
+	- <VIRTUAL_PREFIX>_dev for general development
+	- <VIRTUAL_PREFIX>_test for testing packages and functionality
+	- <VIRTUAL_PREFIX>_release for keeping a release environment
 - virtual-destroy  = delete virtual environments
 - virtual-list     = list virtual environments
 
@@ -122,13 +181,12 @@ type
 
 - start
 
-1) start an edit of python.sh to bump the version
-2) reload python.sh and commit it
-3) create a lock file and copy the Pipfile and lock file to releases/ with VERSION appended
-4) start a git flow release with VERSION
+	1. start an edit of python.sh to bump the version
+	2. reload python.sh and commit it
+	3. create a lock file and copy the Pipfile and lock file to releases/ with VERSION appended
+	4. start a git flow release with VERSION
 
 - release = run git flow release finish with VERSION
-
 - upload  = push main and develop and tags to origin
 
 
