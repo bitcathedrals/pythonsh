@@ -364,7 +364,7 @@ SHELL
 
         git add python.sh
 
-        test -f pyproject.toml && git add pyroject.toml
+        test -f pyproject.toml && git add pyproject.toml
 
         test -f $VER_PIP && git add $VER_PIP
         test -f $VER_LOCK && git add $VER_LOCK
