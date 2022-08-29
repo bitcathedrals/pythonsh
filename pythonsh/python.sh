@@ -65,8 +65,8 @@ export EDITOR=$EDITOR
 function switch_dev {
     if test -f python.sh
     then
-        echo ">>>switching to \${VIRTUAL_PREFIX} dev"
         source python.sh
+        echo ">>>switching to \${VIRTUAL_PREFIX} dev"
 
         if pyenv virtualenvs | grep '*'
         then
@@ -82,8 +82,8 @@ function switch_dev {
 function switch_test {
     if test -f python.sh
     then
-        echo ">>>switching to \${VIRTUAL_PREFIX} test"
         source python.sh
+        echo ">>>switching to \${VIRTUAL_PREFIX} test"
 
         if pyenv virtualenvs | grep '*'
         then
@@ -99,8 +99,8 @@ function switch_test {
 function switch_release {
     if test -f python.sh
     then
-        echo ">>>switching to \${VIRTUAL_PREFIX} release"
         source python.sh
+        echo ">>>switching to \${VIRTUAL_PREFIX} release"
 
         if pyenv virtualenvs | grep '*'
         then
