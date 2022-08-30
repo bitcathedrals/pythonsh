@@ -47,7 +47,7 @@ It has three commands:
 - "clone" = initialize it when it's already a submodule but there are no files in it.
 - "remove" = attempt to completely remove pythonsh
 
-In the root of the project it will install a link for conveinance: "py.sh".  
+In the root of the project it will install a link for convenience: "py.sh".  
 
 For a new installation into a repository copy pysh-install.sh and run:
 
@@ -59,7 +59,7 @@ chmod u+x pysh-install.sh
 ./pysh-install.sh public
 ```
 
-It's a simple script so it's easy to verify that the script is afe.
+It's a simple script so it's easy to verify that the script is safe.
 
 ## pythonsh Configuration
 
@@ -87,7 +87,7 @@ VERSION: (required) version of the repo.
 AWS_ROLE: (optional): the AWS role used to execute the command
 AWS_PROFILE: the credentials (which should also specify region) to use with the role.
 
-### Python Confiugration
+### Python Configuration
 
 Then I write a python.paths file with the source paths to add to python's load path:
 
@@ -140,7 +140,7 @@ Almost all of the commands are a single command except for:
 
 - test   = run tests
 - paths  = install source paths into the current virtual machine environment
-- python = execute python with remaining arguements passed to the interpreter
+- python = execute python with remaining arguments passed to the interpreter
 - run    = execute a command in the virtual environment
 
 ### AWS commands
@@ -158,8 +158,8 @@ Almost all of the commands are a single command except for:
 ### version control
 
 - status   = status of repository
-- fetch    = fetch the current branch and main, and develop
-- pull     = pull the current branch
+- fetch    = fetch the current branch, main, and develop
+- pull     = pull the current branch no fast forward
 - sub      = pull submodules
 - staged   = show diff of staged files
 - history  = show commit history
