@@ -208,6 +208,8 @@ SHELL
     "update")
         pipenv install --skip-lock
         pyenv rehash
+
+        pipenv check
     ;;
     "update-all")
         export PIPENV_SKIP_LOCK=1
