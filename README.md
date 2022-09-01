@@ -47,7 +47,7 @@ It has three commands:
 - "clone" = initialize it when it's already a submodule but there are no files in it.
 - "remove" = attempt to completely remove pythonsh
 
-In the root of the project it will install a link for conveinance: "py.sh".  
+In the root of the project it will install a link for convenience: "py.sh".  
 
 For a new installation into a repository copy pysh-install.sh and run:
 
@@ -59,7 +59,7 @@ chmod u+x pysh-install.sh
 ./pysh-install.sh public
 ```
 
-It's a simple script so it's easy to verify that the script is afe.
+It's a simple script so it's easy to verify that the script is safe.
 
 ## pythonsh Configuration
 
@@ -87,7 +87,7 @@ VERSION: (required) version of the repo.
 AWS_ROLE: (optional): the AWS role used to execute the command
 AWS_PROFILE: the credentials (which should also specify region) to use with the role.
 
-### Python Confiugration
+### Python Configuration
 
 Then I write a python.paths file with the source paths to add to python's load path:
 
@@ -115,11 +115,12 @@ The .zshrc file appends several things to the Zsh login. It adds homebrew, pyenv
 
 ## Use
 
+The "pysh-install.sh" commands create a link of "py.sh" to the python.sh script so you have a short name to type with the commands.
+
 ```bash
 ./py.sh <command>
 ```
 
-The "pysh-install.sh" commands create a link of "py.sh" to the python.sh script so you have a short name to type with the commands.
 
 Almost all of the commands are a single command except for:
 - python = execute python in pyenv with the args given
