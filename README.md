@@ -141,7 +141,7 @@ Almost all of the commands are a single command except for:
 
 - test   = run tests
 - paths  = install source paths into the current virtual machine environment
-- python = execute python with remaining arguements passed to the interpreter
+- python = execute python with remaining arguments passed to the interpreter
 - run    = execute a command in the virtual environment
 
 ### AWS commands
@@ -159,8 +159,8 @@ Almost all of the commands are a single command except for:
 ### version control
 
 - status   = status of repository
-- fetch    = fetch the current branch and main, and develop
-- pull     = pull the current branch
+- fetch    = fetch the current branch, main, and develop
+- pull     = pull the current branch no fast forward
 - sub      = pull submodules
 - staged   = show diff of staged files
 - history  = show commit history
