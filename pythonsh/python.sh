@@ -66,6 +66,12 @@ export PYENV_ROOT="\$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"
 eval "\$(pyenv init -)"
 
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
+
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
+
 export EDITOR=$EDITOR
 
 function switch_dev {
@@ -119,6 +125,10 @@ function switch_release {
     fi;
 }
 SHELL
+    ;;
+    "tools-prompt")
+        echo "installing standard prompt with pyenv and github support"
+        cp pythonsh/pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
     "tools-upgrade")
         brew update
