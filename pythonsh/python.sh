@@ -1,6 +1,6 @@
 #! /bin/bash
 
-source python.sh || exit 1
+test -f python.sh && source python.sh
 
 function add_src {
     site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
@@ -54,11 +54,23 @@ case $1 in
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
-eval "\$(homebrew/bin/brew shellenv)"
+
+if [[ -f \$HOME/homebrew/bin/brew ]]
+then
+    eval "\$(\$HOME/homebrew/bin/brew shellenv)"
+else
+   eval "\$(brew shellenv)"
+fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"
 eval "\$(pyenv init -)"
+
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
+
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
 
 export EDITOR=$EDITOR
 
@@ -113,6 +125,10 @@ function switch_release {
     fi;
 }
 SHELL
+    ;;
+    "tools-prompt")
+        echo "installing standard prompt with pyenv and github support"
+        cp pythonsh/pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
     "tools-upgrade")
         brew update
@@ -202,13 +218,15 @@ SHELL
     "update")
         pipenv install --skip-lock
         pyenv rehash
+
+        pipenv check
     ;;
     "update-all")
         export PIPENV_SKIP_LOCK=1
 
-        pipenv install pyenv pipenv
+        pyenv exec python -m pip install pipenv
         pipenv install --dev
-        pipenv rehash
+        pyenv rehash
 
         # check for known security vulnerabilities
         pipenv check
