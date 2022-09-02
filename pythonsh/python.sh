@@ -55,6 +55,8 @@ case $1 in
 
         cat >>~/.zshrc <<SHELL
 
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
+
 if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
@@ -69,8 +71,6 @@ eval "\$(pyenv init -)"
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 
 test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
-
-test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
 
 export EDITOR=$EDITOR
 
