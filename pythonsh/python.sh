@@ -56,7 +56,7 @@ case $1 in
 
       git clone https://github.com/pyenv/pyenv.git pyenv
 
-      ln -s ~$HOME/tools/pyenv ~/.pyenv
+      ln -s $HOME/tools/pyenv ~/.pyenv
 
       git clone https://github.com/pyenv/pyenv-virtualenv.git pyenv-virtual
 
