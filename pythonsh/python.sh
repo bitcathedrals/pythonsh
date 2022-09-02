@@ -41,7 +41,7 @@ case $1 in
 #
 # tooling
 #
-    "tools-install")
+    "tools-macos")
         echo "installing brew tools"
 
         brew update
@@ -49,6 +49,24 @@ case $1 in
         brew install pyenv
         brew install pyenv-virtualenv
         brew install git-flow
+    ;;
+    "tools-unix")
+      test -d $HOME/tools || mkdir $HOME/tools
+      cd $HOME/tools
+
+      git clone https://github.com/pyenv/pyenv.git pyenv
+
+      ln -s ~$HOME/tools/pyenv ~/.pyenv
+
+      git clone https://github.com/pyenv/pyenv-virtualenv.git pyenv-virtual
+
+      test -d $HOME/tools/local || mkdir -p $HOME/tools/local
+
+      (cd pyenv-virtual && export PREFIX=$HOME/tools/local && ./install.sh)
+
+      echo "export PATH=$HOME/tools/local/bin:$PATH" >>~/.zshrc.custom
+
+      echo "installation completed"
     ;;
     "tools-zshrc")
        echo "adding shell code to .zshrc, you may need to edit the file."
@@ -130,7 +148,7 @@ SHELL
         echo "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
-    "tools-upgrade")
+    "tools-update-macos")
         brew update
 
         brew upgrade pyenv
@@ -447,10 +465,13 @@ python.sh
 
 [tools commands]
 
-tools-install = install tools from homebrew
-tools-update  = update tools from homebrew
-tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
-tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
+tools-macos   = install pyenv and pyenv virtual from brew on MacOS
+tools-unix    = install pyen and pyenv virtual from source on UNIX
+
+tools-update-macos  = update tools from homebrew
+
+tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
