@@ -59,7 +59,7 @@ if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
-   eval "\$(brew shellenv)"
+   which `brew` >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
@@ -128,7 +128,7 @@ SHELL
     ;;
     "tools-prompt")
         echo "installing standard prompt with pyenv and github support"
-        cp pythonsh/pythonsh/prompt.sh $HOME/.zshrc.prompt
+        cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
     "tools-upgrade")
         brew update
