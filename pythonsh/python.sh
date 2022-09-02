@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 
 test -f python.sh && source python.sh
 
@@ -28,11 +28,11 @@ function root_to_branch {
         if [[ $1 == "norelease" ]]
         then
             root="main"
-        else 
+        else
             root=$(git tag | tail -n 1)
         fi
-    else 
-        root='develop'       
+    else
+        root='develop'
     fi
 }
 
@@ -41,7 +41,7 @@ case $1 in
 #
 # tooling
 #
-    "tools-install")
+    "tools-macos")
         echo "installing brew tools"
 
         brew update
@@ -50,16 +50,36 @@ case $1 in
         brew install pyenv-virtualenv
         brew install git-flow
     ;;
+    "tools-unix")
+      test -d $HOME/tools || mkdir $HOME/tools
+      cd $HOME/tools
+
+      git clone https://github.com/pyenv/pyenv.git pyenv
+
+      ln -s ~$HOME/tools/pyenv ~/.pyenv
+
+      git clone https://github.com/pyenv/pyenv-virtualenv.git pyenv-virtual
+
+      test -d $HOME/tools/local || mkdir -p $HOME/tools/local
+
+      (cd pyenv-virtual && export PREFIX=$HOME/tools/local && ./install.sh)
+
+      echo "export PATH=\$HOME/.pyenv/bin/:\$HOME/tools/local/bin:$PATH" >>~/.zshrc.custom
+
+      echo "installation completed"
+    ;;
     "tools-zshrc")
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
 
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
+
 if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
-   eval "\$(brew shellenv)"
+   which `brew` >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
@@ -69,8 +89,6 @@ eval "\$(pyenv init -)"
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 
 test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
-
-test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
 
 export EDITOR=$EDITOR
 
@@ -128,9 +146,9 @@ SHELL
     ;;
     "tools-prompt")
         echo "installing standard prompt with pyenv and github support"
-        cp pythonsh/pythonsh/prompt.sh $HOME/.zshrc.prompt
+        cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
-    "tools-upgrade")
+    "tools-update-macos")
         brew update
 
         brew upgrade pyenv
@@ -192,7 +210,7 @@ SHELL
 
  #
  # AWS commands
- #   
+ #
 
     "aws")
         export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
@@ -303,7 +321,7 @@ SHELL
         git fetch origin main
         git fetch origin develop
 
-        echo ">>>showing upstream changes from: ${branch}->${root}"
+        echo ">>>showing upstream changes from: ${root}->${branch}"
         git log --no-merges ${root} ^${branch} --oneline
     ;;
     "sync")
@@ -447,9 +465,13 @@ python.sh
 
 [tools commands]
 
-tools-install = install tools from homebrew
-tools-update  = update tools from homebrew
-tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-macos   = install pyenv and pyenv virtual from brew on MacOS
+tools-unix    = install pyen and pyenv virtual from source on UNIX
+
+tools-update-macos  = update tools from homebrew
+
+tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
