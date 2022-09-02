@@ -79,7 +79,7 @@ if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
-   which \`brew\` >/dev/null 2>&1 && eval "\$(brew shellenv)"
+   which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
