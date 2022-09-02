@@ -28,11 +28,11 @@ function root_to_branch {
         if [[ $1 == "norelease" ]]
         then
             root="main"
-        else 
+        else
             root=$(git tag | tail -n 1)
         fi
-    else 
-        root='develop'       
+    else
+        root='develop'
     fi
 }
 
@@ -192,7 +192,7 @@ SHELL
 
  #
  # AWS commands
- #   
+ #
 
     "aws")
         export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
@@ -303,7 +303,7 @@ SHELL
         git fetch origin main
         git fetch origin develop
 
-        echo ">>>showing upstream changes from: ${branch}->${root}"
+        echo ">>>showing upstream changes from: ${root}->${branch}"
         git log --no-merges ${root} ^${branch} --oneline
     ;;
     "sync")
@@ -450,6 +450,7 @@ python.sh
 tools-install = install tools from homebrew
 tools-update  = update tools from homebrew
 tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
