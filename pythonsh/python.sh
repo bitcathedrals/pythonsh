@@ -64,7 +64,7 @@ case $1 in
 
       (cd pyenv-virtual && export PREFIX=$HOME/tools/local && ./install.sh)
 
-      echo "export PATH=$HOME/tools/local/bin:$PATH" >>~/.zshrc.custom
+      echo "export PATH=\$HOME/.pyenv/bin/:\$HOME/tools/local/bin:$PATH" >>~/.zshrc.custom
 
       echo "installation completed"
     ;;
