@@ -79,7 +79,7 @@ if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
-   which `brew` >/dev/null 2>&1 && eval "\$(brew shellenv)"
+   which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
@@ -255,7 +255,7 @@ SHELL
     "build")
         pyenv exec python -m build
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r 
+        find . -name '*.egg-info' -type d -print | xargs rm -r
         find . -name '__pycache__' -type d -print | xargs rm -r
 
         test -f Pipfile.lock && rm Pipfile.lock
@@ -280,6 +280,9 @@ SHELL
     ;;
     "sub")
         git submodule update --remote
+    ;;
+    "init")
+        git submodule update --init --recursive
     ;;
     "staged")
         git diff --cached
@@ -508,6 +511,7 @@ status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
 sub        = update submodules
+init       = init any bare submodules
 staged     = show staged changes
 merges     = show merges only
 history    = show commit history
