@@ -90,8 +90,6 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 
 test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
 
-export EDITOR=$EDITOR
-
 function switch_dev {
     if test -f python.sh
     then
