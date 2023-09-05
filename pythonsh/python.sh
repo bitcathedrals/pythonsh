@@ -166,7 +166,10 @@ SHELL
     "virtual-install")
         pyenv install --skip-existing "$PYTHON_VERSION"
 
-        LATEST=$(pyenv versions | grep -E '^ *\d+\.\d+\.\d+$' | sed 's/ *//g')
+        FEATURE=`echo $PYTHON_VERSION | cut -d ':' -f 1`
+        echo "Installing Python feature verrsion: $FEATURE"
+
+        LATEST=`pyenv versions | grep -E "^ *$FEATURE" | sort | tail -n 1 | sed -e 's,^ *,,'`
 
         echo "installing $LATEST to $VIRTUAL_PREFIX"
 
