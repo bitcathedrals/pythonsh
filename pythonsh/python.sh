@@ -241,8 +241,6 @@ SHELL
         pipenv check
     ;;
     "update-all")
-        export PIPENV_SKIP_LOCK=1
-
         pyenv exec python -m pip install pipenv
         pipenv install --dev
         pyenv rehash
