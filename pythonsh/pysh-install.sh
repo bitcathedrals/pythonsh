@@ -7,12 +7,12 @@ case $1 in
 	;;
 	"install")
 		shift
-		git submodule add -f git@github.com:coderofmattie/pythonsh.git pythonsh $@
+		git submodule add -f git@github.com:bitcathedrals/pythonsh.git pythonsh $@
 		test -e py.sh || ln -s pythonsh/pythonsh/python.sh py.sh
 	;;
 	"public")
 		shift
-		git submodule add -f https://github.com/coderofmattie/pythonsh.git pythonsh $@
+		git submodule add -f https://github.com/bitcathedrals/pythonsh.git pythonsh $@
 		test -e py.sh || ln -s pythonsh/pythonsh/python.sh py.sh
 	;;
 	"remove")
