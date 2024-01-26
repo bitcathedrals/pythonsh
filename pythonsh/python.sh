@@ -166,7 +166,10 @@ SHELL
     "virtual-install")
         pyenv install --skip-existing "$PYTHON_VERSION"
 
-        LATEST=$(pyenv versions | grep -E '^ *\d+\.\d+\.\d+$' | sed 's/ *//g')
+        FEATURE=`echo $PYTHON_VERSION | cut -d ':' -f 1`
+        echo "Installing Python feature verrsion: $FEATURE"
+
+        LATEST=`pyenv versions | grep -E "^ *$FEATURE" | sort | tail -n 1 | sed -e 's,^ *,,'`
 
         echo "installing $LATEST to $VIRTUAL_PREFIX"
 
@@ -238,8 +241,6 @@ SHELL
         pipenv check
     ;;
     "update-all")
-        export PIPENV_SKIP_LOCK=1
-
         pyenv exec python -m pip install pipenv
         pipenv install --dev
         pyenv rehash
