@@ -206,7 +206,7 @@ SHELL
     ;;
     "run")
         shift
-        exec pyenv exec $@ 
+        exec pyenv exec $@
     ;;
 
  #
@@ -224,7 +224,6 @@ SHELL
 
         pyenv exec python -m awscli --region $REGION $@
     ;;
-
 
 #
 # packages
@@ -261,9 +260,66 @@ SHELL
     ;;
 
 #
+# modules
+#
+    "modinit")
+      git submodule init
+      git submodule update
+    ;;
+    "modadd")
+      if [[ -z "$1" || -z "$2" || -z "$3" ]]
+      then
+        echo "pythonsh: add submodule command requires <repo> <branch> <local>"
+        exit 1
+      fi
+
+      if git submodule add -b $2 $1 $3
+      then
+        echo "pythonsh: add ok. please remember to commit"
+      else
+        echo "pythonsh: add failed. cleanup required."
+      fi
+    ;;
+    "modup")
+      if [[ -z $1 ]]
+      then
+        echo "pythonsh: update a submodule requires a submodule path"
+        exit 1
+      fi
+
+      if git submodule update --remote --merge $1
+      then
+        echo "pythonsh: update ok. please remember to test and commit."
+      else
+        echo "pythonsh: update failed. cleanup required."
+      fi
+    ;;
+    "modbranch")
+      if [[ -z $1 || -z $2 ]]
+      then
+        echo "pythonsh: update a submodule requires a submodule path and a branch"
+        exit 1
+      fi
+
+      if (cd $1 && git checkout $2)
+      then
+        echo "pythonsh: switch to branch $2 ok. please remember to commit."
+      else
+        echo "pythonsh: switch submodule $1 to branch $2 failed. cleanup required."
+      fi
+    ;;
+    "modrm")
+      if git rm $1 && git rm --cached $1 && rm -rf $1 && rm -rf .git/modules/$1
+      then
+        echo "pythonsh: removal of $1 succeeded."
+      else
+        echo "pythonsh: removal of $1 failed. Repo is in a unknown state"
+      fi
+    ;;
+
+#
 # version control
 #
-
     "status")
         git status
         git submodule foreach 'git status'
@@ -313,8 +369,8 @@ SHELL
     ;;
     "graph")
         root_to_branch
- 
-        echo ">>>showing history between $root and $branch"       
+
+        echo ">>>showing history between $root and $branch"
         git log "${root}..${branch}" --oneline --graph --decorate --all
     ;;
     "upstream")
@@ -328,9 +384,9 @@ SHELL
     ;;
     "sync")
         root_to_branch norelease
-        
-        echo ">>>syncing from: ${root}->${branch}"    
-        
+
+        echo ">>>syncing from: ${root}->${branch}"
+
         git merge --no-ff --stat ${root}
     ;;
 
@@ -341,9 +397,9 @@ SHELL
         echo "===> remember to pull deps with update if warranted <==="
 
         echo "===> fetching new commits from remote <==="
-        git fetch origin main 
+        git fetch origin main
         git fetch origin develop
-        
+
         echo "===> showing unmerged differences <===="
 
         git log main..origin/main --oneline
@@ -399,7 +455,7 @@ SHELL
 
         VER_PIP="releases/Pipfile-$VERSION"
         VER_LOCK="releases/Pipfile.lock-$VERSION"
-        
+
         test -f Pipfile.lock && mv Pipfile.lock $VER_LOCK
         test -f Pipfile && cp Pipfile $VER_PIP
 
@@ -439,8 +495,8 @@ SHELL
     "deploy-m1")
         pyenv exec python -m build
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r 
-        find . -name '__pycache__' -type d -print | xargs rm -r 
+        find . -name '*.egg-info' -type d -print | xargs rm -r
+        find . -name '__pycache__' -type d -print | xargs rm -r
 
         DIST_PATH="/Users/michaelmattie/coding/python-packages/"
         PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
@@ -452,8 +508,8 @@ SHELL
     "deploy-intel")
         pyenv exec python -m build
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r 
-        find . -name '__pycache__' -type d -print | xargs rm -r 
+        find . -name '*.egg-info' -type d -print | xargs rm -r
+        find . -name '__pycache__' -type d -print | xargs rm -r
 
         DIST_PATH="/Users/michaelmattie/coding/python-packages/"
         PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
@@ -504,6 +560,13 @@ list       = list installed packages
 
 build      = build packages
 
+[submodule]
+modinit             = initialize and pull all submodules
+modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
+modup  <module>     = pull the latest version of the module
+
+modrm  <submodule>  = delete a submodule
+
 [version control]
 
 status     = git state, submodule state, diffstat for changes in tree
@@ -524,7 +587,7 @@ sync       = merge from the root branch commits not in this branch no ff
 [release]
 
 check      = fetch main, develop from origin and show log of any pending changes
-start      = initiate an EDITOR session to update VERSION in python.sh, reload config, 
+start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
