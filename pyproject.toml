@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+
+name = "pyutils"
+version = "0.1.0"
+
+license = { file = "LICENSE" }
+
+readme = "README.md"
+
+description = "python development tools"
+authors = [ { name = "Michael Mattie" , email = "codermattie@runbox.com" } ]
+
+dependencies = ['toml']
+
+[project.urls]
+homepage = "https://github.com/bitcathedrals/pastepipe"
+repository = "https://github.com/bitcathedrals/pastepipe.git"
+
+[project.scripts]
+pastepipe = "pyutils.catpip.py:exec"
+
+
