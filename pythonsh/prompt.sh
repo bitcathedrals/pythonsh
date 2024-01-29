@@ -20,12 +20,16 @@ function get_pyenv {
 function get_branch {
   git_branch=`git branch | grep '*' | cut -d ' ' -f 2`
 
-  if git status | grep -i "changes not staged" >/dev/null
+  git_flags=""
+
+  git_status=`git status`
+
+  if echo "$git_status" | grep -i -E "untracked files|changes not staged" >/dev/null
   then
     git_flags="*"
   fi
 
-  if git status | grep -i "changes to be committed" >/dev/null
+  if echo "$git_status" | grep -i "changes to be committed" >/dev/null
   then
     git_flags="${git_flags}+"
   fi
