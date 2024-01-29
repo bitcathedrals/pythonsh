@@ -236,13 +236,15 @@ SHELL
     "update")
         pipenv install --skip-lock
         pyenv rehash
-
+        pipenv lock
+        
         pipenv check
     ;;
     "update-all")
         pyenv exec python -m pip install pipenv
         pipenv install --dev
         pyenv rehash
+        pipenv lock
 
         # check for known security vulnerabilities
         pipenv check
