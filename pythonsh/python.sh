@@ -237,7 +237,7 @@ SHELL
         pipenv install --skip-lock
         pyenv rehash
         pipenv lock
-        
+
         pipenv check
     ;;
     "update-all")
