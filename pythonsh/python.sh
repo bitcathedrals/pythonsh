@@ -329,7 +329,9 @@ SHELL
         echo "pythonsh: removal of $1 failed. Repo is in a unknown state"
       fi
     ;;
-
+    "modall")
+       git submodule foreach 'git pull --no-ff'
+    ;;
 #
 # version control
 #
