@@ -272,6 +272,8 @@ SHELL
       git submodule update
     ;;
     "modadd")
+      shift
+
       if [[ -z "$1" || -z "$2" || -z "$3" ]]
       then
         echo "pythonsh: add submodule command requires <repo> <branch> <local>"
@@ -286,13 +288,15 @@ SHELL
       fi
     ;;
     "modup")
+      shift
+
       if [[ -z $1 ]]
       then
         echo "pythonsh: update a submodule requires a submodule path"
         exit 1
       fi
 
-      if git submodule update --remote --merge $1
+      if git submodule update --remote --merge $2
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
@@ -300,6 +304,8 @@ SHELL
       fi
     ;;
     "modbranch")
+      shift
+
       if [[ -z $1 || -z $2 ]]
       then
         echo "pythonsh: update a submodule requires a submodule path and a branch"
@@ -314,6 +320,8 @@ SHELL
       fi
     ;;
     "modrm")
+      shift
+
       if git rm $1 && git rm --cached $1 && rm -rf $1 && rm -rf .git/modules/$1
       then
         echo "pythonsh: removal of $1 succeeded."
