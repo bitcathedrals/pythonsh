@@ -287,7 +287,7 @@ SHELL
         echo "pythonsh: add failed. cleanup required."
       fi
     ;;
-    "modup")
+    "modupdate")
       shift
 
       if [[ -z $1 ]]
@@ -546,14 +546,19 @@ tools-update-macos  = update tools from homebrew
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
+tools-update-macos  = update the pyenv tools and update pip/pipenv in the current virtual machine
+
+
 [virtual commands]
 
-virtual-install  = install a pyenv virtual environment
-virtual-destroy  = delete the pyenv virtual environment
-virtual-list     = list virtual environments
+virtual-install   = install a pyenv virtual environment
+virtual-destroy   = delete the pyenv virtual environment
+virtual-list      = list virtual environments
+virtual-bootstrap = do a pip install of deps for pythonsh python utilities
 
-dev              = switch to dev environment
-release          = switch to release environment
+switch_dev       = switch to dev virtual environment
+switch_test      = switch to test virtual environment
+switch_release   = switch to release virtual environment         
 
 [python commands]
 
@@ -578,9 +583,9 @@ build      = build packages
 [submodule]
 modinit             = initialize and pull all submodules
 modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
-modup  <module>     = pull the latest version of the module
-
+modupdate <module>  = pull the latest version of the module
 modrm  <submodule>  = delete a submodule
+modall              = update all submodules
 
 [version control]
 
