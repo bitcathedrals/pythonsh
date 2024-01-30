@@ -81,6 +81,8 @@ def exec():
                 update_release(parse)
                 update_build(parse)
                 update_requires(parse)
+        else:
+            print('module spec: {module} does not resolve to {module}/Pipfile - skipping')
 
     print_pipfile()
 
