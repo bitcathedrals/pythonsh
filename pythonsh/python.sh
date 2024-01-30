@@ -207,6 +207,10 @@ SHELL
         shift
         exec pyenv exec python $@
     ;;
+    "repl")
+        shift
+        exec pyenv exec ptpython $@
+    ;;
     "run")
         shift
         exec pyenv exec $@
@@ -536,6 +540,7 @@ switch_release   = switch to release virtual environment
 test    = run pytests
 paths   = install .pth source paths into the python environment
 python  = execute python in pyenv
+repl.   = execute ptpython in pyenv
 run     = run a command in pyenv
 
 [aws commands]
