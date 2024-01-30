@@ -71,7 +71,7 @@ name = "pypi"
         print(f' {pkg} = "{requires[pkg]}"')
 
 def exec():
-    for module in sys.argv:
+    for module in sys.argv[1:]:
         pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):
