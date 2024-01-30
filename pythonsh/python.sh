@@ -187,7 +187,10 @@ SHELL
     "virtual-list")
         pyenv virtualenvs
     ;;
-
+    "virtual-bootstrap")
+       test -f Pipfile.lock || touch Pipfile.lock
+       pipenv install --pipfile pythonsh/Pipfile
+    ;;
 #
 # python commands
 #
