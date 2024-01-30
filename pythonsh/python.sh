@@ -503,35 +503,6 @@ SHELL
 
         git push --tags
     ;;
-
-#
-# my machine specific deploy commands
-#
-    "deploy-m1")
-        pyenv exec python -m build
-
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
-
-        DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
-        BEAST="michaelmattie@beast.local"
-
-        ssh $BEAST "test -d $PKG_PATH || mkdir $PKG_PATH"
-        scp dist/* "$BEAST:$PKG_PATH/"
-    ;;
-    "deploy-intel")
-        pyenv exec python -m build
-
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
-
-        DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
-
-        test -d $PKG_PATH || mkdir $PKG_PATH
-        cp dist/* $PKG_PATH/
-    ;;
     "help"|""|*)
         cat <<HELP
 python.sh
@@ -558,7 +529,7 @@ virtual-bootstrap = do a pip install of deps for pythonsh python utilities
 
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
-switch_release   = switch to release virtual environment         
+switch_release   = switch to release virtual environment
 
 [python commands]
 
@@ -611,11 +582,6 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
              snapshot Pipfile if present, and start a git flow release with VERSION
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
-
-[deploy]
-
-deploy-m1    = deploy packages on the m1 machine
-deploy-intel = deploy packages on the intel machine
 HELP
     ;;
 esac
