@@ -82,7 +82,7 @@ def exec():
                 update_build(parse)
                 update_requires(parse)
         else:
-            print('module spec: {module} does not resolve to {module}/Pipfile - skipping')
+            print(f'module spec: {module} does not resolve to {module}/Pipfile - skipping')
 
     print_pipfile()
 
