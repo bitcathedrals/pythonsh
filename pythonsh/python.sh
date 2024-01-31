@@ -200,6 +200,10 @@ SHELL
         shift
         pyenv exec python -m pytest tests $@
     ;;
+    "show-paths")
+        shift
+        pyenv exec python -c "import sys; print(sys.path)"
+    ;;
     "add-paths")
         shift
         add_src
@@ -562,8 +566,9 @@ switch_release   = switch to release virtual environment
 [python commands]
 
 test    = run pytests
-add-paths = install .pth source paths into the python environment
-rm-paths  = remove .pth
+show-paths = list .pth source paths
+add-paths  = install .pth source paths into the python environment
+rm-paths   = remove .pth source paths
 python  = execute python in pyenv
 repl    = execute ptpython in pyenv
 run     = run a command in pyenv
