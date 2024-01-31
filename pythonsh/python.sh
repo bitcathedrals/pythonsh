@@ -9,7 +9,7 @@ function add_src {
 
     test -d $site || mkdir -p $site
 
-    cat python.paths | sed -e "s,^,$PWD/," | tr -s '\n' >"$site/dev.pth"
+    cat python.paths | tr -s '\n' | sed -e "s,^,$PWD/," >"$site/dev.pth"
 }
 
 function remove_src {
@@ -199,9 +199,14 @@ SHELL
     "test")
         pyenv exec python -m pytest tests
     ;;
-    "paths")
+    "add-paths")
         shift
         add_src
+        pyenv exec python -c "import sys; print(sys.path)"
+    ;;
+    "rm-paths")
+        shift
+        remove_src
         pyenv exec python -c "import sys; print(sys.path)"
     ;;
     "python")
