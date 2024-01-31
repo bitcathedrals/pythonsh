@@ -212,14 +212,31 @@ SHELL
     ;;
     "python")
         shift
+        if [[ -f  env.variables ]]
+        then
+          source env.variables
+        fi
+
         exec pyenv exec python $@
     ;;
     "repl")
         shift
+
+        if [[ -f env,variables ]]
+        then
+          source env.variables
+        fi
+
         exec pyenv exec ptpython $@
     ;;
     "run")
         shift
+
+        if [[ -f env.variables ]]
+        then
+          source env.variables
+        fi
+
         exec pyenv exec $@
     ;;
 
