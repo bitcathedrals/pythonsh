@@ -562,9 +562,10 @@ switch_release   = switch to release virtual environment
 [python commands]
 
 test    = run pytests
-paths   = install .pth source paths into the python environment
+add-paths = install .pth source paths into the python environment
+rm-paths  = remove .pth
 python  = execute python in pyenv
-repl.   = execute ptpython in pyenv
+repl    = execute ptpython in pyenv
 run     = run a command in pyenv
 
 [aws commands]
