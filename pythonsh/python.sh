@@ -328,7 +328,7 @@ SHELL
         exit 1
       fi
 
-      if git submodule update --remote --merge $1
+      if (cd $1 && git pull --no-ff)
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
