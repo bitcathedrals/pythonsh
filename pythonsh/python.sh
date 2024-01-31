@@ -197,7 +197,8 @@ SHELL
 #
 
     "test")
-        pyenv exec python -m pytest tests
+        shift
+        pyenv exec python -m pytest tests $@
     ;;
     "add-paths")
         shift
