@@ -37,13 +37,16 @@ def update_section(parse, section, table):
             table[pkg_name] = parse[section][pkg_name]
 
 def update_release(parse):
-    update_section(parse, 'packages', release)
+    if 'packages' in parse:
+      update_section(parse, 'packages', release)
 
 def update_build(parse):
-    update_section(parse, 'dev-packages', build)
+    if 'dev-packages' in parse:
+      update_section(parse, 'dev-packages', build)
 
 def update_requires(parse):
-    update_section(parse,'requires', requires)
+    if 'requires' in parse:
+      update_section(parse,'requires', requires)
 
 def print_pipfile():    
     repo = '''

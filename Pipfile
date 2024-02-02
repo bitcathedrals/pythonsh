@@ -9,6 +9,8 @@ version-parser = "*"
 
 [dev-packages]
 build = "*"
+ptpython = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.11"

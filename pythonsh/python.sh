@@ -9,7 +9,7 @@ function add_src {
 
     test -d $site || mkdir -p $site
 
-    cat python.paths | sed -e "s,^,$PWD/," | tr -s '\n' >"$site/dev.pth"
+    cat python.paths | tr -s '\n' | sed -e "s,^,$PWD/," >"$site/dev.pth"
 }
 
 function remove_src {
@@ -187,28 +187,60 @@ SHELL
     "virtual-list")
         pyenv virtualenvs
     ;;
-    "virtual-bootstrap")
+
+    "bootstrap")
        test -f Pipfile.lock || touch Pipfile.lock
-       pipenv install --pipfile pythonsh/Pipfile
+       PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
     ;;
 #
 # python commands
 #
 
     "test")
-        pyenv exec python -m pytest tests
+        shift
+        pyenv exec python -m pytest tests $@
     ;;
-    "paths")
+    "show-paths")
+        shift
+        pyenv exec python -c "import sys; print(sys.path)"
+    ;;
+    "add-paths")
         shift
         add_src
         pyenv exec python -c "import sys; print(sys.path)"
     ;;
+    "rm-paths")
+        shift
+        remove_src
+        pyenv exec python -c "import sys; print(sys.path)"
+    ;;
     "python")
         shift
+        if [[ -f  env.variables ]]
+        then
+          source env.variables
+        fi
+
         exec pyenv exec python $@
+    ;;
+    "repl")
+        shift
+
+        if [[ -f env.variables ]]
+        then
+          source env.variables
+        fi
+
+        exec pyenv exec ptpython $@
     ;;
     "run")
         shift
+
+        if [[ -f env.variables ]]
+        then
+          source env.variables
+        fi
+
         exec pyenv exec $@
     ;;
 
@@ -296,7 +328,7 @@ SHELL
         exit 1
       fi
 
-      if git submodule update --remote --merge $2
+      if (cd $1 && git pull --no-ff)
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
@@ -503,35 +535,6 @@ SHELL
 
         git push --tags
     ;;
-
-#
-# my machine specific deploy commands
-#
-    "deploy-m1")
-        pyenv exec python -m build
-
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
-
-        DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
-        BEAST="michaelmattie@beast.local"
-
-        ssh $BEAST "test -d $PKG_PATH || mkdir $PKG_PATH"
-        scp dist/* "$BEAST:$PKG_PATH/"
-    ;;
-    "deploy-intel")
-        pyenv exec python -m build
-
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
-
-        DIST_PATH="/Users/michaelmattie/coding/python-packages/"
-        PKG_PATH="$DIST_PATH/simple/$VIRTUAL_PREFIX"
-
-        test -d $PKG_PATH || mkdir $PKG_PATH
-        cp dist/* $PKG_PATH/
-    ;;
     "help"|""|*)
         cat <<HELP
 python.sh
@@ -554,17 +557,20 @@ tools-update-macos  = update the pyenv tools and update pip/pipenv in the curren
 virtual-install   = install a pyenv virtual environment
 virtual-destroy   = delete the pyenv virtual environment
 virtual-list      = list virtual environments
-virtual-bootstrap = do a pip install of deps for pythonsh python utilities
+bootstrap         = do a pip install of deps for pythonsh python utilities
 
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
-switch_release   = switch to release virtual environment         
+switch_release   = switch to release virtual environment
 
 [python commands]
 
 test    = run pytests
-paths   = install .pth source paths into the python environment
+show-paths = list .pth source paths
+add-paths  = install .pth source paths into the python environment
+rm-paths   = remove .pth source paths
 python  = execute python in pyenv
+repl    = execute ptpython in pyenv
 run     = run a command in pyenv
 
 [aws commands]
@@ -611,11 +617,6 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
              snapshot Pipfile if present, and start a git flow release with VERSION
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
-
-[deploy]
-
-deploy-m1    = deploy packages on the m1 machine
-deploy-intel = deploy packages on the intel machine
 HELP
     ;;
 esac
