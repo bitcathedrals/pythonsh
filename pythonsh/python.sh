@@ -189,6 +189,9 @@ SHELL
     ;;
 
     "bootstrap")
+       pyenv exec python -m pip install pipenv
+       pyenv exec python -m pip install --upgrade pip
+
        test -f Pipfile.lock || touch Pipfile.lock
        PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
     ;;
@@ -276,8 +279,10 @@ SHELL
         pipenv check
     ;;
     "update-all")
-        pyenv exec python -m pip install pipenv
+        pyenv exec python -m pip install --upgrade pip
+
         pipenv install --dev
+
         pyenv rehash
         pipenv lock
 
