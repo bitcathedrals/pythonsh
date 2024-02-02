@@ -193,7 +193,7 @@ SHELL
        pyenv exec python -m pip install --upgrade pip
 
        test -f Pipfile.lock || touch Pipfile.lock
-       PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
     ;;
 #
 # python commands
@@ -266,6 +266,21 @@ SHELL
 #
 # packages
 #
+    "pipfile")
+      pipdirs="pythonsh"
+
+      for project_dir in $(find src -type d -depth 1 -print)
+      do
+        pkg_dir="${project_dir}/${project_dir}/"
+
+        if [[ -f "${pkg_dir}/Pipfile" ]]
+        then
+          pipdirs="${pipdirs} ${pkg_dir}"
+        fi
+      done
+
+      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
+    ;;
     "versions")
         pyenv version
         pyenv exec python --version
@@ -279,6 +294,8 @@ SHELL
         pipenv check
     ;;
     "update-all")
+        test -f Pipfile.lock || touch Pipfile.lock
+
         pyenv exec python -m pip install --upgrade pip
 
         pipenv install --dev
@@ -559,10 +576,12 @@ tools-update-macos  = update the pyenv tools and update pip/pipenv in the curren
 
 [virtual commands]
 
-virtual-install   = install a pyenv virtual environment
-virtual-destroy   = delete the pyenv virtual environment
-virtual-list      = list virtual environments
-bootstrap         = do a pip install of deps for pythonsh python utilities
+virtual-install  = install a pyenv virtual environment
+virtual-destroy  = delete the pyenv virtual environment
+virtual-list     = list virtual environments
+
+bootstrap        = do a pip install of deps for pythonsh python utilities
+pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
 
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
