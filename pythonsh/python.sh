@@ -226,7 +226,7 @@ SHELL
     "repl")
         shift
 
-        if [[ -f env,variables ]]
+        if [[ -f env.variables ]]
         then
           source env.variables
         fi
