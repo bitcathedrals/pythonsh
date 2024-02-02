@@ -557,7 +557,7 @@ tools-update-macos  = update the pyenv tools and update pip/pipenv in the curren
 virtual-install   = install a pyenv virtual environment
 virtual-destroy   = delete the pyenv virtual environment
 virtual-list      = list virtual environments
-virtual-bootstrap = do a pip install of deps for pythonsh python utilities
+bootstrap         = do a pip install of deps for pythonsh python utilities
 
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
