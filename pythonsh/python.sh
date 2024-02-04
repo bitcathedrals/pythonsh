@@ -194,6 +194,8 @@ SHELL
 
        test -f Pipfile.lock || touch Pipfile.lock
        export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+
+       test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
     ;;
 #
 # python commands
@@ -583,16 +585,19 @@ virtual-list     = list virtual environments
 bootstrap        = do a pip install of deps for pythonsh python utilities
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
 
+[using virtual and source paths]
+
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
 switch_release   = switch to release virtual environment
 
-[python commands]
-
-test    = run pytests
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
+
+[python commands]
+
+test    = run pytests
 python  = execute python in pyenv
 repl    = execute ptpython in pyenv
 run     = run a command in pyenv
