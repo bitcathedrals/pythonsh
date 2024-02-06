@@ -7,13 +7,13 @@ git_branch="?"
 project_name="?"
 
 function get_pyenv {
-  environment=`pyenv virtualenvs | grep '*'`
+  environment=`pyenv version`
 
   if [[ -z $environment ]]
   then
     virtual_environment="NA"
   else
-    virtual_environment=`echo $environment | cut -d ' ' -f 2`
+    virtual_environment=`echo "$environment" |  cut -d ' ' -f 1`
   fi
 }
 
