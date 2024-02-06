@@ -83,7 +83,7 @@ else
 fi
 
 export PYENV_ROOT="\$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="\$PYENV_ROOT/bin:\$PATH"
+command -v pyenv >/dev/null || export PATH="\$PATH:\$PYENV_ROOT/bin"
 eval "\$(pyenv init -)"
 
 export PYENV_VIRTUALENV_DISABLE_PROMPT=1
@@ -96,7 +96,7 @@ function switch_dev {
         source python.sh
         echo ">>>switching to \${VIRTUAL_PREFIX} dev"
 
-        if pyenv virtualenvs | grep '*'
+        if pyenv version | cut -d ' ' -f 1 | grep -v 'system'
         then
             pyenv deactivate
         fi
@@ -113,7 +113,7 @@ function switch_test {
         source python.sh
         echo ">>>switching to \${VIRTUAL_PREFIX} test"
 
-        if pyenv virtualenvs | grep '*'
+        if pyenv version | cut -d ' ' -f 1 | grep -v 'system'
         then
             pyenv deactivate
         fi
@@ -130,7 +130,7 @@ function switch_release {
         source python.sh
         echo ">>>switching to \${VIRTUAL_PREFIX} release"
 
-        if pyenv virtualenvs | grep '*'
+        if pyenv version | cut -d ' ' -f 1 | grep 'system'
         then
             pyenv deactivate
         fi
@@ -164,6 +164,22 @@ SHELL
 #
 
     "virtual-install")
+        export PYENV_ROOT="$HOME/.pyenv"
+        command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
+
+        if pyenv virtualenvs | grep '*' >/dev/null 2>&1
+        then
+            eval "$(pyenv init -)"
+
+            old=$(pyenv virtualenvs | grep '*')
+            echo "deactivating: $old"
+
+            pyenv deactivate
+
+            echo -n "building from version: "
+            pyenv version
+        fi
+
         pyenv install --skip-existing "$PYTHON_VERSION"
 
         FEATURE=`echo $PYTHON_VERSION | cut -d ':' -f 1`
@@ -173,10 +189,18 @@ SHELL
 
         echo "installing $LATEST to $VIRTUAL_PREFIX"
 
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_dev"
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_test"
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_release"
+        echo -n "creating: "
 
+        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_dev"
+        echo -n "dev"
+
+        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_test"
+        echo -n ",test"
+
+        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_release"
+        echo ",release -> done"
+
+        echo "you need to run switch_dev,switch_test, or switch_relase to activate the new environments."
     ;;
     "virtual-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
