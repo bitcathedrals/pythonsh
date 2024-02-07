@@ -1,0 +1,10 @@
+PATH="$PATH:$HOME/code/security/bin:$HOME/tools/local/bin"
+export PATH
+
+export PYENV_ROOT="$HOME/.pyenv"
+
+alias status='git status'
+alias diff='git diff'
+alias stat='git diffstat'
+alias commit='git commit'
+
