@@ -2,6 +2,8 @@
 # prompt.sh: set a prompt with the pyenv virtual machine and the github branch
 #
 
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
 virtual_environment="?"
 git_branch="?"
 project_name="?"
