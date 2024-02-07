@@ -51,20 +51,37 @@ case $1 in
         brew install git-flow
     ;;
     "tools-unix")
-      test -d $HOME/tools || mkdir $HOME/tools
-      cd $HOME/tools
+      echo "installing python environment tools for UNIX"
 
-      git clone https://github.com/pyenv/pyenv.git pyenv
+      PYENV_ROOT="$HOME/.pyenv"
+      TOOLS="$HOME/tools"
 
-      ln -s $HOME/tools/pyenv ~/.pyenv
+      test -d $TOOLS || mkdir $TOOLS
+      test -d "$TOOLS/local" || mkdir "$TOOLS/local"
 
-      git clone https://github.com/pyenv/pyenv-virtualenv.git pyenv-virtual
+      if test -d $PYENV_ROOT && test -d $PYENV_ROOT/.git
+      then
+        echo "updating $PYENV_ROOT"
+        (cd $PYENV_ROOT && git pull)
+      else
+        echo "cloning pyenv into $PYENV_ROOT"
+        git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
+      fi
 
-      test -d $HOME/tools/local || mkdir -p $HOME/tools/local
+      VIRTUAL="$TOOLS/pyenv-virtual"
 
-      (cd pyenv-virtual && export PREFIX=$HOME/tools/local && ./install.sh)
+      if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
+      then
+        echo "updating pyenv virtual"
+        (cd $VIRTUAL && git pull)
+      else
+        echo "cloning pyenv virtual into $VIRTUAL"
+        (git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL)
+      fi
 
-      echo "export PATH=\$HOME/tools/local/bin:$PATH" >>~/.zshrc.custom
+      (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
+
+      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin\"" >>~/.zshrc.custom
 
       echo "installation completed"
     ;;
@@ -72,7 +89,6 @@ case $1 in
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
-
 test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
 
 if [[ -f \$HOME/homebrew/bin/brew ]]
@@ -152,12 +168,6 @@ SHELL
         brew upgrade pyenv
         brew upgrade pyenv-virtualenv
         brew upgrade git-flow
-
-        if pyenv virtualenvs | grep '*'
-        then
-           pyenv exec python -m pip install -U pip
-           pyenv exec python -m pip install -U pipenv
-        fi
     ;;
 #
 # virtual environments
