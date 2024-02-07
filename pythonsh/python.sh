@@ -36,6 +36,116 @@ function root_to_branch {
     fi
 }
 
+function setup_pyenv {
+  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/.pyenv"
+  command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
+
+  eval "$(pyenv init --shell)"
+
+  if [[ $? -gt 0 ]]
+  then
+    echo "could not execute pyenv init --shell. FAILED!"
+    return 1
+  fi
+
+  return 0
+}
+
+function deactivate_if_needed {
+  ver=$(pyenv version)
+
+  echo "$ver" | cut -d ' ' -f 1 | grep -v 'system'
+
+  if [[ $? -gt 0 ]]
+  then
+    return 0
+  fi
+
+  if ! pyenv deactivate
+  then
+    echo "deactive of $ver failed!"
+    return 1
+  fi
+
+  return 0
+}
+
+function install_virtualenv_python {
+  VERSION=$1
+  LATEST_PYTHON=`pyenv versions | grep -E "^ *$VERSION" | sort | tail -n 1 | sed -e 's,^ *,,'`
+
+  if [[ -z "$LATEST_PYTHON" ]]
+  then
+    LATEST_PYTHON="$VERSION"
+  fi
+
+  echo -n "Installing Python interpreter: ${LATEST_PYTHON}..."
+
+  if ! pyenv install --skip-existing "$LATEST_PYTHON"
+  then
+    echo "FAILED!"
+    return 1
+  fi
+
+  LATEST_PYTHON=`pyenv versions | grep -E "^ *${VERSION}" | sort | tail -n 1 | sed -e 's,^ *,,'`
+  export LATEST_PYTHON
+
+  echo "done. version ${LATEST_PYTHON} installed."
+  return 0
+}
+
+function install_virtualenv {
+  LATEST=$1
+  NAME=$2
+
+  setup_pyenv || return 1
+
+  deactivate_if_needed || return 1
+
+  if ! pyenv virtualenv "$LATEST" "$NAME"
+  then
+    echo "FAILED!"
+    return 1
+  fi
+
+  echo "done."
+  return 0
+}
+
+function install_project_virtualenv {
+  VERSION=$1
+
+  ENV_ONE=$2
+  ENV_TWO=$3
+  ENV_THREE=$4
+
+  install_virtualenv_python $VERSION || return 1
+
+  echo -n "creating project virtual environments: "
+
+  if [[ -n $ENV_ONE ]]
+  then
+    install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
+  fi
+
+  echo -n ",$ENV_ONE"
+
+  if [[ -n $ENV_TWO ]]
+  then
+    install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
+  fi
+
+  echo -n ",$ENV_TWO"
+
+  if [[ -n $ENV_THREE ]]
+  then
+    install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
+  fi
+
+  echo ",${ENV_THREE}...done!"
+  return 0
+}
+
 case $1 in
 
 #
@@ -89,6 +199,8 @@ case $1 in
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
+DEFAULT_PYPENV="\$HOME/.pyenv/"
+
 test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
 
 if [[ -f \$HOME/homebrew/bin/brew ]]
@@ -98,63 +210,96 @@ else
    which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
-export PYENV_ROOT="\$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="\$PATH:\$PYENV_ROOT/bin"
-eval "\$(pyenv init -)"
+if ! command -v pyenv
+then
+  test -z "\${PYENV_ROOT}" || export PYENV_ROOT="\$DEFAULT_PYENV"
+  export PATH="\$PATH:\$PYENV_ROOT/bin"
 
-export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+  eval "\$(pyenv init --shell)"
+fi
 
 test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
 
-function switch_dev {
-    if test -f python.sh
+function deactivate_if_needed {
+  ver=\$(pyenv version)
+
+  if echo "\$ver" | cut -d ' ' -f 1 | grep -v 'system'
+  then
+    if ! pyenv deactivate
     then
-        source python.sh
-        echo ">>>switching to \${VIRTUAL_PREFIX} dev"
+      echo "deactive of \$ver failed!"
+      return 1
+   fi
 
-        if pyenv version | cut -d ' ' -f 1 | grep -v 'system'
-        then
-            pyenv deactivate
-        fi
+   return 0
+}
 
-        pyenv activate \${VIRTUAL_PREFIX}_dev
-    else
-        echo "cant find python.sh - are you in the project root?"
-    fi;
+function load_python_sh {
+  if test -f python.sh
+  then
+    source python.sh
+  else
+    echo "can\'t find python.sh - are you in the project root?"
+    return 1
+  fi
+
+  return 0
+}
+
+function switch_to_virtual {
+  environment=\$1
+
+  type=\$(echo "\$1" | cut ':' -d ':' -f 1)
+  Name=\$(echo "\$1" | cut ':' -d ':' -f 2)
+
+  if [[ \$type == "project" ]]
+  then
+    load_python_sh || return 1
+    virt="\${VIRTUAL_PREFIX}_\${name}"
+  else
+    virt="\${name}"
+  fi
+
+  deactivatea_if_needed || return 1
+
+  echo -n ">>>switching to: \${virt}..."
+
+  if pyenv activate "\${virt}"
+  then
+    echo "completed."
+  else
+    echo "FAILED!"
+    return 1
+  fi
+
+  return 0
+}
+
+function switch_dev {
+  if switch_to_virtual "project:dev" || return 1
+  return 0
 }
 
 function switch_test {
-    if test -f python.sh
-    then
-        source python.sh
-        echo ">>>switching to \${VIRTUAL_PREFIX} test"
-
-        if pyenv version | cut -d ' ' -f 1 | grep -v 'system'
-        then
-            pyenv deactivate
-        fi
-
-        pyenv activate \${VIRTUAL_PREFIX}_test
-    else
-        echo "cant find python.sh - are you in the project root?"
-    fi;
+  if switch_to_virtual "project:test" || return 1
+  return 0
 }
 
 function switch_release {
-    if test -f python.sh
-    then
-        source python.sh
-        echo ">>>switching to \${VIRTUAL_PREFIX} release"
+  if switch_to_virtual "project:release" || return 1
+  return 0
+}
 
-        if pyenv version | cut -d ' ' -f 1 | grep 'system'
-        then
-            pyenv deactivate
-        fi
+function switch_global {
+  if [[ -z \$1 ]]
+  then
+    echo "you need to specify a virtual environment to switch to as the sole argument"
+    return 1
+  fi
 
-        pyenv activate \${VIRTUAL_PREFIX}_release
-    else
-        echo "cant find python.sh - are you in the project root?"
-    fi;
+  switch_to_virtual "global:\${1}" || return 1
+
+  return 0
 }
 SHELL
     ;;
@@ -172,55 +317,45 @@ SHELL
 #
 # virtual environments
 #
+    "project-virtual")
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" "${VIRTUAL_PREFIX}_release" || exit 1
 
-    "virtual-install")
-        export PYENV_ROOT="$HOME/.pyenv"
-        command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
-
-        if pyenv virtualenvs | grep '*' >/dev/null 2>&1
-        then
-            eval "$(pyenv init -)"
-
-            old=$(pyenv virtualenvs | grep '*')
-            echo "deactivating: $old"
-
-            pyenv deactivate
-
-            echo -n "building from version: "
-            pyenv version
-        fi
-
-        pyenv install --skip-existing "$PYTHON_VERSION"
-
-        FEATURE=`echo $PYTHON_VERSION | cut -d ':' -f 1`
-        echo "Installing Python feature verrsion: $FEATURE"
-
-        LATEST=`pyenv versions | grep -E "^ *$FEATURE" | sort | tail -n 1 | sed -e 's,^ *,,'`
-
-        echo "installing $LATEST to $VIRTUAL_PREFIX"
-
-        echo -n "creating: "
-
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_dev"
-        echo -n "dev"
-
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_test"
-        echo -n ",test"
-
-        pyenv virtualenv "$LATEST" "${VIRTUAL_PREFIX}_release"
-        echo ",release -> done"
-
-        echo "you need to run switch_dev,switch_test, or switch_relase to activate the new environments."
+        echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
-    "virtual-destroy")
+    "global-virtual")
+        VERSION="$1"
+        NAME="$2"
+
+        install_virtualenv_python $VERSION || exit 1
+
+        echo -n "creating global virtual environment: ${NAME}"
+
+        install_virtualenv $PYTHON_LATEST $NAME || exit 1
+
+        echo "you need to run \"switch_global $NAME\" to activate the new environment."
+    ;;
+    "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
+    "global-destroy")
+      NAME=$1
+      if ! pyenv virtualenv-delete $NAME
+      then
+        echo "delete of global virtualenv $NAME FAILED!"
+        exit 1
+      fi
 
+      exit 0
+    ;;
     "virtual-list")
         pyenv virtualenvs
     ;;
+
+#
+# initialization commands
+#
 
     "bootstrap")
        pyenv exec python -m pip install pipenv
@@ -231,6 +366,22 @@ SHELL
 
        test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
     ;;
+    "pipfile")
+      pipdirs="pythonsh"
+
+      for project_dir in $(find src -type d -depth 1 -print)
+      do
+        pkg_dir="${project_dir}/${project_dir}/"
+
+        if [[ -f "${pkg_dir}/Pipfile" ]]
+        then
+          pipdirs="${pipdirs} ${pkg_dir}"
+        fi
+      done
+
+      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
+    ;;
+
 #
 # python commands
 #
@@ -302,21 +453,6 @@ SHELL
 #
 # packages
 #
-    "pipfile")
-      pipdirs="pythonsh"
-
-      for project_dir in $(find src -type d -depth 1 -print)
-      do
-        pkg_dir="${project_dir}/${project_dir}/"
-
-        if [[ -f "${pkg_dir}/Pipfile" ]]
-        then
-          pipdirs="${pipdirs} ${pkg_dir}"
-        fi
-      done
-
-      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
-    ;;
     "versions")
         pyenv version
         pyenv exec python --version
@@ -612,8 +748,12 @@ tools-update-macos  = update the pyenv tools and update pip/pipenv in the curren
 
 [virtual commands]
 
-virtual-install  = install a pyenv virtual environment
-virtual-destroy  = delete the pyenv virtual environment
+project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
+global-virtual   = (VERSION, NAME): create NAME virtual environment
+
+project-destroy  = delete all the project virtual environments
+global-destroy   = delete a global virtual environment
+
 virtual-list     = list virtual environments
 
 bootstrap        = do a pip install of deps for pythonsh python utilities
