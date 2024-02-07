@@ -40,7 +40,7 @@ function setup_pyenv {
   test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/.pyenv"
   command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
 
-  eval "$(pyenv init --shell)"
+  eval "$(pyenv init -)"
 
   if [[ $? -gt 0 ]]
   then
@@ -210,28 +210,28 @@ else
    which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
 
-if ! command -v pyenv
+if ! command -v pyenv >/dev/null 2>&1
 then
   test -z "\${PYENV_ROOT}" || export PYENV_ROOT="\$DEFAULT_PYENV"
   export PATH="\$PATH:\$PYENV_ROOT/bin"
-
-  eval "\$(pyenv init --shell)"
 fi
+
+eval "\$(pyenv init -)"
 
 test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
 
 function deactivate_if_needed {
   ver=\$(pyenv version)
 
-  if echo "\$ver" | cut -d ' ' -f 1 | grep -v 'system'
-  then
-    if ! pyenv deactivate
-    then
-      echo "deactive of \$ver failed!"
-      return 1
-   fi
+  echo "\$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
 
-   return 0
+  if ! pyenv deactivate
+  then
+    echo "deactive of \$ver failed!"
+    return 1
+  fi
+
+  return 0
 }
 
 function load_python_sh {
@@ -249,8 +249,8 @@ function load_python_sh {
 function switch_to_virtual {
   environment=\$1
 
-  type=\$(echo "\$1" | cut ':' -d ':' -f 1)
-  Name=\$(echo "\$1" | cut ':' -d ':' -f 2)
+  type=\$(echo "\$1" | cut -d ':' -f 1)
+  name=\$(echo "\$1" | cut -d ':' -f 2)
 
   if [[ \$type == "project" ]]
   then
@@ -260,7 +260,7 @@ function switch_to_virtual {
     virt="\${name}"
   fi
 
-  deactivatea_if_needed || return 1
+  deactivate_if_needed || return 1
 
   echo -n ">>>switching to: \${virt}..."
 
