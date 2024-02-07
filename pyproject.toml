@@ -14,13 +14,13 @@ readme = "README.md"
 description = "python development tools"
 authors = [ { name = "Michael Mattie" , email = "codermattie@runbox.com" } ]
 
-dependencies = ['toml']
+dependencies = ['toml','versions']
 
 [project.urls]
 homepage = "https://github.com/bitcathedrals/pastepipe"
 repository = "https://github.com/bitcathedrals/pastepipe.git"
 
 [project.scripts]
-pastepipe = "pyutils.catpip.py:exec"
+catpip = "pyutils.catpip.py:exec"
 
 
