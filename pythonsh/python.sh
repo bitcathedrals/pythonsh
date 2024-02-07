@@ -70,37 +70,39 @@ function deactivate_if_needed {
   return 0
 }
 
-function install_virtualenv_python {
+function latest_virtualenv_python {
   VERSION=$1
-  LATEST_PYTHON=`pyenv versions | grep -E "^ *$VERSION" | sort | tail -n 1 | sed -e 's,^ *,,'`
+  escaped=$(echo "${VERSION}" | sed -e 's/\./\\\./g')
 
-  if [[ -z "$LATEST_PYTHON" ]]
-  then
-    LATEST_PYTHON="$VERSION"
-  fi
+  LATEST_PYTHON=`pyenv versions | grep -E "^ *${escaped}\\\.[0-9]+\$" | sed -e "s,^ *,,"`
+  export LATEST_PYTHON
 
-  echo -n "Installing Python interpreter: ${LATEST_PYTHON}..."
+  echo "Using Python version ${LATEST_PYTHON}"
 
-  if ! pyenv install --skip-existing "$LATEST_PYTHON"
+  return 0
+}
+
+function install_virtualenv_python {
+  deactivate_if_needed || return 1
+
+  VERSION=$1
+
+  echo -n "Updating Python interpreter: ${VERSION}..."
+
+  if ! pyenv install --skip-existing $VERSION
   then
     echo "FAILED!"
     return 1
   fi
 
-  LATEST_PYTHON=`pyenv versions | grep -E "^ *${VERSION}" | sort | tail -n 1 | sed -e 's,^ *,,'`
-  export LATEST_PYTHON
+  latest_virtualenv_python $VERSION
 
-  echo "done. version ${LATEST_PYTHON} installed."
   return 0
 }
 
 function install_virtualenv {
   LATEST=$1
   NAME=$2
-
-  setup_pyenv || return 1
-
-  deactivate_if_needed || return 1
 
   if ! pyenv virtualenv "$LATEST" "$NAME"
   then
@@ -318,19 +320,25 @@ SHELL
 # virtual environments
 #
     "project-virtual")
+        setup_pyenv
+
         install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" "${VIRTUAL_PREFIX}_release" || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
     "global-virtual")
+        shift
+
         VERSION="$1"
         NAME="$2"
 
+        setup_pyenv
+
         install_virtualenv_python $VERSION || exit 1
 
-        echo -n "creating global virtual environment: ${NAME}"
+        echo -n "creating global virtual environment: ${NAME} from ${LATEST_PYTHON}"
 
-        install_virtualenv $PYTHON_LATEST $NAME || exit 1
+        install_virtualenv $LATEST_PYTHON $NAME || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
@@ -340,7 +348,9 @@ SHELL
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
+      shift
       NAME=$1
+
       if ! pyenv virtualenv-delete $NAME
       then
         echo "delete of global virtualenv $NAME FAILED!"
