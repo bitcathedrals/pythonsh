@@ -1,3 +1,5 @@
+export EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
+
 PATH="$PATH:$HOME/code/security/bin:$HOME/tools/local/bin"
 export PATH
 
