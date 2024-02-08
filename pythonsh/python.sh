@@ -366,7 +366,6 @@ SHELL
 #
 # initialization commands
 #
-
     "bootstrap")
        pyenv exec python -m pip install pipenv
        pyenv exec python -m pip install --upgrade pip
@@ -383,7 +382,9 @@ SHELL
       do
         pkg_dir="${project_dir}/${project_dir}/"
 
-        if [[ -f "${pkg_dir}/Pipfile" ]]
+        repos=`echo ${pkg_dir}/*.pypi`
+
+        if [[ -f "${pkg_dir}/Pipfile" || -n $repos ]]
         then
           pipdirs="${pipdirs} ${pkg_dir}"
         fi
