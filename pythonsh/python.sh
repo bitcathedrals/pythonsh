@@ -449,16 +449,46 @@ SHELL
  # AWS commands
  #
 
-    "aws")
-        export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
-                    $(aws sts assume-role \
-                    --role-arn $AWS_ROLE \
-                    --role-session-name DevCloudFormationSession \
-                    --profile $AWS_PROFILE \
-                    --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
-                    --output text))
+    "aws-creds")
+      shift
 
-        pyenv exec python -m awscli --region $REGION $@
+      AWS_ROLE=$1
+
+      test -f aws.sh && source aws.sh
+
+      printf >${AWS_ROLE}.sh "export AWS_ACCESS_KEY_ID=\"%s\" AWS_SECRET_ACCESS_KEY=\"%s\" AWS_SESSION_TOKEN=\"%s\"" \
+                  $(aws sts assume-role \
+                    --role-arn $AWS_ROLE \
+                    --role-session-name pythonsh-cli-creds \
+                    --profile $PROFILE \
+                    --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
+                    --output text)
+    ;;
+    "aws")
+        shift
+
+        test -f aws.sh && source aws.sh
+
+        role=""
+
+        if [[ -n $1 ]]
+        then
+          if echo "$1" | grep -E '^role='
+          then
+            role=$(echo $1 | cut -d '=' -f 2)
+
+            if [[ -f ${role}.sh ]]
+            then
+              source ${role}.sh
+              shift
+            else
+              echo "role file: ${role}.sh cound not be found"
+              exit 1
+            fi
+          fi
+        fi
+
+        aws $@ --profile $PROFILE --output json
     ;;
 
 #
