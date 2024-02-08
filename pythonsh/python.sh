@@ -468,6 +468,9 @@ SHELL
         pyenv exec python --version
         pipenv graph
     ;;
+    "locked")
+      pipenv sync
+    ;;
     "update")
         pipenv install --skip-lock
         pyenv rehash
@@ -746,7 +749,7 @@ python.sh
 [tools commands]
 
 tools-macos   = install pyenv and pyenv virtual from brew on MacOS
-tools-unix    = install pyen and pyenv virtual from source on UNIX
+tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-update-macos  = update tools from homebrew
 
@@ -754,7 +757,6 @@ tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into 
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
 tools-update-macos  = update the pyenv tools and update pip/pipenv in the current virtual machine
-
 
 [virtual commands]
 
@@ -765,6 +767,8 @@ project-destroy  = delete all the project virtual environments
 global-destroy   = delete a global virtual environment
 
 virtual-list     = list virtual environments
+
+[initialization]
 
 bootstrap        = do a pip install of deps for pythonsh python utilities
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
@@ -793,6 +797,7 @@ aws       = execute a aws cli command
 [package commands]
 
 versions   = display the versions of python and installed packages
+locked     = update from lockfile
 update     = update installed packages
 update-all = update pip and installed
 list       = list installed packages
