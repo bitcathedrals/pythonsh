@@ -140,7 +140,8 @@ def exec():
                 update_build(parse)
                 update_requires(parse)
         else:
-            print(f'module spec: {module} does not resolve to {module}/Pipfile - skipping')
+            print(f'module spec: {module} does not resolve to {module}/Pipfile - skipping', 
+                  file=sys.stderr)
 
     print_pipfile()
 
