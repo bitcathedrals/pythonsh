@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 
-name = "pyutils"
+name = "pythonsh"
 version = "0.8.0"
 
 license = { file = "LICENSE" }
@@ -17,8 +17,8 @@ authors = [ { name = "Michael Mattie" , email = "codermattie@runbox.com" } ]
 dependencies = ['toml','versions']
 
 [project.urls]
-homepage = "https://github.com/bitcathedrals/pastepipe"
-repository = "https://github.com/bitcathedrals/pastepipe.git"
+homepage = "https://github.com/bitcathedrals/pythonsh/"
+repository = "https://github.com/bitcathedrals/pythonsh.git"
 
 [project.scripts]
 catpip = "pyutils.catpip.py:exec"

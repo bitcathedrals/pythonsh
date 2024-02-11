@@ -1,4 +1,5 @@
 # pythonsh configuration file
+
 VERSION=0.8.0
 
 VIRTUAL_PREFIX='pythonsh'
