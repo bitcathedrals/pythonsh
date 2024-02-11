@@ -3,7 +3,6 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-
 name = "pythonsh"
 version = "0.8.0"
 
