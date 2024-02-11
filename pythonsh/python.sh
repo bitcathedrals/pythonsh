@@ -378,15 +378,15 @@ SHELL
     "pipfile")
       pipdirs="pythonsh"
 
-      for project_dir in $(find src -type d -depth 1 -print)
+      for dep_dir in $(find src -type d -depth 1 -print)
       do
-        pkg_dir="${project_dir}/${project_dir}/"
+        echo >/dev/stderr "checking dependency: $dep_dir"
 
-        repos=`echo ${pkg_dir}/*.pypi`
+        repos=`echo ${dep_dir}/*.pypi`
 
-        if [[ -f "${pkg_dir}/Pipfile" || -n $repos ]]
+        if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
         then
-          pipdirs="${pipdirs} ${pkg_dir}"
+          pipdirs="${pipdirs} ${dep_dir}"
         fi
       done
 

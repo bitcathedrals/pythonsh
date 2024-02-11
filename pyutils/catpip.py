@@ -127,12 +127,14 @@ def print_pipfile():
 def exec():
     for module in sys.argv[1:]:
         for repo_file in glob.glob(f'{module}/*.pypi'):
-            print(f'adding pypi server: {repo_file}')
+            print(f'adding pypi server: {repo_file}', file=sys.stderr)
             repos.append(load_pypi(repo_file))
 
         pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):
+            print (f'processing: {pipfile}', file=sys.stderr)
+
             with open(pipfile) as f:
                 parse = toml.load(f)
 
@@ -140,7 +142,8 @@ def exec():
                 update_build(parse)
                 update_requires(parse)
         else:
-            print(f'module spec: {module} does not resolve to {module}/Pipfile - skipping')
+            print(f'module spec: {module} does not resolve to src/{module}/Pipfile - skipping', 
+                  file=sys.stderr)
 
     print_pipfile()
 
