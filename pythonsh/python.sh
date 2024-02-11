@@ -741,7 +741,7 @@ SHELL
         VER_PIP="releases/Pipfile-$VERSION"
         VER_LOCK="releases/Pipfile.lock-$VERSION"
 
-        test -f Pipfile.lock && mv Pipfile.lock $VER_LOCK
+        test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
         test -f Pipfile && cp Pipfile $VER_PIP
 
         git add python.sh
