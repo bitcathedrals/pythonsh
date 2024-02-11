@@ -1,12 +1,17 @@
 import os
 import sys
+import glob
+from pathlib import Path
+
 from version_parser import Version
 
 import toml
 
+repos=[]
 release = {}
 build = {}
 requires={}
+global_section={}
 
 def expand_version(version):
     if version == "*":
@@ -48,33 +53,83 @@ def update_requires(parse):
     if 'requires' in parse:
       update_section(parse,'requires', requires)
 
-def print_pipfile():    
+def update_global(parse):
+    for key in parse['global']:
+        global_section[key] = parse['global'][key]
+
+def default_pypi():
     repo = '''
 [[source]]
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 '''
+    
+    return repo
 
-    print(repo)
+def extra_pypi(address, port, name, verify):
+    if verify:
+        ssl = "true"
+    else:
+        ssl = "false"
+    
+    if port:
+        address=f'https://{address}:{port}'
+    else:
+        address=f'https://{address}'
 
-    print('[packages]')
+    return "\n".join(['[[[source]]',f'{address}/simple',f'verify_ssl = {ssl}',f'name = "{name}"'])
+    
+def load_pypi(repo_file):
+    parse = None
 
-    for pkg in release:
-        print(f' {pkg} = "{release[pkg]}"')
+    with open(repo_file) as f:
+        parse = toml.load(f)
 
-    print('[dev-packages]')
+    if not parse or 'pypi' not in parse:
+        return ""
 
-    for pkg in build:
-        print(f' {pkg} = "{build[pkg]}"')
+    stripped_name = Path(os.path.basename(repo_file)).stem
 
-    print('[requires]')
+    return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])
+    
+def print_pipfile():
+    if global_section:
+        print('[global]')
 
-    for pkg in requires:
-        print(f' {pkg} = "{requires[pkg]}"')
+        for key in global_section:
+            print(f'{key} = "{global_section[key]}"')
+
+    print(default_pypi())
+
+    if repos:
+        for server in repos:
+            print(server)
+
+    if release:
+        print('[packages]')
+
+        for pkg in release:
+            print(f'{pkg} = "{release[pkg]}"')
+
+    if build:
+        print('[dev-packages]')
+
+        for pkg in build:
+            print(f'{pkg} = "{build[pkg]}"')
+
+    if requires:
+        print('[requires]')
+
+        for pkg in requires:
+            print(f'{pkg} = "{requires[pkg]}"')
 
 def exec():
     for module in sys.argv[1:]:
+        for repo_file in glob.glob(f'{module}/*.pypi'):
+            print(f'adding pypi server: {repo_file}')
+            repos.append(load_pypi(repo_file))
+
         pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):

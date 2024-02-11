@@ -2,18 +2,20 @@
 # prompt.sh: set a prompt with the pyenv virtual machine and the github branch
 #
 
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
 virtual_environment="?"
 git_branch="?"
 project_name="?"
 
 function get_pyenv {
-  environment=`pyenv virtualenvs | grep '*'`
+  environment=`pyenv version`
 
   if [[ -z $environment ]]
   then
     virtual_environment="NA"
   else
-    virtual_environment=`echo $environment | cut -d ' ' -f 2`
+    virtual_environment=`echo "$environment" |  cut -d ' ' -f 1`
   fi
 }
 
