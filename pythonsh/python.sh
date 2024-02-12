@@ -83,6 +83,8 @@ function latest_virtualenv_python {
 }
 
 function install_virtualenv_python {
+  setup_pyenv
+
   deactivate_if_needed || return 1
 
   VERSION=$1
