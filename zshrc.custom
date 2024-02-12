@@ -13,7 +13,7 @@ fi
 export EDITOR
 
 
-PATH="$HOME/tools/local/bin:$PATH:$HOME/code/security/bin"
+PATH="$HOME/tools/local/bin:$PATH"
 export PATH
 
 export PYENV_ROOT="$HOME/.pyenv"
