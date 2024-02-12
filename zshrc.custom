@@ -1,6 +1,19 @@
-export EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
+EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
 
-PATH="$HOME/tools/local/bin:$PATH:$HOME/code/security/bin"
+if [[ ! -x $EDITOR ]]
+then
+  if command -v nano >/dev/null 2>&1
+  then
+    EDITOR=nano
+  else
+    echo "WARNING: zshrc.custom no editor found!"
+  fi
+fi
+
+export EDITOR
+
+
+PATH="$HOME/tools/local/bin:$PATH"
 export PATH
 
 export PYENV_ROOT="$HOME/.pyenv"
@@ -9,5 +22,7 @@ alias status='git status'
 alias diff='git diff'
 alias stat='git diffstat'
 alias commit='git commit'
+alias ff='git pull'
+alias pull='git pull --no-ff'
 
 export PATH="$PYENV_ROOT/bin:$PATH"

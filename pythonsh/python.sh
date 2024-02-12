@@ -83,13 +83,15 @@ function latest_virtualenv_python {
 }
 
 function install_virtualenv_python {
+  setup_pyenv
+
   deactivate_if_needed || return 1
 
   VERSION=$1
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if ! pyenv install --skip-existing $VERSION
+  if ! pyenv install -v --skip-existing $VERSION
   then
     echo "FAILED!"
     return 1
