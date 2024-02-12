@@ -91,7 +91,7 @@ function install_virtualenv_python {
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if ! pyenv install --no-warn-script-location --skip-existing $VERSION
+  if ! pyenv install -v --skip-existing $VERSION
   then
     echo "FAILED!"
     return 1
