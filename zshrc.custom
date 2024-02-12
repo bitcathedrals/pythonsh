@@ -1,4 +1,17 @@
-export EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
+EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
+
+if [[ ! -x $EDITOR ]]
+then
+  if command -v nano >/dev/null 2>&1
+  then
+    EDITOR=nano
+  else
+    echo "WARNING: zshrc.custom no editor found!"
+  fi
+fi
+
+export EDITOR
+
 
 PATH="$HOME/tools/local/bin:$PATH:$HOME/code/security/bin"
 export PATH
