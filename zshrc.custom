@@ -22,5 +22,7 @@ alias status='git status'
 alias diff='git diff'
 alias stat='git diffstat'
 alias commit='git commit'
+alias ff='git pull'
+alias pull='git pull --no-ff'
 
 export PATH="$PYENV_ROOT/bin:$PATH"
