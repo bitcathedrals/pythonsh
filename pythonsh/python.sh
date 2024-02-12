@@ -746,7 +746,7 @@ SHELL
         test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
         test -f Pipfile && cp Pipfile $VER_PIP
 
-        git add python.sh
+        git add python.sh Pipfile.lock
 
         test -f pyproject.toml && git add pyproject.toml
 
