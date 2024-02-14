@@ -594,8 +594,20 @@ SHELL
     "modrm")
       shift
 
-      if git rm $1 && git rm --cached $1 && rm -rf $1 && rm -rf .git/modules/$1
+      if git rm $1 && git rm --cached $1
       then
+        if [[ -d $1 ]]
+        then
+          rm -rf $1
+          echo "manual cleanup of source tree $1 done."
+        fi
+
+        if [[ -d ".git/modules/$1" ]]
+        then
+          rm -rf ".git/modules/$1"
+          echo "manual cleanup of git module $1 done."
+        fi
+
         echo "pythonsh: removal of $1 succeeded."
       else
         echo "pythonsh: removal of $1 failed. Repo is in a unknown state"
