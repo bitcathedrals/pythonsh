@@ -78,7 +78,7 @@ def extra_pypi(address, port, name, verify):
     else:
         address=f'https://{address}'
 
-    return "\n".join(['[[[source]]',f'{address}/simple',f'verify_ssl = {ssl}',f'name = "{name}"'])
+    return "\n".join(['[[[source]]',f'{address}/simple',f'verify_ssl = {ssl}',f'name = "{name}"']) + "\n"
     
 def load_pypi(repo_file):
     parse = None
@@ -104,7 +104,7 @@ def print_pipfile():
 
     if repos:
         for server in repos:
-            print(server)
+            print(load_pypi(server))
 
     if release:
         print('[packages]')
