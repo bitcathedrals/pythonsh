@@ -83,6 +83,8 @@ def extra_pypi(address, port, name, verify):
 def load_pypi(repo_file):
     parse = None
 
+    print(f'loading pypi server: {repo_file}', file=sys.stderr)
+
     with open(repo_file) as f:
         parse = toml.load(f)
 
