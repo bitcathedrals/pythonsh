@@ -106,7 +106,7 @@ def print_pipfile():
 
     if repos:
         for server in repos:
-            print(load_pypi(server))
+            print(server)
 
     if release:
         print('[packages]')
