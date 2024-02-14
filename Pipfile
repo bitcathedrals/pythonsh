@@ -1,16 +1,11 @@
-[[source]]
-url = "https://pypi.python.org/simple"
-verify_ssl = true
-name = "pypi"
-
 [packages]
-toml = "*"
-version-parser = "*"
+toml = { version = "*", index = "pypi" }
+version-parser = { version = "*", index = "pypi" }
 
 [dev-packages]
-build = "*"
-ptpython = "*"
-pytest = "*"
+build = { version = "*", index = "pypi" }
+ptpython = { version = "*", index = "pypi" }
+pytest = { version = "*", index = "pypi" }
 
 [requires]
 python_version = "3.12"
