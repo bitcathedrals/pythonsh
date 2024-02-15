@@ -2,6 +2,8 @@
 
 test -f python.sh && source python.sh
 
+export PIPENV_VERBOSITY=-1
+
 function add_src {
     site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
@@ -367,7 +369,6 @@ SHELL
 #
     "bootstrap")
        test -f Pipfile.lock || touch Pipfile.lock
-       export PIPENV_VERBOSITY=-1
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
@@ -510,7 +511,6 @@ SHELL
     ;;
     "update-all")
         test -f Pipfile.lock || touch Pipfile.lock
-        export PIPENV_VERBOSITY=-1
 
         pyenv exec python -m pip install --upgrade pip
         pyenv exec python -m pip install --upgrade pipenv
