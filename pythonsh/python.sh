@@ -369,13 +369,12 @@ SHELL
 # initialization commands
 #
     "bootstrap")
-       pyenv exec python -m pip install pipenv
-       pyenv exec python -m pip install --upgrade pip
-
        test -f Pipfile.lock || touch Pipfile.lock
-       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
 
-       test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
+       pyenv exec python -m pip install --upgrade pip
+       pyenv exec python -m pip install pipenv
+
+       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
     ;;
     "pipfile")
       pipdirs="pythonsh"
