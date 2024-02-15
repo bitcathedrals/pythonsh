@@ -125,28 +125,25 @@ function install_project_virtualenv {
 
   install_virtualenv_python $VERSION || return 1
 
-  echo -n "creating project virtual environments: "
+  echo -n "creating project virtual environments..."
 
   if [[ -n $ENV_ONE ]]
   then
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
 
-  echo -n "pythonsh - building: $ENV_ONE"
-
   if [[ -n $ENV_TWO ]]
   then
+    echo -n "pythonsh - building: ${ENV_TWO}...."
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
-  echo -n "pythonsh - building: $ENV_TWO"
-
   if [[ -n $ENV_THREE ]]
   then
+    echo -n "pythonsh - building: ${ENV_THREE}..."
     install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
   fi
 
-  echo "pythonsh - building: ${ENV_THREE}...done!"
   return 0
 }
 
