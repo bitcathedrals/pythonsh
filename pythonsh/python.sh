@@ -367,6 +367,7 @@ SHELL
 #
     "bootstrap")
        test -f Pipfile.lock || touch Pipfile.lock
+       export PIPENV_VERBOSITY=-1
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
@@ -509,8 +510,10 @@ SHELL
     ;;
     "update-all")
         test -f Pipfile.lock || touch Pipfile.lock
+        export PIPENV_VERBOSITY=-1
 
         pyenv exec python -m pip install --upgrade pip
+        pyenv exec python -m pip install --upgrade pipenv
 
         pipenv install --dev
 
