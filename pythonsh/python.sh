@@ -132,21 +132,21 @@ function install_project_virtualenv {
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
 
-  echo -n ",$ENV_ONE"
+  echo -n "pythonsh - building: $ENV_ONE"
 
   if [[ -n $ENV_TWO ]]
   then
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
-  echo -n ",$ENV_TWO"
+  echo -n "pythonsh - building: $ENV_TWO"
 
   if [[ -n $ENV_THREE ]]
   then
     install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
   fi
 
-  echo ",${ENV_THREE}...done!"
+  echo "pythonsh - building: ${ENV_THREE}...done!"
   return 0
 }
 
