@@ -3,7 +3,13 @@ import sys
 import glob
 from pathlib import Path
 
+from collections import namedtuple
+
 from version_parser import Version
+
+package_spec = namedtuple('package_spec', ['name','version', 'index'])
+
+default_server = 'pypi'
 
 import toml
 
@@ -12,6 +18,9 @@ release = {}
 build = {}
 requires={}
 global_section={}
+
+open_brace = "{"
+close_brace = "}"
 
 def expand_version(version):
     if version == "*":
@@ -24,34 +33,60 @@ def expand_version(version):
 
     return version
 
-def update_section(parse, section, table):
+def update_packages(filename, parse, section, table):
     
     for pkg_name in parse[section]:
+        pkg_spec = parse[section][pkg_name]
+
+        pkg_ver = None
+        pkg_server = default_server
+
+        if isinstance(pkg_spec, dict):
+            pkg_ver = pkg_spec['version']
+            pkg_server = pkg_spec['index']
+        else:
+            pkg_ver = pkg_spec
 
         if pkg_name in table:
-            pkg_ver = parse[section][pkg_name]
+            if table[pkg_name].version == '*' or pkg_ver == '*':
+                pkg_ver = '*'
+                print(f'package {pkg_name} version "*" is latest: taking the latest version',
+                      file=sys.stderr)
+            else:
+                if table[pkg_name].version != pkg_ver:
+                    if Version(expand_version(table[pkg_name].version)) > Version(expand_version(pkg_ver)):
+                        print(f'current {pkg_name} version {table[pkg_name].version} is newer than {filename}:{pkg_ver} - taking the latest version', 
+                              file=sys.stderr)
+                        pkg_ver = table[pkg_name].version
+        
+        table[pkg_name] = package_spec(name=pkg_name, version=pkg_ver, index=pkg_server)
 
-            if table[pkg_name] == '*' or pkg_ver == '*':
-                table[pkg_name] = '*'
-                return
+def update_variables(filename, parse, section, table):
+    
+    for var_name in parse[section]:
+        version = parse[section][var_name]
 
-            if table[pkg_name] != pkg_ver:
-                if Version(expand_version(table[pkg_name])) < Version(expand_version(pkg_ver)):
-                    table[pkg_name] = pkg_ver
-        else:
-            table[pkg_name] = parse[section][pkg_name]
+        if var_name in table:   
+            if table[var_name] != version:
+                if Version(expand_version(table[var_name])) > Version(expand_version(version)):
+                    print(f'current {var_name} version {table[var_name]} is newer than {filename}:{var_name} - taking the latest version', 
+                            file=sys.stderr)
+                    
+                    version = table[var_name]
 
-def update_release(parse):
+        table[var_name] = version
+
+def update_release(filename, parse):
     if 'packages' in parse:
-      update_section(parse, 'packages', release)
+      update_packages(filename, parse, 'packages', release)
 
-def update_build(parse):
+def update_build(filename, parse):
     if 'dev-packages' in parse:
-      update_section(parse, 'dev-packages', build)
+      update_packages(filename, parse, 'dev-packages', build)
 
-def update_requires(parse):
+def update_requires(filename, parse):
     if 'requires' in parse:
-      update_section(parse,'requires', requires)
+      update_variables(filename, parse,'requires', requires)
 
 def update_global(parse):
     for key in parse['global']:
@@ -68,17 +103,20 @@ name = "pypi"
     return repo
 
 def extra_pypi(address, port, name, verify):
+    protocol = 'https'
+
     if verify:
         ssl = "true"
     else:
         ssl = "false"
-    
-    if port:
-        address=f'https://{address}:{port}'
-    else:
-        address=f'https://{address}'
+        protocol = 'http'
 
-    return "\n".join(['[[[source]]',f'{address}/simple',f'verify_ssl = {ssl}',f'name = "{name}"']) + "\n"
+    if port:
+        address=f'{protocol}://{address}:{port}'
+    else:
+        address=f'{protocol}://{address}'
+
+    return "\n".join(['[[source]]',f'url = "{address}/simple"',f'verify_ssl = {ssl}',f'name = "{name}"']) + "\n"
     
 def load_pypi(repo_file):
     parse = None
@@ -112,13 +150,13 @@ def print_pipfile():
         print('[packages]')
 
         for pkg in release:
-            print(f'{pkg} = "{release[pkg]}"')
+            print(f'{pkg} = {open_brace}version = "{release[pkg].version}", index = "{release[pkg].index}"{close_brace}')
 
     if build:
         print('[dev-packages]')
 
         for pkg in build:
-            print(f'{pkg} = "{build[pkg]}"')
+            print(f'{pkg} = {open_brace}version = "{build[pkg].version}", index = "{build[pkg].index}"{close_brace}')
 
     if requires:
         print('[requires]')
@@ -137,14 +175,14 @@ def exec():
         if os.path.isfile(pipfile):
             print (f'processing: {pipfile}', file=sys.stderr)
 
-            with open(pipfile) as f:
-                parse = toml.load(f)
+            with open(pipfile) as file:
+                parse = toml.load(file)
 
-                update_release(parse)
-                update_build(parse)
-                update_requires(parse)
+                update_release(pipfile, parse)
+                update_build(pipfile, parse)
+                update_requires(pipfile, parse)
         else:
-            print(f'module spec: {module} does not resolve to src/{module}/Pipfile - skipping', 
+            print(f'module spec: {module} does not have Pipfile - skipping', 
                   file=sys.stderr)
 
     print_pipfile()
