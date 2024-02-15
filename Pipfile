@@ -1,11 +1,13 @@
 [packages]
-toml = { version = "*", index = "pypi" }
-version-parser = { version = "*", index = "pypi" }
+toml =  "*"
+version-parser = "*"
 
 [dev-packages]
-build = { version = "*", index = "pypi" }
-ptpython = { version = "*", index = "pypi" }
-pytest = { version = "*", index = "pypi" }
+build = "*"
+ptpython = "*"
+pytest = "*"
+pipenv = "*"
+pip = "*"
 
 [requires]
 python_version = "3.12"
