@@ -1,16 +1,13 @@
-[[source]]
-url = "https://pypi.python.org/simple"
-verify_ssl = true
-name = "pypi"
-
 [packages]
-toml = "*"
+toml =  "*"
 version-parser = "*"
 
 [dev-packages]
 build = "*"
 ptpython = "*"
 pytest = "*"
+pipenv = "*"
+pip = "*"
 
 [requires]
 python_version = "3.12"

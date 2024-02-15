@@ -2,6 +2,8 @@
 
 test -f python.sh && source python.sh
 
+export PIPENV_VERBOSITY=-1
+
 function add_src {
     site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
@@ -125,28 +127,25 @@ function install_project_virtualenv {
 
   install_virtualenv_python $VERSION || return 1
 
-  echo -n "creating project virtual environments: "
+  echo -n "creating project virtual environments..."
 
   if [[ -n $ENV_ONE ]]
   then
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
 
-  echo -n ",$ENV_ONE"
-
   if [[ -n $ENV_TWO ]]
   then
+    echo -n "pythonsh - building: ${ENV_TWO}...."
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
-  echo -n ",$ENV_TWO"
-
   if [[ -n $ENV_THREE ]]
   then
+    echo -n "pythonsh - building: ${ENV_THREE}..."
     install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
   fi
 
-  echo ",${ENV_THREE}...done!"
   return 0
 }
 
@@ -369,13 +368,12 @@ SHELL
 # initialization commands
 #
     "bootstrap")
-       pyenv exec python -m pip install pipenv
-       pyenv exec python -m pip install --upgrade pip
-
        test -f Pipfile.lock || touch Pipfile.lock
-       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
 
-       test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
+       pyenv exec python -m pip install --upgrade pip
+       pyenv exec python -m pip install pipenv
+
+       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
     ;;
     "pipfile")
       pipdirs="pythonsh"
@@ -515,6 +513,7 @@ SHELL
         test -f Pipfile.lock || touch Pipfile.lock
 
         pyenv exec python -m pip install --upgrade pip
+        pyenv exec python -m pip install --upgrade pipenv
 
         pipenv install --dev
 
@@ -594,8 +593,20 @@ SHELL
     "modrm")
       shift
 
-      if git rm $1 && git rm --cached $1 && rm -rf $1 && rm -rf .git/modules/$1
+      if git rm $1 && git rm --cached $1
       then
+        if [[ -d $1 ]]
+        then
+          rm -rf $1
+          echo "manual cleanup of source tree $1 done."
+        fi
+
+        if [[ -d ".git/modules/$1" ]]
+        then
+          rm -rf ".git/modules/$1"
+          echo "manual cleanup of git module $1 done."
+        fi
+
         echo "pythonsh: removal of $1 succeeded."
       else
         echo "pythonsh: removal of $1 failed. Repo is in a unknown state"
