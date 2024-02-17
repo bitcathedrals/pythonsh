@@ -786,6 +786,13 @@ SHELL
 
         git push --tags
     ;;
+    "purge")
+      for cache in $(find . -name '__pycache__' -type d -print)
+      do
+        echo "purging: $cache"
+        rm -r $cache
+      done
+    ;;
     "help"|""|*)
         cat <<HELP
 python.sh
@@ -879,6 +886,9 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
              snapshot Pipfile if present, and start a git flow release with VERSION
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
+
+[misc]
+purge      = remove all the __pycache__ dirs
 HELP
     ;;
 esac
