@@ -720,15 +720,45 @@ SHELL
         fi
     ;;
     "start")
+      shift
+
+      VERSION="$1"
+      resume=""
+
+      if [[ $VERSION == "resume" ]]
+      then
+        resume=$2
+        echo "attempting to resume at point: $resume"
+
+        if [[ $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+        then
+          source "python.sh"
+        else
+          echo "resume must be either: \"merge\" or \"pipfile\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
+          exit 1
+        fi
+      else
         if git diff --quiet
         then
-            echo ">>>working tree clean - proceeding with release: $VERSION"
+          echo ">>>working tree clean - proceeding with release: $VERSION"
         else
-            echo "working tree dirty - terminating release:"
+          echo "working tree dirty - terminating release:"
 
-            git status
-            exit 1
+          git status
+          exit 1
         fi
+      fi
+
+      if [[ -z $resume ]]
+      then
+        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo "."
+        sleep 1
+
+        git flow release start $VERSION
 
         echo -n ">>>please edit python.sh with an updated version in 3 seconds."
         sleep 1
@@ -738,22 +768,46 @@ SHELL
         sleep 1
 
         $EDITOR python.sh || exit 1
-        source python.sh
 
         if [[ -f pyproject.toml ]]
         then
-            echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
-            sleep 1
-            echo -n "."
-            sleep 1
-            echo "."
-            sleep 1
+          echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
+          sleep 1
+          echo -n "."
+          sleep 1
+          echo "."
+          sleep 1
 
-            $EDITOR pyproject.toml || exit 1
+          $EDITOR pyproject.toml || exit 1
         fi
 
+        git add pyproject.toml python.sh
+      fi
+
+      if [[ -z $resume || $resume == "merge" ]]
+      then
+        echo -n ">>>merging work from develop in 3 seconds: "
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo "."
+
+        if git merge --no-ff develop
+        then
+          echo "merge ok!"
+        else
+          echo "error result from merge, probably a conflict, please clean up manually and restart with ./py.sh start resume pipfile"
+        fi
+      fi
+
+      if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
+      then
         test -d releases || mkdir releases
         test -f Pipfile && pipenv lock
+
+        git add Pipfile.lock
 
         VER_PIP="releases/Pipfile-$VERSION"
         VER_LOCK="releases/Pipfile.lock-$VERSION"
@@ -761,25 +815,18 @@ SHELL
         test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
         test -f Pipfile && cp Pipfile $VER_PIP
 
-        git add python.sh Pipfile.lock
-
-        test -f pyproject.toml && git add pyproject.toml
-
         test -f $VER_PIP && git add $VER_PIP
         test -f $VER_LOCK && git add $VER_LOCK
+      fi
 
+      if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+      then
         echo ">>>commiting bump to to $VERSION"
 
-        git commit -m "bump to version $VERSION"
+        git commit -m "(release) release version: $VERSION"
+      fi
 
-        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
-        sleep 1
-
-        git flow release start $VERSION
+      echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
     "release")
         git flow release finish $VERSION || exit 1
@@ -889,6 +936,11 @@ sync       = merge from the root branch commits not in this branch no ff
 check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
+
+             for the first time pass version as an argument: "./py.sh start 1.0.0"
+
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile]
+             to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
 
