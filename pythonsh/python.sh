@@ -502,7 +502,7 @@ SHELL
     "locked")
       pipenv sync
     ;;
-    "update-all")
+    "all")
         test -f Pipfile.lock || touch Pipfile.lock
 
         pyenv exec python -m pip install --upgrade pip
@@ -900,8 +900,8 @@ aws       = execute a aws cli command
 
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
-update-all = update pip and installed
-update     = update installed packages
+all        = update pip and pipenv install dependencies and dev, lock and check
+update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
 
