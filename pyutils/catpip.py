@@ -25,7 +25,7 @@ close_brace = "}"
 def expand_version(version):
     if version == "*":
         return "9999999.0.0"
-    
+
     fields = version.count('.')
 
     for i in range(fields + 1,3):
@@ -91,21 +91,26 @@ def get_python_version():
         line = line.strip()
         
         if line.startswith('PYTHON_VERSION'):
-            return line.split('=')[1].strip()
-    
+            v = line.split('=')[1].strip()
+
+            v = v.replace('"', '')
+            v = v.replace("'", '')
+
+            return v
+
     return None
 
 def update_requires(filename, parse):
-    pythonsh_version = get_python_version()
+    pythonsh_version = expand_version(get_python_version())
 
     py_version = pythonsh_version
 
     if 'requires' in parse:
         if 'python_version' in parse['requires']:
-            requires_version = parse['requires']['python_version']
+            requires_version = expand_version(parse['requires']['python_version'])
 
             if pythonsh_version != requires_version:
-                if Version(expand_version(pythonsh_version)) > Version(expand_version(requires_version)):
+                if Version(pythonsh_version) > Version(requires_version):
                     print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile {requires_version}', 
                             file=sys.stderr)
                     parse['requires']['python_version'] = pythonsh_version
