@@ -378,17 +378,34 @@ SHELL
     "pipfile")
       pipdirs="pythonsh"
 
-      for dep_dir in $(find src -type d -depth 1 -print)
+      for dep_dir in $(find src -type d -depth 1 -print 2>/dev/null)
       do
-        echo >/dev/stderr "checking dependency: $dep_dir"
-
-        repos=`echo ${dep_dir}/*.pypi`
+        repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
 
         if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
         then
           pipdirs="${pipdirs} ${dep_dir}"
         fi
       done
+
+      site_dir=$(pyenv exec python -m site | grep 'site-packages' | sed -e s/^\s*// | sed -e s/,//g | sed -e s/\'//g)
+
+      echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
+
+      for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+      do
+        if [[ ! `basename $dep_dir` == 'examples' ]]
+        then
+           repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
+
+           if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
+           then
+             pipdirs="${pipdirs} ${dep_dir}"
+           fi
+        fi
+      done
+
+      echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
 
       eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
     ;;
