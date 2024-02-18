@@ -543,17 +543,31 @@ include_package_data = True
 
 packages=${PACKAGES}
 SETUP
-      echo "going with setup.cfg:"
-      cat setup.cfg
+    echo "generated: setup.cfg"
+    cat setup.cfg
 
-      pyenv exec python -m build
+    for src_dir in $(ls src/)
+    do
+      if [[ -f "src/${src_dir}/Pipfile" ]]
+      then
+        echo "include src/${src_dir}/Pipfile" >>MANIFEST.in
+      fi
 
-      find . -name '*.egg-info' -type d -print | xargs rm -r
-      find . -name '__pycache__' -type d -print | xargs rm -r
+      repos=$(ls src/$item/*.pypi)
+      if [[ -n $repos ]]
+      then
+        echo "include src/{$src_dir}/*.pypi" >>MANIFEST.in
+      fi
+    done
 
-      test -f Pipfile.lock && rm Pipfile.lock
+    pyenv exec python -m build
 
-      rm setup.cfg
+    find . -name '*.egg-info' -type d -print | xargs rm -r
+    find . -name '__pycache__' -type d -print | xargs rm -r
+
+    test -f MANIFEST.in && rm MANIFEST.in
+
+    rm setup.cfg
     ;;
 
 #
