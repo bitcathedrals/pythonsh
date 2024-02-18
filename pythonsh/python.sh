@@ -502,13 +502,6 @@ SHELL
     "locked")
       pipenv sync
     ;;
-    "update")
-        pipenv install --skip-lock
-        pyenv rehash
-        pipenv lock
-
-        pipenv check
-    ;;
     "update-all")
         test -f Pipfile.lock || touch Pipfile.lock
 
@@ -522,6 +515,17 @@ SHELL
 
         # check for known security vulnerabilities
         pipenv check
+    ;;
+    "update")
+        pipenv install --skip-lock
+        pyenv rehash
+        pipenv lock
+
+        pipenv check
+    ;;
+    "remove")
+      shift
+      pipenv uninstall $@
     ;;
     "list")
         pipenv graph
@@ -849,8 +853,9 @@ aws       = execute a aws cli command
 
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
-update     = update installed packages
 update-all = update pip and installed
+update     = update installed packages
+remove     = uninstall the listed packages
 list       = list installed packages
 
 build      = build packages
