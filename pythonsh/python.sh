@@ -503,18 +503,18 @@ SHELL
       pipenv sync
     ;;
     "all")
-        test -f Pipfile.lock || touch Pipfile.lock
+      test -f Pipfile.lock || touch Pipfile.lock
 
-        pyenv exec python -m pip install --upgrade pip
-        pyenv exec python -m pip install --upgrade pipenv
+      pyenv exec python -m pip install --upgrade pip
+      pyenv exec python -m pip install --upgrade pipenv
 
-        pipenv install --dev
+      pipenv install --dev
 
-        pyenv rehash
-        pipenv lock
+      pyenv rehash
+      pipenv lock
 
-        # check for known security vulnerabilities
-        pipenv check
+      # check for known security vulnerabilities
+      pipenv check
     ;;
     "update")
         pipenv install --skip-lock
@@ -531,12 +531,29 @@ SHELL
         pipenv graph
     ;;
     "build")
-        pyenv exec python -m build
+      cat >setup.cfg <<SETUP
+[metadata]
+name=${BUILD_NAME}
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
+[options]
+package_dir=
+    =${SOURCE}
 
-        test -f Pipfile.lock && rm Pipfile.lock
+include_package_data = True
+
+packages=${PACKAGES}
+SETUP
+      echo "going with setup.cfg:"
+      cat setup.cfg
+
+      pyenv exec python -m build
+
+      find . -name '*.egg-info' -type d -print | xargs rm -r
+      find . -name '__pycache__' -type d -print | xargs rm -r
+
+      test -f Pipfile.lock && rm Pipfile.lock
+
+      rm setup.cfg
     ;;
 
 #

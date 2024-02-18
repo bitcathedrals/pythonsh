@@ -84,9 +84,39 @@ def update_build(filename, parse):
     if 'dev-packages' in parse:
       update_packages(filename, parse, 'dev-packages', build)
 
+def get_python_version():
+    pythonsh = open('python.sh', 'r')
+    
+    for line in pythonsh:
+        line = line.strip()
+        
+        if line.startswith('PYTHON_VERSION'):
+            return line.split('=')[1].strip()
+    
+    return None
+
 def update_requires(filename, parse):
+    pythonsh_version = get_python_version()
+
+    py_version = pythonsh_version
+
     if 'requires' in parse:
-      update_variables(filename, parse,'requires', requires)
+        if 'python_version' in parse['requires']:
+            requires_version = parse['requires']['python_version']
+
+            if pythonsh_version != requires_version:
+                if Version(expand_version(pythonsh_version)) > Version(expand_version(requires_version)):
+                    print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile {requires_version}', 
+                            file=sys.stderr)
+                    parse['requires']['python_version'] = pythonsh_version
+                else:   
+                    parse['requires']['python_version'] = requires_version
+        else:
+            parse['requires']['python_version'] = pythonsh_version
+    else:
+        parse['requires'] = {'python_version': pythonsh_version}
+
+    update_variables(filename, parse,'requires', requires)
 
 def update_global(parse):
     for key in parse['global']:
