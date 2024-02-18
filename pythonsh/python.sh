@@ -502,13 +502,6 @@ SHELL
     "locked")
       pipenv sync
     ;;
-    "update")
-        pipenv install --skip-lock
-        pyenv rehash
-        pipenv lock
-
-        pipenv check
-    ;;
     "update-all")
         test -f Pipfile.lock || touch Pipfile.lock
 
@@ -522,6 +515,17 @@ SHELL
 
         # check for known security vulnerabilities
         pipenv check
+    ;;
+    "update")
+        pipenv install --skip-lock
+        pyenv rehash
+        pipenv lock
+
+        pipenv check
+    ;;
+    "remove")
+      shift
+      pipenv uninstall $@
     ;;
     "list")
         pipenv graph
@@ -786,6 +790,13 @@ SHELL
 
         git push --tags
     ;;
+    "purge")
+      for cache in $(find . -name '__pycache__' -type d -print)
+      do
+        echo "purging: $cache"
+        rm -r $cache
+      done
+    ;;
     "help"|""|*)
         cat <<HELP
 python.sh
@@ -842,8 +853,9 @@ aws       = execute a aws cli command
 
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
-update     = update installed packages
 update-all = update pip and installed
+update     = update installed packages
+remove     = uninstall the listed packages
 list       = list installed packages
 
 build      = build packages
@@ -879,6 +891,9 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
              snapshot Pipfile if present, and start a git flow release with VERSION
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
+
+[misc]
+purge      = remove all the __pycache__ dirs
 HELP
     ;;
 esac
