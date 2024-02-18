@@ -25,7 +25,7 @@ close_brace = "}"
 def expand_version(version):
     if version == "*":
         return "9999999.0.0"
-    
+
     fields = version.count('.')
 
     for i in range(fields + 1,3):
@@ -84,9 +84,44 @@ def update_build(filename, parse):
     if 'dev-packages' in parse:
       update_packages(filename, parse, 'dev-packages', build)
 
+def get_python_version():
+    pythonsh = open('python.sh', 'r')
+    
+    for line in pythonsh:
+        line = line.strip()
+        
+        if line.startswith('PYTHON_VERSION'):
+            v = line.split('=')[1].strip()
+
+            v = v.replace('"', '')
+            v = v.replace("'", '')
+
+            return v
+
+    return None
+
 def update_requires(filename, parse):
+    pythonsh_version = expand_version(get_python_version())
+
+    py_version = pythonsh_version
+
     if 'requires' in parse:
-      update_variables(filename, parse,'requires', requires)
+        if 'python_version' in parse['requires']:
+            requires_version = expand_version(parse['requires']['python_version'])
+
+            if pythonsh_version != requires_version:
+                if Version(pythonsh_version) > Version(requires_version):
+                    print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile {requires_version}', 
+                            file=sys.stderr)
+                    parse['requires']['python_version'] = pythonsh_version
+                else:   
+                    parse['requires']['python_version'] = requires_version
+        else:
+            parse['requires']['python_version'] = pythonsh_version
+    else:
+        parse['requires'] = {'python_version': pythonsh_version}
+
+    update_variables(filename, parse,'requires', requires)
 
 def update_global(parse):
     for key in parse['global']:

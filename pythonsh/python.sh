@@ -502,19 +502,19 @@ SHELL
     "locked")
       pipenv sync
     ;;
-    "update-all")
-        test -f Pipfile.lock || touch Pipfile.lock
+    "all")
+      test -f Pipfile.lock || touch Pipfile.lock
 
-        pyenv exec python -m pip install --upgrade pip
-        pyenv exec python -m pip install --upgrade pipenv
+      pyenv exec python -m pip install --upgrade pip
+      pyenv exec python -m pip install --upgrade pipenv
 
-        pipenv install --dev
+      pipenv install --dev
 
-        pyenv rehash
-        pipenv lock
+      pyenv rehash
+      pipenv lock
 
-        # check for known security vulnerabilities
-        pipenv check
+      # check for known security vulnerabilities
+      pipenv check
     ;;
     "update")
         pipenv install --skip-lock
@@ -531,12 +531,29 @@ SHELL
         pipenv graph
     ;;
     "build")
-        pyenv exec python -m build
+      cat >setup.cfg <<SETUP
+[metadata]
+name=${BUILD_NAME}
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
+[options]
+package_dir=
+    =${SOURCE}
 
-        test -f Pipfile.lock && rm Pipfile.lock
+include_package_data = True
+
+packages=${PACKAGES}
+SETUP
+      echo "going with setup.cfg:"
+      cat setup.cfg
+
+      pyenv exec python -m build
+
+      find . -name '*.egg-info' -type d -print | xargs rm -r
+      find . -name '__pycache__' -type d -print | xargs rm -r
+
+      test -f Pipfile.lock && rm Pipfile.lock
+
+      rm setup.cfg
     ;;
 
 #
@@ -900,8 +917,8 @@ aws       = execute a aws cli command
 
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
-update-all = update pip and installed
-update     = update installed packages
+all        = update pip and pipenv install dependencies and dev, lock and check
+update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
 
