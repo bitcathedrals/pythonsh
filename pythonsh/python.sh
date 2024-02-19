@@ -867,6 +867,12 @@ SETUP
 
         git flow release start $VERSION
 
+        if [[ $? -ne 0 ]]
+        then
+          echo "git flow release start $VERSION FAILED!"
+          exit 1
+        fi
+
         echo -n ">>>please edit python.sh with an updated version in 3 seconds."
         sleep 1
         echo -n "."
