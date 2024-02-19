@@ -58,7 +58,7 @@ def strip_pipfile_version_operators(spec):
      if spec == "*":
          return "*"
      
-     return re.findall(r'\d+\.\d+\.\d+', spec)[0]
+     return re.findall(r'\d+\.\d+\.\d+|\d+\.\d+', spec)[0]
 
 def get_interpreter_version(spec):
     return expand_version(get_python_feature(spec)) 

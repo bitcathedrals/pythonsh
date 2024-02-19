@@ -19,6 +19,9 @@ def test_version_operator_strip():
 
     assert "1.2.3" == strip_pipfile_version_operators(">1.2.3")
 
+def test_version_operator_strip_feature():
+    assert "1.2" == strip_pipfile_version_operators(">=1.2")
+    
 def test_version_operator_strip_any():
     assert "*" == strip_pipfile_version_operators("*")
 
