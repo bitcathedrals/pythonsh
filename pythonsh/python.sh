@@ -336,6 +336,18 @@ SHELL
         VERSION="$1"
         NAME="$2"
 
+        if [[ -n "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
+
+        if [[ -n "$NAME" ]]
+        then
+          echo "global-virtual NAME (second argument) is missing."
+          exit 1
+        fi
+
         setup_pyenv
 
         install_virtualenv_python $VERSION || exit 1
