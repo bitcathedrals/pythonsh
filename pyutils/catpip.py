@@ -55,12 +55,18 @@ def get_python_feature(spec):
     return '.'.join(v)
 
 def strip_pipfile_version_operators(spec):
+     if spec == "*":
+         return "*"
+     
      return re.findall(r'\d+\.\d+\.\d+', spec)[0]
 
 def get_interpreter_version(spec):
     return expand_version(get_python_feature(spec)) 
 
 def get_pipfile_version(spec):
+    if spec == "*":
+        return "*"
+    
     return '~=' + get_python_feature(strip_pipfile_version_operators(spec))
 
 def update_packages(filename, parse, section, table):
@@ -72,15 +78,15 @@ def update_packages(filename, parse, section, table):
         pkg_server = default_server
 
         if isinstance(pkg_spec, dict):
-            pkg_ver = pkg_spec['version']
+            pkg_ver = strip_pipfile_version_operators(pkg_spec['version'])
             pkg_server = pkg_spec['index']
         else:
-            pkg_ver = pkg_spec
+            pkg_ver = strip_pipfile_version_operators(pkg_spec)
 
         if pkg_name in table:
             if table[pkg_name].version == '*' or pkg_ver == '*':
                 pkg_ver = '*'
-                print(f'package {pkg_name} version "*" is latest: taking the latest version',
+                print(f'package {pkg_name} version "*" overrides all other versions',
                       file=sys.stderr)
             else:
                 if table[pkg_name].version != pkg_ver:
@@ -113,9 +119,6 @@ def update_release(filename, parse):
 def update_build(filename, parse):
     if 'dev-packages' in parse:
       update_packages(filename, parse, 'dev-packages', build)
-
-
-
 
 def update_requires(filename, parse):
     pythonsh_version = expand_version(get_python_version())
@@ -200,13 +203,15 @@ def print_pipfile():
         print('[packages]')
 
         for pkg in release:
-            print(f'{pkg} = {open_brace}version = "{release[pkg].version}", index = "{release[pkg].index}"{close_brace}')
+            version = get_pipfile_version(release[pkg].version)
+            print(f'{pkg} = {open_brace}version = "{version}", index = "{release[pkg].index}"{close_brace}')
 
     if build:
         print('[dev-packages]')
 
         for pkg in build:
-            print(f'{pkg} = {open_brace}version = "{build[pkg].version}", index = "{build[pkg].index}"{close_brace}')
+            version = get_pipfile_version(build[pkg].version)
+            print(f'{pkg} = {open_brace}version = "{version}", index = "{build[pkg].index}"{close_brace}')
 
     if requires:
         print('[requires]')
