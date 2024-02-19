@@ -401,7 +401,7 @@ SHELL
         fi
       done
 
-      site_dir=$(pyenv exec python -m site | grep 'site-packages' | sed -e s/^\s*// | sed -e s/,//g | sed -e s/\'//g)
+      site_dir=$(pyenv exec python -m site | grep 'site-packages' | grep -v USER_SITE | sed -e 's,^ *,,' | sed -e s/,//g | sed -e s/\'//g)
 
       echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
 
