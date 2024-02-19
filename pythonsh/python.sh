@@ -367,26 +367,43 @@ SHELL
 #
 # initialization commands
 #
-    "bootstrap")
+    "minimal")
        test -f Pipfile.lock || touch Pipfile.lock
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
 
-       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+       pipfile="pythonsh/Pipfile"
 
-       # generate the initial pipfile getting deps out of the source tree
-       $0 pipfile >Pipfile
+       if [[ -f $pipfile ]]
+       then
+         echo "using distributed Pipfile for minimal bootstrap"
+       elif [[ -f Pipfile ]]
+       then
+          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
+          pipfile="Pipfile"
+       else
+         echo "No Pipfile could be found, exiting"
+         exit 1
+       fi
 
-       # do the basic install
-       $0 all
+       export PIPENV_PIPFILE="$pipfile"; pipenv install
+    ;;
+    "bootstrap")
+      $0 minimal || exit 1
 
-       # get all the pipfiles even in site-dir from installed packages
-       $0 pipfile >Pipfile
+      # generate the initial pipfile getting deps out of the source tree
+      $0 pipfile >Pipfile || exit 1
 
-       $0 update
+      # do the basic install
+      $0 all || exit 1
 
-       echo "bootstrap complete"
+      # get all the pipfiles even in site-dir from installed packages
+      $0 pipfile >Pipfile || exit 1
+
+      $0 update || exit 1
+
+      echo "bootstrap complete"
     ;;
     "pipfile")
       pipdirs="pythonsh"
@@ -420,7 +437,21 @@ SHELL
 
       echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
 
-      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
+      catpip="pythonsh/pyutils/catpip.py"
+
+      if [[ -f $catpip ]]
+      then
+        echo >/dev/stderr "pipfile: using distributed catpip: $catpip"
+      elif [[ -f pyutils/catpip.py ]]
+      then
+        echo >/dev/stderr "pipfile: using internal catpip: $catpip"
+        catpip="pyutils/catpip.py"
+      else
+        echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+        exit 1
+      fi
+
+      eval "pyenv exec python $catpip $pipdirs"
     ;;
 
 #
@@ -576,28 +607,37 @@ SETUP
     echo "generated: setup.cfg"
     cat setup.cfg
 
-    for src_dir in $(ls src/)
+    for src_dir in $(ls "$SOURCE")
     do
-      if [[ -f "src/${src_dir}/Pipfile" ]]
+      if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
       then
-        echo "include src/${src_dir}/Pipfile" >>MANIFEST.in
+        echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
       fi
 
-      repos=$(ls src/$item/*.pypi)
+      repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
+
       if [[ -n $repos ]]
       then
-        echo "include src/{$src_dir}/*.pypi" >>MANIFEST.in
+        echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
       fi
     done
+
+    if [[ -n "$BUILD_DATA" ]]
+    then
+      echo "${BUILD_DATA}" | tr -s ' ' '\n' >>MANIFEST.in
+    fi
+
+    echo "generated: MANIFEST.in"
+
+    cat MANIFEST.in
 
     pyenv exec python -m build
 
     find . -name '*.egg-info' -type d -print | xargs rm -r
     find . -name '__pycache__' -type d -print | xargs rm -r
 
-    test -f MANIFEST.in && rm MANIFEST.in
-
     rm setup.cfg
+    test -f MANIFEST.in && rm MANIFEST.in
     ;;
 
 #
@@ -683,6 +723,9 @@ SETUP
 #
 # version control
 #
+    "verify")
+      exec git log --show-signature $@
+    ;;
     "status")
         git status
         git submodule foreach 'git status'
@@ -933,8 +976,9 @@ virtual-list     = list virtual environments
 
 [initialization]
 
-bootstrap        = do a pip install of deps for pythonsh python utilities
-pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
+minimal          = pythonsh only bootstrap for projects with only built-in deps
+bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 
 [using virtual and source paths]
 
@@ -977,6 +1021,7 @@ modall              = update all submodules
 
 [version control]
 
+verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
@@ -1010,3 +1055,5 @@ purge      = remove all the __pycache__ dirs
 HELP
     ;;
 esac
+
+exit 0
