@@ -374,21 +374,51 @@ SHELL
        pyenv exec python -m pip install pipenv
 
        export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+
+       # generate the initial pipfile getting deps out of the source tree
+       $0 pipfile >Pipfile
+
+       # do the basic install
+       $0 all
+
+       # get all the pipfiles even in site-dir from installed packages
+       $0 pipfile >Pipfile
+
+       $0 update
+
+       echo "bootstrap complete"
     ;;
     "pipfile")
       pipdirs="pythonsh"
 
-      for dep_dir in $(find src -type d -depth 1 -print)
+      for dep_dir in $(find src -type d -depth 1 -print 2>/dev/null)
       do
-        echo >/dev/stderr "checking dependency: $dep_dir"
-
-        repos=`echo ${dep_dir}/*.pypi`
+        repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
 
         if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
         then
           pipdirs="${pipdirs} ${dep_dir}"
         fi
       done
+
+      site_dir=$(pyenv exec python -m site | grep 'site-packages' | grep -v USER_SITE | sed -e 's,^ *,,' | sed -e s/,//g | sed -e s/\'//g)
+
+      echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
+
+      for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+      do
+        if [[ ! `basename $dep_dir` == 'examples' ]]
+        then
+           repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
+
+           if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
+           then
+             pipdirs="${pipdirs} ${dep_dir}"
+           fi
+        fi
+      done
+
+      echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
 
       eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
     ;;
@@ -543,17 +573,31 @@ include_package_data = True
 
 packages=${PACKAGES}
 SETUP
-      echo "going with setup.cfg:"
-      cat setup.cfg
+    echo "generated: setup.cfg"
+    cat setup.cfg
 
-      pyenv exec python -m build
+    for src_dir in $(ls src/)
+    do
+      if [[ -f "src/${src_dir}/Pipfile" ]]
+      then
+        echo "include src/${src_dir}/Pipfile" >>MANIFEST.in
+      fi
 
-      find . -name '*.egg-info' -type d -print | xargs rm -r
-      find . -name '__pycache__' -type d -print | xargs rm -r
+      repos=$(ls src/$item/*.pypi)
+      if [[ -n $repos ]]
+      then
+        echo "include src/{$src_dir}/*.pypi" >>MANIFEST.in
+      fi
+    done
 
-      test -f Pipfile.lock && rm Pipfile.lock
+    pyenv exec python -m build
 
-      rm setup.cfg
+    find . -name '*.egg-info' -type d -print | xargs rm -r
+    find . -name '__pycache__' -type d -print | xargs rm -r
+
+    test -f MANIFEST.in && rm MANIFEST.in
+
+    rm setup.cfg
     ;;
 
 #

@@ -100,10 +100,14 @@ def get_python_version():
 
     return None
 
+def get_python_feature(spec):
+    v = spec.split('.')[0:1]
+    
+    return '.'.join(v)
+
+
 def update_requires(filename, parse):
     pythonsh_version = expand_version(get_python_version())
-
-    py_version = pythonsh_version
 
     if 'requires' in parse:
         if 'python_version' in parse['requires']:
@@ -113,13 +117,13 @@ def update_requires(filename, parse):
                 if Version(pythonsh_version) > Version(requires_version):
                     print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile {requires_version}', 
                             file=sys.stderr)
-                    parse['requires']['python_version'] = pythonsh_version
+                    parse['requires']['python_version'] = get_python_feature(pythonsh_version)
                 else:   
-                    parse['requires']['python_version'] = requires_version
+                    parse['requires']['python_version'] = get_python_feature(requires_version)
         else:
-            parse['requires']['python_version'] = pythonsh_version
+            parse['requires']['python_version'] = get_python_feature(pythonsh_version)
     else:
-        parse['requires'] = {'python_version': pythonsh_version}
+        parse['requires'] = {'python_version': get_python_feature(pythonsh_version)}
 
     update_variables(filename, parse,'requires', requires)
 
