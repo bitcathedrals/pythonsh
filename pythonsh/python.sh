@@ -714,6 +714,9 @@ SETUP
 #
 # version control
 #
+    "verify")
+      exec git log --show-signature $@
+    ;;
     "status")
         git status
         git submodule foreach 'git status'
@@ -1009,6 +1012,7 @@ modall              = update all submodules
 
 [version control]
 
+verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
