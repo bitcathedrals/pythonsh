@@ -374,6 +374,19 @@ SHELL
        pyenv exec python -m pip install pipenv
 
        export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+
+       # generate the initial pipfile getting deps out of the source tree
+       $0 pipfile >Pipfile
+
+       # do the basic install
+       $0 all
+
+       # get all the pipfiles even in site-dir from installed packages
+       $0 pipfile >Pipfile
+
+       $0 update
+
+       echo "bootstrap complete"
     ;;
     "pipfile")
       pipdirs="pythonsh"
