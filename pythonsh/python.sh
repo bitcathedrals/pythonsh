@@ -437,7 +437,21 @@ SHELL
 
       echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
 
-      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
+      catpip="pythonsh/pyutils/catpip.py"
+
+      if [[ -f $catpip ]]
+      then
+        echo >/dev/stderr "pipfile: using distributed catpip: $catpip"
+      elif [[ -f pyutils/catpip.py ]]
+      then
+        echo >/dev/stderr "pipfile: using internal catpip: $catpip"
+        catpip="pyutils/catpip.py"
+      else
+        echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+        exit 1
+      fi
+
+      eval "pyenv exec python $catpip $pipdirs"
     ;;
 
 #
