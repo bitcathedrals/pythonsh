@@ -150,6 +150,9 @@ function install_project_virtualenv {
 }
 
 case $1 in
+  "version")
+    echo "pythonsh version is: 0.9.4"
+  ;;
 
 #
 # tooling
@@ -863,6 +866,12 @@ SETUP
         sleep 1
 
         git flow release start $VERSION
+
+        if [[ $? -ne 0 ]]
+        then
+          echo "git flow release start $VERSION FAILED!"
+          exit 1
+        fi
 
         echo -n ">>>please edit python.sh with an updated version in 3 seconds."
         sleep 1
