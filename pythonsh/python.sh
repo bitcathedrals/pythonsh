@@ -390,18 +390,18 @@ SHELL
        export PIPENV_PIPFILE="$pipfile"; pipenv install
     ;;
     "bootstrap")
-      $0 minimal
+      $0 minimal || exit 1
 
       # generate the initial pipfile getting deps out of the source tree
-      $0 pipfile >Pipfile
+      $0 pipfile >Pipfile || exit 1
 
       # do the basic install
-      $0 all
+      $0 all || exit 1
 
       # get all the pipfiles even in site-dir from installed packages
-      $0 pipfile >Pipfile
+      $0 pipfile >Pipfile || exit 1
 
-      $0 update
+      $0 update || exit 1
 
       echo "bootstrap complete"
     ;;
@@ -1042,3 +1042,5 @@ purge      = remove all the __pycache__ dirs
 HELP
     ;;
 esac
+
+exit 0
