@@ -2,7 +2,7 @@ import os
 import sys
 import glob
 from pathlib import Path
-
+import re
 from collections import namedtuple
 
 from version_parser import Version
@@ -101,10 +101,22 @@ def get_python_version():
     return None
 
 def get_python_feature(spec):
-    v = spec.split('.')[0:1]
+    v = spec.split('.')[0:2]
     
     return '.'.join(v)
 
+def strip_pipfile_version_operators(spec):
+     return re.findall(r'\d+\.\d+\.\d+', spec)[0]
+
+def get_python_bug_fixes(spec):
+    v = strip_pipfile_version_operators(spec)
+
+    v = get_python_feature(v) + '.0'
+
+    return
+
+def get_pipfile_version(spec):
+    return '~=' + get_python_feature(strip_pipfile_version_operators(spec))
 
 def update_requires(filename, parse):
     pythonsh_version = expand_version(get_python_version())
