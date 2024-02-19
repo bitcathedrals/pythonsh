@@ -367,26 +367,43 @@ SHELL
 #
 # initialization commands
 #
-    "bootstrap")
+    "minimal")
        test -f Pipfile.lock || touch Pipfile.lock
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
 
-       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+       pipfile="pythonsh/Pipfile"
 
-       # generate the initial pipfile getting deps out of the source tree
-       $0 pipfile >Pipfile
+       if [[ -f $pipfile ]]
+       then
+         echo "using distributed Pipfile for minimal bootstrap"
+       elif [[ -f Pipfile ]]
+       then
+          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
+          pipfile="Pipfile"
+       else
+         echo "No Pipfile could be found, exiting"
+         exit 1
+       fi
 
-       # do the basic install
-       $0 all
+       export PIPENV_PIPFILE="$pipfile"; pipenv install
+    ;;
+    "bootstrap")
+      $0 minimal
 
-       # get all the pipfiles even in site-dir from installed packages
-       $0 pipfile >Pipfile
+      # generate the initial pipfile getting deps out of the source tree
+      $0 pipfile >Pipfile
 
-       $0 update
+      # do the basic install
+      $0 all
 
-       echo "bootstrap complete"
+      # get all the pipfiles even in site-dir from installed packages
+      $0 pipfile >Pipfile
+
+      $0 update
+
+      echo "bootstrap complete"
     ;;
     "pipfile")
       pipdirs="pythonsh"
@@ -933,8 +950,9 @@ virtual-list     = list virtual environments
 
 [initialization]
 
-bootstrap        = do a pip install of deps for pythonsh python utilities
-pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
+minimal          = pythonsh only bootstrap for projects with only built-in deps
+bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 
 [using virtual and source paths]
 
