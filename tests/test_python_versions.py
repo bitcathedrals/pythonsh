@@ -1,6 +1,6 @@
 import pytest
 
-from pyutils.catpip import expand_version, get_python_feature, strip_pipfile_version_operators, get_pipfile_version
+from pyutils.catpip import expand_version, get_python_feature, strip_pipfile_version_operators, get_pipfile_version, get_interpreter_version
 
 def test_expand_version_minor():
     assert "1.2.0" == expand_version("1.2")
@@ -25,3 +25,7 @@ def test_version_operator_reformat():
     assert "~=1.2" == get_pipfile_version("~=1.2.3")
 
 
+def test_python_interpreter_version():
+    assert "12.1.0" == get_interpreter_version("12.1.15")
+    assert "12.1.0" == get_interpreter_version("12.1")
+    assert "12.0.0" == get_interpreter_version("12")

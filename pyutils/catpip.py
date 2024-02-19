@@ -33,6 +33,36 @@ def expand_version(version):
 
     return version
 
+def get_python_version():
+    pythonsh = open('python.sh', 'r')
+    
+    for line in pythonsh:
+        line = line.strip()
+        
+        if line.startswith('PYTHON_VERSION'):
+            v = line.split('=')[1].strip()
+
+            v = v.replace('"', '')
+            v = v.replace("'", '')
+
+            return v
+
+    return None
+
+def get_python_feature(spec):
+    v = spec.split('.')[0:2]
+    
+    return '.'.join(v)
+
+def strip_pipfile_version_operators(spec):
+     return re.findall(r'\d+\.\d+\.\d+', spec)[0]
+
+def get_interpreter_version(spec):
+    return expand_version(get_python_feature(spec)) 
+
+def get_pipfile_version(spec):
+    return '~=' + get_python_feature(strip_pipfile_version_operators(spec))
+
 def update_packages(filename, parse, section, table):
     
     for pkg_name in parse[section]:
@@ -84,39 +114,8 @@ def update_build(filename, parse):
     if 'dev-packages' in parse:
       update_packages(filename, parse, 'dev-packages', build)
 
-def get_python_version():
-    pythonsh = open('python.sh', 'r')
-    
-    for line in pythonsh:
-        line = line.strip()
-        
-        if line.startswith('PYTHON_VERSION'):
-            v = line.split('=')[1].strip()
 
-            v = v.replace('"', '')
-            v = v.replace("'", '')
 
-            return v
-
-    return None
-
-def get_python_feature(spec):
-    v = spec.split('.')[0:2]
-    
-    return '.'.join(v)
-
-def strip_pipfile_version_operators(spec):
-     return re.findall(r'\d+\.\d+\.\d+', spec)[0]
-
-def get_python_bug_fixes(spec):
-    v = strip_pipfile_version_operators(spec)
-
-    v = get_python_feature(v) + '.0'
-
-    return
-
-def get_pipfile_version(spec):
-    return '~=' + get_python_feature(strip_pipfile_version_operators(spec))
 
 def update_requires(filename, parse):
     pythonsh_version = expand_version(get_python_version())
