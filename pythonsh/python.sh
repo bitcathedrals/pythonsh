@@ -150,6 +150,9 @@ function install_project_virtualenv {
 }
 
 case $1 in
+  "version")
+    echo "pythonsh version is: 0.9.4"
+  ;;
 
 #
 # tooling
