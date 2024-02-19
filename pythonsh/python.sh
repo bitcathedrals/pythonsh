@@ -607,28 +607,37 @@ SETUP
     echo "generated: setup.cfg"
     cat setup.cfg
 
-    for src_dir in $(ls src/)
+    for src_dir in $(ls "$SOURCE")
     do
-      if [[ -f "src/${src_dir}/Pipfile" ]]
+      if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
       then
-        echo "include src/${src_dir}/Pipfile" >>MANIFEST.in
+        echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
       fi
 
-      repos=$(ls src/$item/*.pypi)
+      repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
+
       if [[ -n $repos ]]
       then
-        echo "include src/{$src_dir}/*.pypi" >>MANIFEST.in
+        echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
       fi
     done
+
+    if [[ -n "$BUILD_DATA" ]]
+    then
+      echo "${BUILD_DATA}" | tr -s ' ' '\n' >>MANIFEST.in
+    fi
+
+    echo "generated: MANIFEST.in"
+
+    cat MANIFEST.in
 
     pyenv exec python -m build
 
     find . -name '*.egg-info' -type d -print | xargs rm -r
     find . -name '__pycache__' -type d -print | xargs rm -r
 
-    test -f MANIFEST.in && rm MANIFEST.in
-
     rm setup.cfg
+    test -f MANIFEST.in && rm MANIFEST.in
     ;;
 
 #
