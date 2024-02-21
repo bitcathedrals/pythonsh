@@ -4,8 +4,13 @@ version-parser = "*"
 
 [dev-packages]
 build = "*"
+
 ptpython = "*"
+
 pytest = "*"
+pytest-ordering = "*"
+pytest-dependency = "*"
+
 pipenv = "*"
 pip = "*"
 

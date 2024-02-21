@@ -336,6 +336,18 @@ SHELL
         VERSION="$1"
         NAME="$2"
 
+        if [[ -n "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
+
+        if [[ -n "$NAME" ]]
+        then
+          echo "global-virtual NAME (second argument) is missing."
+          exit 1
+        fi
+
         setup_pyenv
 
         install_virtualenv_python $VERSION || exit 1
@@ -372,6 +384,8 @@ SHELL
 #
     "minimal")
        test -f Pipfile.lock || touch Pipfile.lock
+
+       test -e pytest.ini || ln -s pythonsh/pytest.ini
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
