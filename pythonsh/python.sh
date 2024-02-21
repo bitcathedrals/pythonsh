@@ -385,6 +385,8 @@ SHELL
     "minimal")
        test -f Pipfile.lock || touch Pipfile.lock
 
+       test -e pytest.ini || ln -s pythonsh/pytest.ini
+
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
 
