@@ -67,7 +67,9 @@ def get_pipfile_version(spec):
     if spec == "*":
         return "*"
     
-    return '~=' + get_python_feature(strip_pipfile_version_operators(spec))
+    feature=get_python_feature(strip_pipfile_version_operators(spec))
+
+    return "~=" + feature + ".0"
 
 def update_packages(filename, parse, section, table):
     
