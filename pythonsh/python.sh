@@ -127,10 +127,11 @@ function install_project_virtualenv {
 
   install_virtualenv_python $VERSION || return 1
 
-  echo -n "creating project virtual environments..."
+  echo "creating project virtual environments"
 
   if [[ -n $ENV_ONE ]]
   then
+    echo -n "pythonsh - building: ${ENV_ONE}...."
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
 
