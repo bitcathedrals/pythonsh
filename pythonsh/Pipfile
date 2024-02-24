@@ -1,0 +1,18 @@
+[packages]
+toml =  "*"
+version-parser = "*"
+
+[dev-packages]
+build = "*"
+
+ptpython = "*"
+
+pytest = "*"
+pytest-ordering = "*"
+pytest-dependency = "*"
+
+pipenv = "*"
+pip = "*"
+
+[requires]
+python_version = "3.12"

@@ -151,6 +151,9 @@ function install_project_virtualenv {
 }
 
 case $1 in
+  "version")
+    echo "pythonsh version is: 0.9.4"
+  ;;
 
 #
 # tooling
@@ -334,6 +337,18 @@ SHELL
         VERSION="$1"
         NAME="$2"
 
+        if [[ -n "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
+
+        if [[ -n "$NAME" ]]
+        then
+          echo "global-virtual NAME (second argument) is missing."
+          exit 1
+        fi
+
         setup_pyenv
 
         install_virtualenv_python $VERSION || exit 1
@@ -368,22 +383,52 @@ SHELL
 #
 # initialization commands
 #
-    "bootstrap")
+    "minimal")
        test -f Pipfile.lock || touch Pipfile.lock
+
+       test -e pytest.ini || ln -s pythonsh/pytest.ini
 
        pyenv exec python -m pip install --upgrade pip
        pyenv exec python -m pip install pipenv
 
-       export PIPENV_PIPFILE='pythonsh/Pipfile'; pipenv install
+       pipfile="pythonsh/Pipfile"
+
+       if [[ -f $pipfile ]]
+       then
+         echo "using distributed Pipfile for minimal bootstrap"
+       elif [[ -f Pipfile ]]
+       then
+          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
+          pipfile="Pipfile"
+       else
+         echo "No Pipfile could be found, exiting"
+         exit 1
+       fi
+
+       export PIPENV_PIPFILE="$pipfile"; pipenv install
+    ;;
+    "bootstrap")
+      $0 minimal || exit 1
+
+      # generate the initial pipfile getting deps out of the source tree
+      $0 pipfile >Pipfile || exit 1
+
+      # do the basic install
+      $0 all || exit 1
+
+      # get all the pipfiles even in site-dir from installed packages
+      $0 pipfile >Pipfile || exit 1
+
+      $0 update || exit 1
+
+      echo "bootstrap complete"
     ;;
     "pipfile")
       pipdirs="pythonsh"
 
-      for dep_dir in $(find src -type d -depth 1 -print)
+      for dep_dir in $(find src -type d -depth 1 -print 2>/dev/null)
       do
-        echo >/dev/stderr "checking dependency: $dep_dir"
-
-        repos=`echo ${dep_dir}/*.pypi`
+        repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
 
         if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
         then
@@ -391,7 +436,40 @@ SHELL
         fi
       done
 
-      eval "pyenv exec python pythonsh/pyutils/catpip.py $pipdirs"
+      site_dir=$(pyenv exec python -m site | grep 'site-packages' | grep -v USER_SITE | sed -e 's,^ *,,' | sed -e s/,//g | sed -e s/\'//g)
+
+      echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
+
+      for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+      do
+        if [[ ! `basename $dep_dir` == 'examples' ]]
+        then
+           repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
+
+           if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
+           then
+             pipdirs="${pipdirs} ${dep_dir}"
+           fi
+        fi
+      done
+
+      echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
+
+      catpip="pythonsh/pyutils/catpip.py"
+
+      if [[ -f $catpip ]]
+      then
+        echo >/dev/stderr "pipfile: using distributed catpip: $catpip"
+      elif [[ -f pyutils/catpip.py ]]
+      then
+        echo >/dev/stderr "pipfile: using internal catpip: $catpip"
+        catpip="pyutils/catpip.py"
+      else
+        echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+        exit 1
+      fi
+
+      eval "pyenv exec python $catpip $pipdirs"
     ;;
 
 #
@@ -503,37 +581,81 @@ SHELL
     "locked")
       pipenv sync
     ;;
+    "all")
+      test -f Pipfile.lock || touch Pipfile.lock
+
+      pyenv exec python -m pip install --upgrade pip
+      pyenv exec python -m pip install --upgrade pipenv
+
+      pipenv install --dev
+
+      pyenv rehash
+      pipenv lock
+
+      # check for known security vulnerabilities
+      pipenv check
+    ;;
     "update")
-        pipenv install --skip-lock
+        pipenv update --skip-lock
         pyenv rehash
         pipenv lock
 
         pipenv check
     ;;
-    "update-all")
-        test -f Pipfile.lock || touch Pipfile.lock
-
-        pyenv exec python -m pip install --upgrade pip
-        pyenv exec python -m pip install --upgrade pipenv
-
-        pipenv install --dev
-
-        pyenv rehash
-        pipenv lock
-
-        # check for known security vulnerabilities
-        pipenv check
+    "remove")
+      shift
+      pipenv uninstall $@
     ;;
     "list")
         pipenv graph
     ;;
     "build")
-        pyenv exec python -m build
+      cat >setup.cfg <<SETUP
+[metadata]
+name=${BUILD_NAME}
 
-        find . -name '*.egg-info' -type d -print | xargs rm -r
-        find . -name '__pycache__' -type d -print | xargs rm -r
+[options]
+package_dir=
+    =${SOURCE}
 
-        test -f Pipfile.lock && rm Pipfile.lock
+include_package_data = True
+
+packages=${PACKAGES}
+SETUP
+    echo "generated: setup.cfg"
+    cat setup.cfg
+
+    for src_dir in $(ls "$SOURCE")
+    do
+      if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
+      then
+        echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
+      fi
+
+      repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
+
+      if [[ -n $repos ]]
+      then
+        echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
+      fi
+    done
+
+    if [[ -n "$BUILD_DATA" ]]
+    then
+      echo "${BUILD_DATA}" | tr -s ' ' '\n' >>MANIFEST.in
+    fi
+
+    echo "generated: MANIFEST.in"
+
+    cat MANIFEST.in
+
+    pyenv exec python -m build
+
+    find . -name '*.egg-info' -type d -print | xargs rm -r
+    find . -name '__pycache__' -type d -print | xargs rm -r
+
+    rm setup.cfg
+    test -f MANIFEST.in && rm MANIFEST.in
     ;;
 
 #
@@ -619,6 +741,9 @@ SHELL
 #
 # version control
 #
+    "verify")
+      exec git log --show-signature $@
+    ;;
     "status")
         git status
         git submodule foreach 'git status'
@@ -717,14 +842,50 @@ SHELL
         fi
     ;;
     "start")
+      shift
+
+      VERSION="$1"
+      resume=""
+
+      if [[ $VERSION == "resume" ]]
+      then
+        resume=$2
+        echo "attempting to resume at point: $resume"
+
+        if [[ $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+        then
+          source "python.sh"
+        else
+          echo "resume must be either: \"merge\" or \"pipfile\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
+          exit 1
+        fi
+      else
         if git diff --quiet
         then
-            echo ">>>working tree clean - proceeding with release: $VERSION"
+          echo ">>>working tree clean - proceeding with release: $VERSION"
         else
-            echo "working tree dirty - terminating release:"
+          echo "working tree dirty - terminating release:"
 
-            git status
-            exit 1
+          git status
+          exit 1
+        fi
+      fi
+
+      if [[ -z $resume ]]
+      then
+        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo "."
+        sleep 1
+
+        git flow release start $VERSION
+
+        if [[ $? -ne 0 ]]
+        then
+          echo "git flow release start $VERSION FAILED!"
+          exit 1
         fi
 
         echo -n ">>>please edit python.sh with an updated version in 3 seconds."
@@ -735,22 +896,46 @@ SHELL
         sleep 1
 
         $EDITOR python.sh || exit 1
-        source python.sh
 
         if [[ -f pyproject.toml ]]
         then
-            echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
-            sleep 1
-            echo -n "."
-            sleep 1
-            echo "."
-            sleep 1
+          echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
+          sleep 1
+          echo -n "."
+          sleep 1
+          echo "."
+          sleep 1
 
-            $EDITOR pyproject.toml || exit 1
+          $EDITOR pyproject.toml || exit 1
         fi
 
+        git add pyproject.toml python.sh
+      fi
+
+      if [[ -z $resume || $resume == "merge" ]]
+      then
+        echo -n ">>>merging work from develop in 3 seconds: "
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo -n "."
+        sleep 1
+        echo "."
+
+        if git merge --no-ff develop
+        then
+          echo "merge ok!"
+        else
+          echo "error result from merge, probably a conflict, please clean up manually and restart with ./py.sh start resume pipfile"
+        fi
+      fi
+
+      if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
+      then
         test -d releases || mkdir releases
         test -f Pipfile && pipenv lock
+
+        git add Pipfile.lock
 
         VER_PIP="releases/Pipfile-$VERSION"
         VER_LOCK="releases/Pipfile.lock-$VERSION"
@@ -758,25 +943,18 @@ SHELL
         test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
         test -f Pipfile && cp Pipfile $VER_PIP
 
-        git add python.sh
-
-        test -f pyproject.toml && git add pyproject.toml
-
         test -f $VER_PIP && git add $VER_PIP
         test -f $VER_LOCK && git add $VER_LOCK
+      fi
 
+      if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+      then
         echo ">>>commiting bump to to $VERSION"
 
-        git commit -m "bump to version $VERSION"
+        git commit -m "(release) release version: $VERSION"
+      fi
 
-        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
-        sleep 1
-
-        git flow release start $VERSION
+      echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
     "release")
         git flow release finish $VERSION || exit 1
@@ -786,6 +964,13 @@ SHELL
         git push origin develop:develop
 
         git push --tags
+    ;;
+    "purge")
+      for cache in $(find . -name '__pycache__' -type d -print)
+      do
+        echo "purging: $cache"
+        rm -r $cache
+      done
     ;;
     "help"|""|*)
         cat <<HELP
@@ -815,8 +1000,9 @@ virtual-list     = list virtual environments
 
 [initialization]
 
-bootstrap        = do a pip install of deps for pythonsh python utilities
-pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh
+minimal          = pythonsh only bootstrap for projects with only built-in deps
+bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 
 [using virtual and source paths]
 
@@ -843,8 +1029,9 @@ aws       = execute a aws cli command
 
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
-update     = update installed packages
-update-all = update pip and installed
+all        = update pip and pipenv install dependencies and dev, lock and check
+update     = update installed packages, lock and check
+remove     = uninstall the listed packages
 list       = list installed packages
 
 build      = build packages
@@ -858,6 +1045,7 @@ modall              = update all submodules
 
 [version control]
 
+verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
@@ -878,8 +1066,18 @@ sync       = merge from the root branch commits not in this branch no ff
 check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
+
+             for the first time pass version as an argument: "./py.sh start 1.0.0"
+
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile]
+             to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
+
+[misc]
+purge      = remove all the __pycache__ dirs
 HELP
     ;;
 esac
+
+exit 0
