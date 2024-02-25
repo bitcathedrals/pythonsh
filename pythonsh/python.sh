@@ -152,21 +152,12 @@ function install_project_virtualenv {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.9.4"
+    echo "pythonsh version is: 0.9.9"
   ;;
 
 #
 # tooling
 #
-    "tools-macos")
-        echo "installing brew tools"
-
-        brew update
-
-        brew install pyenv
-        brew install pyenv-virtualenv
-        brew install git-flow
-    ;;
     "tools-unix")
       echo "installing python environment tools for UNIX"
 
@@ -314,13 +305,7 @@ SHELL
         echo "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
-    "tools-update-macos")
-        brew update
 
-        brew upgrade pyenv
-        brew upgrade pyenv-virtualenv
-        brew upgrade git-flow
-    ;;
 #
 # virtual environments
 #
@@ -896,6 +881,7 @@ SETUP
         sleep 1
 
         $EDITOR python.sh || exit 1
+        git add python.sh
 
         if [[ -f pyproject.toml ]]
         then
@@ -907,9 +893,8 @@ SETUP
           sleep 1
 
           $EDITOR pyproject.toml || exit 1
+          git add pyproject.toml
         fi
-
-        git add pyproject.toml python.sh
       fi
 
       if [[ -z $resume || $resume == "merge" ]]
