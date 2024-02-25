@@ -2,44 +2,60 @@
 
 ## Goals
 
-pythonsh systematizes the tooling, development, building, release, and deployment of python projects.
+pythonsh systematizes the tooling, development, building, release, and
+deployment of python projects.
 
-It does this with a shell script that performs almost all of the necessary tasks using git, git-flow, pyenv, and python build - facilitating sophisticated use of key developer tools.
+It does this with a shell script that performs almost all of the
+necessary tasks using git, git-flow, pyenv, and python build -
+facilitating sophisticated use of key developer tools.
 
-The commands are all simple with almost all of them being single words with no arguments. pythonsh executes all the tools for you.
+The commands are all simple with almost all of them being single words
+with no arguments. pythonsh executes all the tools for you.
 
 ## History
 
-pythonsh emerged from years of trying to type out git commands that had no equivalent in graphical tools, and various hacked up shell scripts.
+pythonsh emerged from years of trying to type out git commands that
+had no equivalent in graphical tools, and various hacked up shell
+scripts.
 
-I decided to make a comprehensive script in a single place, and that I would distribute it via github and integrate it with git submodules which made it easy to keep up to date.
+I decided to make a comprehensive script in a single place, and that I
+would distribute it via github and integrate it with git submodules
+which made it easy to keep up to date.
 
-It hast vastly accelerated my development speed and systematically almost eliminated errors in project tasks.
+It hast vastly accelerated my development speed and systematically
+almost eliminated errors in project tasks.
 
 ## Design
 
-pythonsh is designed as a shell script that is easy to use on MacOS and Linux. The script is integrated into the repository as a submodule making it easy to update and integrate.
+pythonsh is designed as a shell script that is easy to use on MacOS
+and Linux. The script is integrated into the repository as a submodule
+making it easy to update and integrate.
 
-It uses single word commands and as much as possible it infers the arguments needed by the tools.
+It uses single word commands and as much as possible it infers the
+arguments needed by the tools.
 
 ### Tools
 
-pythonsh installs pyenv, pyenv-virtual, and git-flow using homebrew for MacOS.
+pythonsh installs pyenv, pyenv-virtual, and git-flow using homebrew
+for MacOS.
 
-It sets up virtual environment, wraps package installation and management, executes git commands, executes build commands, and executes release commands.
+It sets up virtual environment, wraps package installation and
+management, executes git commands, executes build commands, and
+executes release commands.
 
 ### Assumptions
 
 pythonsh assumes that you
 - initialized the git repo with "git init"
 - initialized the git-flow tool with "git flow init"
-- Have "build" package in your dev dependencies in Pipfile
 - have pyproject.toml if necessary setup correctly, and also the build backend of your choice configured.
 
 ## Installation
 
-The main script is [python.sh](pythonsh/python.sh). I install it as a git submodule
-using the script [pysh-install.sh](pythonsh/pysh-install.sh).
+The main script is [python.sh](pythonsh/python.sh). 
+
+I install it as a git submodule using the script
+[pysh-install.sh](pythonsh/pysh-install.sh).
 
 It has three commands:
 - "install" = install as a submodule using ssh for write access
@@ -68,24 +84,30 @@ It's a simple script so it's easy to verify that the script is safe.
 In the root of the repository I write a "python.sh" file like this:
 
 ```bash
-PYTHON_VERSION="3.10:latest"
+# pythonsh configuration file
+VERSION=0.9.8
 
-VIRTUAL_PREFIX="config"
+PACKAGES=pythonsh
+SOURCE=pyutils
 
-VERSION=0.7.2
+BUILD_NAME=pythonsh
 
-AWS_ROLE=<ARN>
-AWS_PROFILE=<credentials user>
+VIRTUAL_PREFIX='pythonsh'
+
+
+PYTHON_VERSION='3.12'
 ````
 
-PYTHON_VERSION: (required for python) version is the version of python for installing via pyenv.
+VERSION: the version of the sofware
 
-VIRTUAL_PREFIX: (required) the prefix for all the project names such as virtual environment names and package names.
+VIRTUAL_PREFIX: (required) the prefix for all the project names such
+as virtual environment names and package names.
 
-VERSION: (required) version of the repo.
+SOURCE: the source tree
 
-AWS_ROLE: (optional): the AWS role used to execute the command
-AWS_PROFILE: the credentials (which should also specify region) to use with the role.
+BUILD_NAME: the name of the package built
+
+PYTHON_VERSION: what version of python to use
 
 ### Python Configuration
 
@@ -105,95 +127,127 @@ Since "pyproject.toml" can use different backends and has many fields to set I w
 
 - tools-install = install pyenv and git-flow via homebrew
 - tools-zshrc   = install homebrew and pyenv commands into .zshrc
-- tools-update  = update pyenv and git-flow 
 
-Tooling commands install the necessary tools via homebrew which is a pervasive tool for installing open source software on MacOS.
+tools-install, tools-zshrc, tools-prompt all use git to install pyenv,
+pyenv-virtual, zshrc file, and zsh prompt extensions.
 
-If you are using Linux you need to install git, git-flow, pyenv, and pyenv-virtualenv
+if you need to update tools, you can call tools-install again.
 
-The .zshrc file appends several things to the Zsh login. It adds homebrew, pyenv, and the commands switch_dev, swich_test, and switch_release which switch to the different virtual environments that pythonsh creates.
+The .zshrc file appends several things to the Zsh login. It adds the
+commands switch_dev, swich_test, and switch_release which switch to
+the different virtual environments that pythonsh creates.
+
+switch_global <name> switches to a non-project specific virtualenv
 
 ## Use
 
-The "pysh-install.sh" commands create a link of "py.sh" to the python.sh script so you have a short name to type with the commands.
+The "pysh-install.sh" commands create a link of "py.sh" to the
+python.sh script so you have a short name to type with the commands.
 
 ```bash
 ./py.sh <command>
 ```
 
 
-Almost all of the commands are a single command except for:
-- python = execute python in pyenv with the args given
-- run = execute any command in pyenv with the args given
-- aws = execute awscli with the args given using the AWS_REGION, AWS_ROLE, and AWS_PROFILE as specified in the "python.sh" configuration file.
+# python.sh
 
+## [tools commands]
 
-### virtual environments
+tools-macos   = install pyenv and pyenv virtual from brew on MacOS
+tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
-- virtual-install  = install virtual environments:
-	- <VIRTUAL_PREFIX>_dev for general development
-	- <VIRTUAL_PREFIX>_test for testing packages and functionality
-	- <VIRTUAL_PREFIX>_release for keeping a release environment
-- virtual-destroy  = delete virtual environments
-- virtual-list     = list virtual environments
+tools-update-macos  = update tools from homebrew
 
-### python commands
+tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
-- test   = run tests
-- paths  = install source paths into the current virtual machine environment
-- python = execute python with remaining arguments passed to the interpreter
-- run    = execute a command in the virtual environment
+tools-update-macos  = update the pyenv tools and update pip/pipenv in the current virtual machine
 
-### AWS commands
+[virtual commands]
 
-- aws  = run an aws command
+project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
+global-virtual   = (VERSION, NAME): create NAME virtual environment
 
-### packages
+project-destroy  = delete all the project virtual environments
+global-destroy   = delete a global virtual environment
 
-- versions    = show the versions of everything
-- update      = update packages
-- update-all  = full update of pipenv and all packages
-- list        = graph packages
-- build       = build this project as a package, output in dist/
+virtual-list     = list virtual environments
 
-### version control
+## [initialization]
 
-- status   = status of repository
-- fetch    = fetch the current branch, main, and develop
-- pull     = pull the current branch no fast forward
-- sub      = pull submodules
-- staged   = show diff of staged files
-- history  = show commit history
-- merges   = show merges in history
-- summary  = show diffstat of the feature branch from develop or from develop to the last tag release
-- delta    = show the diff of the feature branch from develop or from develop to the last tag release
-- log      = show the log of the feature branch from develop or from develop to the last tag release
-- graph    = show a graph history from the feature branch from develop or from develop to 
-             the last tag release
-- upstream = show a log of the changes from main or develop that haven't been integrated into 
-             the current branch
-- sync     = merge from the root branch
+minimal          = pythonsh only bootstrap for projects with only built-in deps
+bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 
+## [using virtual and source paths]
 
-### release commands
+switch_dev       = switch to dev virtual environment
+switch_test      = switch to test virtual environment
+switch_release   = switch to release virtual environment
 
-- check   = fetch from main and develop, show logs of any commits from upstream not in the
-            develop or main branches. Also check that the working tree is clean.
+show-paths = list .pth source paths
+add-paths  = install .pth source paths into the python environment
+rm-paths   = remove .pth source paths
 
-- start
+## [python commands]
 
-	1. start an edit of python.sh to bump the version
-	2. reload python.sh and commit it
-	3. create a lock file and copy the Pipfile and lock file to releases/ with VERSION appended
-	4. start a git flow release with VERSION
+test    = run pytests
+python  = execute python in pyenv
+repl    = execute ptpython in pyenv
+run     = run a command in pyenv
 
-- release = run git flow release finish with VERSION
-- upload  = push main and develop and tags to origin
+## [aws commands]
 
+aws       = execute a aws cli command
 
-### my deploy commands
+## [package commands]
 
-- deploy-m1, deploy-intel
+versions   = display the versions of python and installed packages
+locked     = update from lockfile
+all        = update pip and pipenv install dependencies and dev, lock and check
+update     = update installed packages, lock and check
+remove     = uninstall the listed packages
+list       = list installed packages
 
-commands to deploy copying package files. These are specific to my configuration
-and can be ignored.
+build      = build packages
+
+## [submodule]
+modinit             = initialize and pull all submodules
+modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
+modupdate <module>  = pull the latest version of the module
+modrm  <submodule>  = delete a submodule
+modall              = update all submodules
+
+## [version control]
+
+verify     = show log with signatures for verification
+status     = git state, submodule state, diffstat for changes in tree
+fetch      = fetch main, develop, and current branch
+pull       = pull current branch no ff
+sub        = update submodules
+init       = init any bare submodules
+staged     = show staged changes
+merges     = show merges only
+history    = show commit history
+summary    = show diffstat of summary between feature and develop or last release and develop
+delta      = show diff between feature and develop or last release and develop
+log        = show log between feature and develop or last release and develop
+graph      = show history between feature and develop or last release and develop
+upstream   = show upstream changes that havent been merged yet
+sync       = merge from the root branch commits not in this branch no ff
+
+## [release]
+
+check      = fetch main, develop from origin and show log of any pending changes
+start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
+             snapshot Pipfile if present, and start a git flow release with VERSION
+
+             for the first time pass version as an argument: "./py.sh start 1.0.0"
+
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile]
+             to resume at that point in the flow.
+release    = execute git flow release finish with VERSION
+upload     = push main and develop branches and tags to remote
+
+[misc]
+purge      = remove all the __pycache__ dirs
