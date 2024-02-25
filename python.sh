@@ -1,5 +1,5 @@
 # pythonsh configuration file
-VERSION=0.9.8
+VERSION=0.9.9
 
 PACKAGES=pythonsh
 SOURCE=pyutils
