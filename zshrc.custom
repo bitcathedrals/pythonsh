@@ -27,5 +27,6 @@ alias pull='git pull --no-ff'
 alias push='git push'
 alias add='git add'
 alias co='git checkout'
+alias branch='git branch'
 
 export PATH="$PYENV_ROOT/bin:$PATH"
