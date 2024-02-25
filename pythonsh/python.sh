@@ -896,6 +896,7 @@ SETUP
         sleep 1
 
         $EDITOR python.sh || exit 1
+        git add python.sh
 
         if [[ -f pyproject.toml ]]
         then
@@ -907,9 +908,8 @@ SETUP
           sleep 1
 
           $EDITOR pyproject.toml || exit 1
+          git add pyproject.toml
         fi
-
-        git add pyproject.toml python.sh
       fi
 
       if [[ -z $resume || $resume == "merge" ]]
