@@ -741,6 +741,10 @@ SETUP
 #
 # version control
 #
+    "track")
+      shift
+      git branch -u $1/$2
+    ;;
     "verify")
       exec git log --show-signature $@
     ;;
@@ -1044,7 +1048,7 @@ modrm  <submodule>  = delete a submodule
 modall              = update all submodules
 
 [version control]
-
+track <1> <2>  = set upstream tracking 1=remote 2=branch
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
