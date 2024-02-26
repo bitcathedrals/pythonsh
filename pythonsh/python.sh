@@ -963,15 +963,10 @@ python.sh
 
 [tools commands]
 
-tools-macos   = install pyenv and pyenv virtual from brew on MacOS
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
-
-tools-update-macos  = update tools from homebrew
 
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
-
-tools-update-macos  = update the pyenv tools and update pip/pipenv in the current virtual machine
 
 [virtual commands]
 
