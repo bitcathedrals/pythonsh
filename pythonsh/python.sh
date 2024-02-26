@@ -745,6 +745,9 @@ SETUP
       shift
       git branch -u $1/$2
     ;;
+    "info")
+      git branch -vv
+    ;;
     "verify")
       exec git log --show-signature $@
     ;;
@@ -1049,6 +1052,7 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
+info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
