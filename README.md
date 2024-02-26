@@ -185,10 +185,6 @@ python.sh script so you have a short name to type with the commands.
 - repl    = execute ptpython in pyenv
 - run     = run a command in pyenv
 
-## [aws commands]
-
-- aws       = execute a aws cli command
-
 ## [package commands]
 
 - versions   = display the versions of python and installed packages
