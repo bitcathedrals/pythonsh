@@ -13,6 +13,12 @@ fi
 export EDITOR
 
 
+# if there is a file for crypto keys then add it
+if [[ -f $HOME/.crypto.sh ]]
+then
+  source $HOME/.crypto.sh
+fi
+
 PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$PATH"
 export PATH
 
