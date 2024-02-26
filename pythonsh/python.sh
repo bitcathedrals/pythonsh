@@ -509,55 +509,10 @@ SHELL
         exec pyenv exec $@
     ;;
 
- #
- # AWS commands
- #
-
-    "aws-creds")
-      shift
-
-      AWS_ROLE=$1
-
-      test -f aws.sh && source aws.sh
-
-      printf >${AWS_ROLE}.sh "export AWS_ACCESS_KEY_ID=\"%s\" AWS_SECRET_ACCESS_KEY=\"%s\" AWS_SESSION_TOKEN=\"%s\"" \
-                  $(aws sts assume-role \
-                    --role-arn $AWS_ROLE \
-                    --role-session-name pythonsh-cli-creds \
-                    --profile $PROFILE \
-                    --query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
-                    --output text)
-    ;;
-    "aws")
-        shift
-
-        test -f aws.sh && source aws.sh
-
-        role=""
-
-        if [[ -n $1 ]]
-        then
-          if echo "$1" | grep -E '^role='
-          then
-            role=$(echo $1 | cut -d '=' -f 2)
-
-            if [[ -f ${role}.sh ]]
-            then
-              source ${role}.sh
-              shift
-            else
-              echo "role file: ${role}.sh cound not be found"
-              exit 1
-            fi
-          fi
-        fi
-
-        aws $@ --profile $PROFILE --output json
-    ;;
-
 #
 # packages
 #
+
     "versions")
         pyenv version
         pyenv exec python --version
@@ -726,6 +681,13 @@ SETUP
 #
 # version control
 #
+    "track")
+      shift
+      git branch -u $1/$2
+    ;;
+    "info")
+      git branch -vv
+    ;;
     "verify")
       exec git log --show-signature $@
     ;;
@@ -963,15 +925,10 @@ python.sh
 
 [tools commands]
 
-tools-macos   = install pyenv and pyenv virtual from brew on MacOS
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
-
-tools-update-macos  = update tools from homebrew
 
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
-
-tools-update-macos  = update the pyenv tools and update pip/pipenv in the current virtual machine
 
 [virtual commands]
 
@@ -1006,10 +963,6 @@ python  = execute python in pyenv
 repl    = execute ptpython in pyenv
 run     = run a command in pyenv
 
-[aws commands]
-
-aws       = execute a aws cli command
-
 [package commands]
 
 versions   = display the versions of python and installed packages
@@ -1029,7 +982,8 @@ modrm  <submodule>  = delete a submodule
 modall              = update all submodules
 
 [version control]
-
+track <1> <2>  = set upstream tracking 1=remote 2=branch
+info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
