@@ -13,14 +13,49 @@ default_server = 'pypi'
 
 import toml
 
-repos=[]
+pipdirs = []
+
+pythonsh = {}
+
+repos = []
 release = {}
 build = {}
-requires={}
-global_section={}
+requires = {}
+global_section = {}
 
 open_brace = "{"
 close_brace = "}"
+
+def load_pythonsh():
+    with open('python.sh', 'r') as f:
+        for line in f:
+            stripped = line.strip()
+
+            if line[0] == '#':
+                continue
+
+            if stripped == '':
+                continue
+
+            split = stripped.split('=')
+
+            if len(split) == 2:
+                pythonsh[split[0]] = split[1].replace('\'', '').replace('\"', '')
+            else:
+                print(f'fpython.sh: line: "{line}" is malformed', file=sys.stderr)
+
+def load_project():
+    with open('project.toml', 'r') as f:
+        data = toml.load(f)
+    
+        project = data['project']
+
+        scripts = data['scripts']
+
+        return {
+            'project': project,
+            'scripts': scripts
+        }
 
 def expand_version(version):
     if version == "*":
@@ -34,22 +69,15 @@ def expand_version(version):
     return version
 
 def get_python_version():
-    pythonsh = open('python.sh', 'r')
-    
-    for line in pythonsh:
-        line = line.strip()
-        
-        if line.startswith('PYTHON_VERSION'):
-            v = line.split('=')[1].strip()
-
-            v = v.replace('"', '')
-            v = v.replace("'", '')
-
-            return v
+    if 'PYTHON_VERSION' in pythonsh:
+        return pythonsh['PYTHON_VERSION']
 
     return None
 
 def get_python_feature(spec):
+    if not spec:
+        return None
+
     v = spec.split('.')[0:2]
     
     return '.'.join(v)
@@ -100,7 +128,6 @@ def update_packages(filename, parse, section, table):
         table[pkg_name] = package_spec(name=pkg_name, version=pkg_ver, index=pkg_server)
 
 def update_variables(filename, parse, section, table):
-    
     for var_name in parse[section]:
         version = parse[section][var_name]
 
@@ -123,9 +150,9 @@ def update_build(filename, parse):
       update_packages(filename, parse, 'dev-packages', build)
 
 def update_requires(filename, parse):
-    pythonsh_version = expand_version(get_python_version())
-
     if 'requires' in parse:
+        pythonsh_version = expand_version(get_python_version())
+
         if 'python_version' in parse['requires']:
             requires_version = expand_version(parse['requires']['python_version'])
 
@@ -139,7 +166,10 @@ def update_requires(filename, parse):
         else:
             parse['requires']['python_version'] = get_python_feature(pythonsh_version)
     else:
-        parse['requires'] = {'python_version': get_python_feature(pythonsh_version)}
+        ver = get_python_feature(pythonsh_version)
+
+        if ver:
+            parse['requires'] = {'python_version': ver}
 
     update_variables(filename, parse,'requires', requires)
 
@@ -188,6 +218,29 @@ def load_pypi(repo_file):
 
     return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])
     
+def compile(*dirs):
+    load_pythonsh()
+
+    for module in dirs:
+        for repo_file in glob.glob(f'{module}/*.pypi'):
+            print(f'adding pypi server: {repo_file}', file=sys.stderr)
+            repos.append(load_pypi(repo_file))
+
+        pipfile = f'{module}/Pipfile'
+
+        if os.path.isfile(pipfile):
+            print (f'processing: {pipfile}', file=sys.stderr)
+
+            with open(pipfile) as file:
+                parse = toml.load(file)
+
+                update_release(pipfile, parse)
+                update_build(pipfile, parse)
+                update_requires(pipfile, parse)
+        else:
+            print(f'module spec: {module} does not have Pipfile - skipping', 
+                  file=sys.stderr)
+
 def print_pipfile():
     if global_section:
         print('[global]')
@@ -221,28 +274,94 @@ def print_pipfile():
         for pkg in requires:
             print(f'{pkg} = "{requires[pkg]}"')
 
-def exec():
-    for module in sys.argv[1:]:
-        for repo_file in glob.glob(f'{module}/*.pypi'):
-            print(f'adding pypi server: {repo_file}', file=sys.stderr)
-            repos.append(load_pypi(repo_file))
 
-        pipfile = f'{module}/Pipfile'
+def pyproject_deps(table):
+    deps = []
+    
+    for pkg, spec in table.items():
 
-        if os.path.isfile(pipfile):
-            print (f'processing: {pipfile}', file=sys.stderr)
+        ver = spec.version
 
-            with open(pipfile) as file:
-                parse = toml.load(file)
-
-                update_release(pipfile, parse)
-                update_build(pipfile, parse)
-                update_requires(pipfile, parse)
+        if spec.index == 'pypi':
+            if ver == '*':
+                deps.append(f'"{pkg}"')
+            else:
+                deps.append(f'"{pkg} ~= {ver}"')
         else:
-            print(f'module spec: {module} does not have Pipfile - skipping', 
-                  file=sys.stderr)
+            print(f'skipping package: {pkg} from private repo {spec.index}')
 
+    return "[" + ",".join(deps) + "]"
+
+def print_pyproject():
+    load_pythonsh()
+    project = load_project()
+
+    print('[build-systeml]')
+    print('build-backend = "setuptools.build_meta"')
+
+    print(f'requires = {pyproject_deps(build)}')
+
+    if 'SOURCE' in pythonsh:
+        print('[tool.setuptools.packages.find]')
+        print(f'where = ["{pythonsh["SOURCE"]}"]')
+
+    print('[project]')
+    
+    if 'BUILD_NAME' in pythonsh:
+        print(f'name = "{pythonsh["BUILD_NAME"]}"')
+    
+    if 'VERSION' in pythonsh:
+        print(f'version = "{pythonsh["VERSION"]}"')
+
+    if 'LICENSE' in pythonsh:
+        print(f'license = "{project["LICENSE"]}')
+    
+    print(f'readme = "README.md"')
+
+    if 'description' in project:
+        print(f'description = \"{project["description"]}\"')
+    
+    if 'authors' in project:
+        print(f'authors = "{project["authors"]}"')
+
+    print(f'dependencies = {pyproject_deps(release)}')
+
+
+    if 'homepage' in project or 'repository' in project:
+        print('[project.urls]')
+    
+        if 'homepage' in project:
+            print(f'homepage = "{project["homepage"]}"')
+        if 'repository' in project:
+            print(f'repository = "{project["repository"]}"')
+    
+    if 'scripts' in project:
+        print('[project.scripts]')
+        for name, path in project['scripts'].items():
+            print(f'{name} = "{path}"')
+
+def pipfile(pipdirs):
+    compile(*pipdirs)
+    
     print_pipfile()
 
+def project(pipdirs):
+    compile(*pipdirs)
+
+    load_project()
+    print_pyproject()
+
 if __name__ == '__main__':
-    exec()
+    pipdirs = sys.argv[2:]
+
+    if sys.argv[1] == 'pipfile':
+        pipfile(pipdirs)
+        exit(0)
+
+    if sys.argv[1] == 'project':
+        project(pipdirs)
+        exit(0)
+
+    print('unknown command {sys.argv[1]}')
+    exit(1)
+    

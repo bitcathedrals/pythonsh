@@ -150,6 +150,61 @@ function install_project_virtualenv {
   return 0
 }
 
+function find_deps {
+  pipdirs="pythonsh"
+
+  for dep_dir in $(find ${SOURCE} -type d -depth 1 -print 2>/dev/null)
+  do
+    repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
+
+    if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
+    then
+      pipdirs="${pipdirs} ${dep_dir}"
+    fi
+  done
+
+  site_dir=$(pyenv exec python -m site | grep 'site-packages' | grep -v USER_SITE | sed -e 's,^ *,,' | sed -e s/,//g | sed -e s/\'//g)
+
+  echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
+
+  for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+  do
+    if [[ ! `basename $dep_dir` == 'examples' ]]
+    then
+      repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
+
+      if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
+      then
+        pipdirs="${pipdirs} ${dep_dir}"
+      fi
+    fi
+  done
+
+  echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
+}
+
+function find_catpip {
+  catpip="pythonsh/pyutils/catpip.py pipfile"
+
+  if command -v catpip >/dev/null 2>&1
+  then
+    echo >/dev/stderr "pipfile: using installed catpip: catpip"
+    catpip="catpip"
+  elif [[ -f pythonsh/pyutils/catpip.py ]]
+  then
+    echo >/dev/stderr "pipfile: using distributed catpip: pythonsh/pyutils/catpip.py"
+    catpip="pythonsh/pyutils/catpip.py"
+  elif [[ -f pyutils/catpip.py ]]
+  then
+    echo >/dev/stderr "pipfile: using internal catpip: pyutils/catpip.py"
+    catpip="pyutils/catpip.py"
+   else
+     echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+     exit 1
+   fi
+}
+
+
 case $1 in
   "version")
     echo "pythonsh version is: 0.9.9"
@@ -409,58 +464,21 @@ SHELL
       echo "bootstrap complete"
     ;;
     "pipfile")
-      pipdirs="pythonsh"
+      find_deps
+      find_catpip
 
-      for dep_dir in $(find src -type d -depth 1 -print 2>/dev/null)
-      do
-        repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
+      eval "pyenv exec python $catpip pipfile $pipdirs"
+    ;;
+    "project")
+      find_deps
+      find_catpip
 
-        if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
-        then
-          pipdirs="${pipdirs} ${dep_dir}"
-        fi
-      done
-
-      site_dir=$(pyenv exec python -m site | grep 'site-packages' | grep -v USER_SITE | sed -e 's,^ *,,' | sed -e s/,//g | sed -e s/\'//g)
-
-      echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
-
-      for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
-      do
-        if [[ ! `basename $dep_dir` == 'examples' ]]
-        then
-           repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
-
-           if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
-           then
-             pipdirs="${pipdirs} ${dep_dir}"
-           fi
-        fi
-      done
-
-      echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
-
-      catpip="pythonsh/pyutils/catpip.py"
-
-      if [[ -f $catpip ]]
-      then
-        echo >/dev/stderr "pipfile: using distributed catpip: $catpip"
-      elif [[ -f pyutils/catpip.py ]]
-      then
-        echo >/dev/stderr "pipfile: using internal catpip: $catpip"
-        catpip="pyutils/catpip.py"
-      else
-        echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
-        exit 1
-      fi
-
-      eval "pyenv exec python $catpip $pipdirs"
+      eval "pyenv exec python $catpip project $pipdirs"
     ;;
 
 #
 # python commands
 #
-
     "test")
         shift
         pyenv exec python -m pytest tests $@
@@ -550,52 +568,55 @@ SHELL
         pipenv graph
     ;;
     "build")
-      cat >setup.cfg <<SETUP
-[metadata]
-name=${BUILD_NAME}
+      $0 project >pyproject.toml
 
-[options]
-package_dir=
-    =${SOURCE}
+      for src_dir in $(ls "$SOURCE")
+      do
+        if [[ $src_dir == "Pipfile" ]]
+        then
+          echo "include $SOURCE/Pipfile" >>MANIFEST.in
+          repos=$(ls ${SOURCE}/*.pypi 2>/dev/null)
 
-include_package_data = True
+          if [[ -n $repos ]]
+          then
+            echo "include $SOURCE/*.pypi" >>MANIFEST.in
+          fi
+        fi
 
-packages=${PACKAGES}
-SETUP
-    echo "generated: setup.cfg"
-    cat setup.cfg
+        if [[ -d "$SOURCE/${src_dir}" ]]
+        then
+          if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
+          then
+            echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
+          fi
 
-    for src_dir in $(ls "$SOURCE")
-    do
-      if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
+          repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
+
+          if [[ -n $repos ]]
+          then
+            echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
+          fi
+        fi
+      done
+
+      if [[ -n "$BUILD_DATA" ]]
       then
-        echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
+        echo "${BUILD_DATA}" | tr -s ' ' '\n' | sed -e 's,^,include ,' >>MANIFEST.in
       fi
 
-      repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
-
-      if [[ -n $repos ]]
+      if [[ -f MANIFEST.in ]]
       then
-        echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
+        echo "generated: MANIFEST.in"
+
+        cat MANIFEST.in
       fi
-    done
 
-    if [[ -n "$BUILD_DATA" ]]
-    then
-      echo "${BUILD_DATA}" | tr -s ' ' '\n' >>MANIFEST.in
-    fi
+      pyenv exec python -m build
 
-    echo "generated: MANIFEST.in"
+      find . -name '*.egg-info' -type d -print | xargs rm -r
+      find . -name '__pycache__' -type d -print | xargs rm -r
 
-    cat MANIFEST.in
-
-    pyenv exec python -m build
-
-    find . -name '*.egg-info' -type d -print | xargs rm -r
-    find . -name '__pycache__' -type d -print | xargs rm -r
-
-    rm setup.cfg
-    test -f MANIFEST.in && rm MANIFEST.in
+      test -f MANIFEST.in && rm MANIFEST.in
     ;;
 
 #
@@ -945,6 +966,7 @@ virtual-list     = list virtual environments
 minimal          = pythonsh only bootstrap for projects with only built-in deps
 bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
+project          = generate a pyproject.toml file
 
 [using virtual and source paths]
 

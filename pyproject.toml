@@ -1,25 +1,13 @@
-[build-system]
-requires = ["setuptools", "wheel"]
+[build-systeml]
 build-backend = "setuptools.build_meta"
-
+requires = ["build","ptpython","pytest","pytest-ordering","pytest-dependency","pipenv","pip"]
+[tool.setuptools.packages.find]
+where = ["pyutils"]
 [project]
 name = "pythonsh"
 version = "0.10.0"
-
-license = { file = "LICENSE" }
-
 readme = "README.md"
-
-description = "python development tools"
-authors = [ { name = "Michael Mattie" , email = "codermattie@runbox.com" } ]
-
-dependencies = ['toml','versions']
-
-[project.urls]
-homepage = "https://github.com/bitcathedrals/pythonsh/"
-repository = "https://github.com/bitcathedrals/pythonsh.git"
-
+dependencies = ["toml","version-parser"]
 [project.scripts]
-catpip = "pyutils.catpip.py:exec"
-
-
+catpip = "pyutils.catpip.py:pipfile"
+catproject = "pyutils.catpip:pyproject"
