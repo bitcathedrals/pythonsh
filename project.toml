@@ -1,0 +1,11 @@
+
+[project]
+description = "python development tools"
+authors = [ { name = "Michael Mattie" , email = "codermattie@runbox.com" } ]
+
+homepage = "https://github.com/bitcathedrals/pythonsh/"
+repository = "https://github.com/bitcathedrals/pythonsh.git"
+
+[scripts]
+catpip = "pyutils.catpip.py:pipfile"
+catproject = "pyutils.catpip:pyproject"
