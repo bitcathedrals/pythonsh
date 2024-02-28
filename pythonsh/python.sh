@@ -782,7 +782,7 @@ SHELL
         then
           source "python.sh"
         else
-          echo "resume must be either: \"merge\" or \"pipfile\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
+          echo "resume must be either: \"merge\" or \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
           exit 1
         fi
       else
@@ -824,18 +824,10 @@ SHELL
         $EDITOR python.sh || exit 1
         git add python.sh
 
-        if [[ -f pyproject.toml ]]
-        then
-          echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
-          sleep 1
-          echo -n "."
-          sleep 1
-          echo "."
-          sleep 1
+        echo -n ">>>regenerating pyproject.toml."
 
-          $EDITOR pyproject.toml || exit 1
-          git add pyproject.toml
-        fi
+        $0 project
+        git add pyproject.toml
       fi
 
       if [[ -z $resume || $resume == "merge" ]]
@@ -988,7 +980,7 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
 
              for the first time pass version as an argument: "./py.sh start 1.0.0"
 
-             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile]
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile|commit]
              to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
