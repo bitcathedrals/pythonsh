@@ -608,7 +608,7 @@ SHELL
         exit 1
       fi
 
-      if (cd $1 && git pull --no-ff)
+      if (cd $1 && git pull)
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
@@ -654,7 +654,9 @@ SHELL
       fi
     ;;
     "modall")
-       git submodule foreach 'git pull --no-ff'
+      echo "all submodule updating..."
+      git submodule update --init --recursive || exit 1
+      echo "all submodule update done."
     ;;
 #
 # version control
