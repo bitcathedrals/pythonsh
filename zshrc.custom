@@ -2,11 +2,16 @@ EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
 
 if [[ ! -x $EDITOR ]]
 then
-  if command -v nano >/dev/null 2>&1
+  if command -v emacsclient >/dev/null 2>&1
   then
-    EDITOR=nano
+    EDITOR=emacsclient
   else
-    echo "WARNING: zshrc.custom no editor found!"
+    if command -v nano >/dev/null 2>&1
+    then
+      EDITOR=nano
+    else
+      echo "WARNING: zshrc.custom no editor found!"
+    fi
   fi
 fi
 

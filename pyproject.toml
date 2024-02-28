@@ -7,7 +7,7 @@ where = ["."]
 "*" = ["Pipfile", "*.pypi"]
 [project]
 name = "pythonsh"
-version = "0.10.0"
+version = "0.11.0"
 readme = "README.md"
 dependencies = ["toml","version-parser"]
 [project.scripts]
