@@ -570,53 +570,10 @@ SHELL
     "build")
       $0 project >pyproject.toml
 
-      for src_dir in $(ls "$SOURCE")
-      do
-        if [[ $src_dir == "Pipfile" ]]
-        then
-          echo "include $SOURCE/Pipfile" >>MANIFEST.in
-          repos=$(ls ${SOURCE}/*.pypi 2>/dev/null)
-
-          if [[ -n $repos ]]
-          then
-            echo "include $SOURCE/*.pypi" >>MANIFEST.in
-          fi
-        fi
-
-        if [[ -d "$SOURCE/${src_dir}" ]]
-        then
-          if [[ -f "$SOURCE/${src_dir}/Pipfile" ]]
-          then
-            echo "include $SOURCE/${src_dir}/Pipfile" >>MANIFEST.in
-          fi
-
-          repos=$(ls ${SOURCE}/${src_dir}/*.pypi 2>/dev/null)
-
-          if [[ -n $repos ]]
-          then
-            echo "include $SOURCE/{$src_dir}/*.pypi" >>MANIFEST.in
-          fi
-        fi
-      done
-
-      if [[ -n "$BUILD_DATA" ]]
-      then
-        echo "${BUILD_DATA}" | tr -s ' ' '\n' | sed -e 's,^,include ,' >>MANIFEST.in
-      fi
-
-      if [[ -f MANIFEST.in ]]
-      then
-        echo "generated: MANIFEST.in"
-
-        cat MANIFEST.in
-      fi
-
       pyenv exec python -m build
 
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
-
-      test -f MANIFEST.in && rm MANIFEST.in
     ;;
 
 #

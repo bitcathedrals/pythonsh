@@ -296,7 +296,7 @@ def print_pyproject():
     load_pythonsh()
     project = load_project()
 
-    print('[build-systeml]')
+    print('[build-system]')
     print('build-backend = "setuptools.build_meta"')
 
     print(f'requires = {pyproject_deps(build)}')
@@ -305,6 +305,9 @@ def print_pyproject():
         print('[tool.setuptools.packages.find]')
         print(f'where = ["{pythonsh["SOURCE"]}"]')
 
+    print('[tool.setuptools.package-data]')
+    print(f'"*" = ["Pipfile", "*.pypi"]')
+    
     print('[project]')
     
     if 'BUILD_NAME' in pythonsh:

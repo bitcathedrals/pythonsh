@@ -1,8 +1,10 @@
-[build-systeml]
+[build-system]
 build-backend = "setuptools.build_meta"
 requires = ["build","ptpython","pytest","pytest-ordering","pytest-dependency","pipenv","pip"]
 [tool.setuptools.packages.find]
-where = ["pyutils"]
+where = ["."]
+[tool.setuptools.package-data]
+"*" = ["Pipfile", "*.pypi"]
 [project]
 name = "pythonsh"
 version = "0.10.0"
