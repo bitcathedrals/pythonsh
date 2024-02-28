@@ -581,7 +581,6 @@ SHELL
 #
     "modinit")
       git submodule init
-      git submodule update
     ;;
     "modadd")
       shift
