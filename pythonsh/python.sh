@@ -252,16 +252,16 @@ case $1 in
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
-DEFAULT_PYPENV="\$HOME/.pyenv/"
-
-test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
-
 if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
    which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
+
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
+
+DEFAULT_PYPENV="\$HOME/.pyenv/"
 
 if ! command -v pyenv >/dev/null 2>&1
 then
