@@ -773,6 +773,14 @@ SHELL
       VERSION="$1"
       resume=""
 
+      if pyenv exec python --version >/dev/null 2>&1
+      then
+        echo ">>> pyenv python found."
+      else
+        echo ">>> pyenv python NOT FOUND! exiting now!"
+        exit 1
+      fi
+
       if [[ $VERSION == "resume" ]]
       then
         resume=$2
@@ -823,6 +831,9 @@ SHELL
 
         $EDITOR python.sh || exit 1
         git add python.sh
+
+        echo ">>>re-loading python.sh"
+        source python.sh
 
         if [[ -f pyproject.toml ]]
         then
