@@ -773,6 +773,14 @@ SHELL
       VERSION="$1"
       resume=""
 
+      if pyenv exec python --version >/dev/null 2>&1
+      then
+        echo ">>> pyenv python found."
+      else
+        echo ">>> pyenv python NOT FOUND! exiting now!"
+        exit 1
+      fi
+
       if [[ $VERSION == "resume" ]]
       then
         resume=$2
@@ -824,10 +832,17 @@ SHELL
         $EDITOR python.sh || exit 1
         git add python.sh
 
-        echo -n ">>>regenerating pyproject.toml."
+        echo ">>>re-loading python.sh"
+        source python.sh
 
-        $0 project
-        git add pyproject.toml
+
+        if [[ -f Pipfile ]]
+        then
+          echo -n ">>>regenerating pyproject.toml."
+
+          $0 project
+          git add pyproject.toml
+        fi
       fi
 
       if [[ -z $resume || $resume == "merge" ]]
@@ -850,19 +865,22 @@ SHELL
 
       if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
       then
-        test -d releases || mkdir releases
-        test -f Pipfile && pipenv lock
+        if [[ -f Pipfile ]]
+        then
+          test -d releases || mkdir releases
+          test -f Pipfile && pipenv lock
 
-        git add Pipfile.lock
+          git add Pipfile.lock
 
-        VER_PIP="releases/Pipfile-$VERSION"
-        VER_LOCK="releases/Pipfile.lock-$VERSION"
+          VER_PIP="releases/Pipfile-$VERSION"
+          VER_LOCK="releases/Pipfile.lock-$VERSION"
 
-        test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
-        test -f Pipfile && cp Pipfile $VER_PIP
+          test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
+          test -f Pipfile && cp Pipfile $VER_PIP
 
-        test -f $VER_PIP && git add $VER_PIP
-        test -f $VER_LOCK && git add $VER_LOCK
+          test -f $VER_PIP && git add $VER_PIP
+          test -f $VER_LOCK && git add $VER_LOCK
+        fi
       fi
 
       if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
