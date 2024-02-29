@@ -252,16 +252,16 @@ case $1 in
        echo "adding shell code to .zshrc, you may need to edit the file."
 
         cat >>~/.zshrc <<SHELL
-DEFAULT_PYPENV="\$HOME/.pyenv/"
-
-test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
-
 if [[ -f \$HOME/homebrew/bin/brew ]]
 then
     eval "\$(\$HOME/homebrew/bin/brew shellenv)"
 else
    which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
 fi
+
+test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
+
+DEFAULT_PYPENV="\$HOME/.pyenv/"
 
 if ! command -v pyenv >/dev/null 2>&1
 then
@@ -790,7 +790,7 @@ SHELL
         then
           source "python.sh"
         else
-          echo "resume must be either: \"merge\" or \"pipfile\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
+          echo "resume must be either: \"merge\" or \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
           exit 1
         fi
       else
@@ -835,16 +835,12 @@ SHELL
         echo ">>>re-loading python.sh"
         source python.sh
 
-        if [[ -f pyproject.toml ]]
-        then
-          echo -n ">>>please edit pyproject.toml with an updated version in 3 seconds."
-          sleep 1
-          echo -n "."
-          sleep 1
-          echo "."
-          sleep 1
 
-          $EDITOR pyproject.toml || exit 1
+        if [[ -f Pipfile ]]
+        then
+          echo -n ">>>regenerating pyproject.toml."
+
+          $0 project
           git add pyproject.toml
         fi
       fi
@@ -869,19 +865,22 @@ SHELL
 
       if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
       then
-        test -d releases || mkdir releases
-        test -f Pipfile && pipenv lock
+        if [[ -f Pipfile ]]
+        then
+          test -d releases || mkdir releases
+          test -f Pipfile && pipenv lock
 
-        git add Pipfile.lock
+          git add Pipfile.lock
 
-        VER_PIP="releases/Pipfile-$VERSION"
-        VER_LOCK="releases/Pipfile.lock-$VERSION"
+          VER_PIP="releases/Pipfile-$VERSION"
+          VER_LOCK="releases/Pipfile.lock-$VERSION"
 
-        test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
-        test -f Pipfile && cp Pipfile $VER_PIP
+          test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
+          test -f Pipfile && cp Pipfile $VER_PIP
 
-        test -f $VER_PIP && git add $VER_PIP
-        test -f $VER_LOCK && git add $VER_LOCK
+          test -f $VER_PIP && git add $VER_PIP
+          test -f $VER_LOCK && git add $VER_LOCK
+        fi
       fi
 
       if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
@@ -999,7 +998,7 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
 
              for the first time pass version as an argument: "./py.sh start 1.0.0"
 
-             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile]
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile|commit]
              to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
