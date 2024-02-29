@@ -835,7 +835,6 @@ SHELL
         echo ">>>re-loading python.sh"
         source python.sh
 
-
         if [[ -f Pipfile ]]
         then
           echo -n ">>>regenerating pyproject.toml."
