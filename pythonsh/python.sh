@@ -775,12 +775,16 @@ SHELL
       VERSION="$1"
       resume=""
 
-      if pyenv exec python --version >/dev/null 2>&1
+      # if python project check for python
+      if [[ -f Pipfile ]]
       then
-        echo ">>> pyenv python found."
-      else
-        echo ">>> pyenv python NOT FOUND! exiting now!"
-        exit 1
+        if pyenv exec python --version >/dev/null 2>&1
+        then
+          echo ">>> pyenv python found."
+        else
+          echo ">>> pyenv python NOT FOUND! exiting now!"
+          exit 1
+        fi
       fi
 
       if [[ $VERSION == "resume" ]]
