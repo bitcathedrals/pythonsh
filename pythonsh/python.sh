@@ -596,6 +596,7 @@ SHELL
         echo "pythonsh: add ok. please remember to commit"
       else
         echo "pythonsh: add failed. cleanup required."
+        exit 1
       fi
     ;;
     "modupdate")
@@ -607,11 +608,12 @@ SHELL
         exit 1
       fi
 
-      if (cd $1 && git pull)
+      if git submodule update --remote $1
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
         echo "pythonsh: update failed. cleanup required."
+        exit 1
       fi
     ;;
     "modbranch")
