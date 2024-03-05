@@ -74,12 +74,11 @@ function deactivate_if_needed {
 
 function latest_virtualenv_python {
   VERSION=$1
-  escaped=$(echo "${VERSION}" | sed -e 's/\./\\\./g')
 
-  LATEST_PYTHON=`pyenv versions | grep -E "^ *${escaped}\\\.[0-9]+\$" | sed -e "s,^ *,,"`
+  LATEST_PYTHON=`pyenv versions | tr -s ' ' | sed -e 's,^ ,,' | cut -d '/' -f 1 | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -u -r`
   export LATEST_PYTHON
 
-  echo "Using Python version ${LATEST_PYTHON}"
+  echo "Python Latest Version: ${LATEST_PYTHON}"
 
   return 0
 }
@@ -131,19 +130,19 @@ function install_project_virtualenv {
 
   if [[ -n $ENV_ONE ]]
   then
-    echo -n "pythonsh - building: ${ENV_ONE}...."
+    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
 
   if [[ -n $ENV_TWO ]]
   then
-    echo -n "pythonsh - building: ${ENV_TWO}...."
+    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
   if [[ -n $ENV_THREE ]]
   then
-    echo -n "pythonsh - building: ${ENV_THREE}..."
+    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_THREE}..."
     install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
   fi
 
@@ -924,7 +923,7 @@ tools-prompt        = install prompt support with pyeenv, git, and project in th
 project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
 global-virtual   = (VERSION, NAME): create NAME virtual environment
 
-project-destroy  = delete all the project virtual environments
+project-destroy  = delete all the project virtual edenvironments
 global-destroy   = delete a global virtual environment
 
 virtual-list     = list virtual environments
@@ -1010,3 +1009,4 @@ HELP
 esac
 
 exit 0
+
