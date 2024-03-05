@@ -83,6 +83,10 @@ function latest_virtualenv_python {
   return 0
 }
 
+function show_all_python_versions {
+  pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
+}
+
 function install_virtualenv_python {
   setup_pyenv
 
@@ -96,8 +100,8 @@ function install_virtualenv_python {
   then
     echo "Success!"
   else
+    show_all_python_versions
     echo "FAILED! - likey a bad version - showing available versions"
-    pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
     exit 1
   fi
 
@@ -209,7 +213,7 @@ function find_catpip {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.9.9"
+    echo "pythonsh version is: 0.11.3"
   ;;
 
 #
@@ -366,6 +370,9 @@ SHELL
 #
 # virtual environments
 #
+    "python-versions")
+      show_all_python_versions
+    ;;
     "project-virtual")
         setup_pyenv
 
@@ -936,6 +943,7 @@ tools-prompt        = install prompt support with pyeenv, git, and project in th
 
 [virtual commands]
 
+python-versions  = list the available python versions
 project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
 global-virtual   = (VERSION, NAME): create NAME virtual environment
 
