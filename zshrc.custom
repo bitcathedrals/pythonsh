@@ -44,7 +44,6 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 
 
 system=`uname`
-#echo "ssh-agent: - host is \"$system\""
 
 function launch_ssh_agent {
   if [[ "$system" == "Darwin" ]]
