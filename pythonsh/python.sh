@@ -772,6 +772,18 @@ SHELL
     "start")
       shift
 
+      $0 check
+
+      read -p "Proceed? [y/n]: " proceed
+
+      if [[ $proceed = "y" ]]
+      then
+        echo ">>> proceeding with release start!"
+      else
+        echo ">>> ABORT! exiting now!"
+        exit 1
+      fi
+
       VERSION="$1"
       resume=""
 
