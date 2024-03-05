@@ -213,7 +213,7 @@ function find_catpip {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.11.3"
+    echo "pythonsh version is: 0.12.0"
   ;;
 
 #
