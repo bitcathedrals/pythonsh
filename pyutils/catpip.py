@@ -4,7 +4,7 @@ import glob
 from pathlib import Path
 import re
 from collections import namedtuple
-
+from subprocess import Popen, PIPE
 from version_parser import Version
 
 package_spec = namedtuple('package_spec', ['name','version', 'index'])
@@ -40,7 +40,7 @@ def load_pythonsh():
             split = stripped.split('=')
 
             if len(split) == 2:
-                pythonsh[split[0]] = split[1].replace('\'', '').replace('\"', '')
+                pythonsh[split[0]] = split[1].replace('\'', '').replace('"', '')
             else:
                 print(f'fpython.sh: line: "{line}" is malformed', file=sys.stderr)
 
@@ -77,9 +77,9 @@ def get_python_version():
 def get_python_feature(spec):
     if not spec:
         return None
-
-    v = spec.split('.')[0:2]
     
+    v = spec.split('.')[0:2]
+
     return '.'.join(v)
 
 def strip_pipfile_version_operators(spec):
@@ -150,8 +150,8 @@ def update_build(filename, parse):
       update_packages(filename, parse, 'dev-packages', build)
 
 def update_requires(filename, parse):
-    if 'requires' in parse:
-        pythonsh_version = expand_version(get_python_version())
+    if 'requires' in parse and 'python_version' in parse['requires']:
+        pythonsh_version = expand_version(get_python_version(parse['requires']['python_version']))
 
         if 'python_version' in parse['requires']:
             requires_version = expand_version(parse['requires']['python_version'])
@@ -166,10 +166,28 @@ def update_requires(filename, parse):
         else:
             parse['requires']['python_version'] = get_python_feature(pythonsh_version)
     else:
-        ver = get_python_feature(pythonsh_version)
+        ver = get_python_feature(pythonsh['PYTHON_VERSION'])
 
         if ver:
             parse['requires'] = {'python_version': ver}
+        else:
+            print('no python version found in requires section or python.sh: attempting to find latest.', 
+                  file=sys.stderr)
+            
+            pyenv_list_command = 'pyenv install -l | sed -e \'s,^ *,,\' | grep -E \'^[0-9]+\.[0-9]+\.[0-9]+$\' | sort -u -V -r'
+
+            process = Popen([pyenv_list_command],shell=True,
+                            text=True,
+                            stdout=PIPE)
+            
+            output = process.communicate()[0].decode()
+
+            for line in output.split('\n'):
+                if not line:
+                    continue
+
+                ver = get_python_feature(line.strip())
+                break
 
     update_variables(filename, parse,'requires', requires)
 
