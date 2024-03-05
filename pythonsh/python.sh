@@ -361,9 +361,14 @@ function switch_global {
   return 0
 }
 SHELL
+      echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
+    ;;
+    "tools-custom")
+      echo >/dev/stderr "replacing .zshrc.custom with upstream version"
+      cp zshrc.custom ~/.zshrc.custom
     ;;
     "tools-prompt")
-        echo "installing standard prompt with pyenv and github support"
+        echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
 
@@ -939,6 +944,7 @@ python.sh
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]

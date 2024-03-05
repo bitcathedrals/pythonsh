@@ -42,11 +42,8 @@ alias branch='git branch'
 
 export PATH="$PYENV_ROOT/bin:$PATH"
 
-
-system=`uname`
-
 function launch_ssh_agent {
-  if [[ "$system" == "Darwin" ]]
+  if [[ `uname` == "Darwin" ]]
   then
     echo "ssh-agent: on Darwin - not starting the ssh-agent."
     return
