@@ -75,12 +75,16 @@ function deactivate_if_needed {
 function latest_virtualenv_python {
   VERSION=$1
 
-  LATEST_PYTHON=`pyenv versions | tr -s ' ' | sed -e 's,^ ,,' | cut -d '/' -f 1 | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -u -r`
+  LATEST_PYTHON=`pyenv versions | tr -s ' ' | sed -e 's,^ ,,' | cut -d '/' -f 1 | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -u -V -r | head -n 1`
   export LATEST_PYTHON
 
   echo "Python Latest Version: ${LATEST_PYTHON}"
 
   return 0
+}
+
+function show_all_python_versions {
+  pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
 }
 
 function install_virtualenv_python {
@@ -92,10 +96,13 @@ function install_virtualenv_python {
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if ! pyenv install -v --skip-existing $VERSION
+  if pyenv install -v --skip-existing $VERSION
   then
-    echo "FAILED!"
-    return 1
+    echo "Success!"
+  else
+    show_all_python_versions
+    echo "FAILED! - likey a bad version - showing available versions"
+    exit 1
   fi
 
   latest_virtualenv_python $VERSION
@@ -206,7 +213,7 @@ function find_catpip {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.9.9"
+    echo "pythonsh version is: 0.12.0"
   ;;
 
 #
@@ -354,15 +361,23 @@ function switch_global {
   return 0
 }
 SHELL
+      echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
+    ;;
+    "tools-custom")
+      echo >/dev/stderr "replacing .zshrc.custom with upstream version"
+      cp zshrc.custom ~/.zshrc.custom
     ;;
     "tools-prompt")
-        echo "installing standard prompt with pyenv and github support"
+        echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
 
 #
 # virtual environments
 #
+    "python-versions")
+      show_all_python_versions
+    ;;
     "project-virtual")
         setup_pyenv
 
@@ -376,13 +391,13 @@ SHELL
         VERSION="$1"
         NAME="$2"
 
-        if [[ -n "$VERSION" ]]
+        if [[ -z "$VERSION" ]]
         then
           echo "global-virtual: VERSION (first argument) is missing."
           exit 1
         fi
 
-        if [[ -n "$NAME" ]]
+        if [[ -z "$NAME" ]]
         then
           echo "global-virtual NAME (second argument) is missing."
           exit 1
@@ -390,11 +405,7 @@ SHELL
 
         setup_pyenv
 
-        install_virtualenv_python $VERSION || exit 1
-
-        echo -n "creating global virtual environment: ${NAME} from ${LATEST_PYTHON}"
-
-        install_virtualenv $LATEST_PYTHON $NAME || exit 1
+        install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
@@ -595,6 +606,7 @@ SHELL
         echo "pythonsh: add ok. please remember to commit"
       else
         echo "pythonsh: add failed. cleanup required."
+        exit 1
       fi
     ;;
     "modupdate")
@@ -606,11 +618,12 @@ SHELL
         exit 1
       fi
 
-      if (cd $1 && git pull)
+      if git submodule update --remote $1
       then
         echo "pythonsh: update ok. please remember to test and commit."
       else
         echo "pythonsh: update failed. cleanup required."
+        exit 1
       fi
     ;;
     "modbranch")
@@ -769,15 +782,31 @@ SHELL
     "start")
       shift
 
+      $0 check
+
+      read -p "Proceed? [y/n]: " proceed
+
+      if [[ $proceed = "y" ]]
+      then
+        echo ">>> proceeding with release start!"
+      else
+        echo ">>> ABORT! exiting now!"
+        exit 1
+      fi
+
       VERSION="$1"
       resume=""
 
-      if pyenv exec python --version >/dev/null 2>&1
+      # if python project check for python
+      if [[ -f Pipfile ]]
       then
-        echo ">>> pyenv python found."
-      else
-        echo ">>> pyenv python NOT FOUND! exiting now!"
-        exit 1
+        if pyenv exec python --version >/dev/null 2>&1
+        then
+          echo ">>> pyenv python found."
+        else
+          echo ">>> pyenv python NOT FOUND! exiting now!"
+          exit 1
+        fi
       fi
 
       if [[ $VERSION == "resume" ]]
@@ -833,7 +862,6 @@ SHELL
 
         echo ">>>re-loading python.sh"
         source python.sh
-
 
         if [[ -f Pipfile ]]
         then
@@ -916,10 +944,12 @@ python.sh
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
+python-versions  = list the available python versions
 project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
 global-virtual   = (VERSION, NAME): create NAME virtual environment
 
@@ -1009,4 +1039,3 @@ HELP
 esac
 
 exit 0
-
