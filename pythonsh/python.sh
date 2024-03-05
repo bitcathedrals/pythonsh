@@ -75,7 +75,7 @@ function deactivate_if_needed {
 function latest_virtualenv_python {
   VERSION=$1
 
-  LATEST_PYTHON=`pyenv versions | tr -s ' ' | sed -e 's,^ ,,' | cut -d '/' -f 1 | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -u -r`
+  LATEST_PYTHON=`pyenv versions | tr -s ' ' | sed -e 's,^ ,,' | cut -d '/' -f 1 | grep -E '[0-9]+\.[0-9]+\.[0-9]+' | sort -u -V -r | head -n 1`
   export LATEST_PYTHON
 
   echo "Python Latest Version: ${LATEST_PYTHON}"
@@ -92,10 +92,13 @@ function install_virtualenv_python {
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if ! pyenv install -v --skip-existing $VERSION
+  if pyenv install -v --skip-existing $VERSION
   then
-    echo "FAILED!"
-    return 1
+    echo "Success!"
+  else
+    echo "FAILED! - likey a bad version - showing available versions"
+    pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
+    exit 1
   fi
 
   latest_virtualenv_python $VERSION
@@ -376,13 +379,13 @@ SHELL
         VERSION="$1"
         NAME="$2"
 
-        if [[ -n "$VERSION" ]]
+        if [[ -z "$VERSION" ]]
         then
           echo "global-virtual: VERSION (first argument) is missing."
           exit 1
         fi
 
-        if [[ -n "$NAME" ]]
+        if [[ -z "$NAME" ]]
         then
           echo "global-virtual NAME (second argument) is missing."
           exit 1
@@ -390,11 +393,7 @@ SHELL
 
         setup_pyenv
 
-        install_virtualenv_python $VERSION || exit 1
-
-        echo -n "creating global virtual environment: ${NAME} from ${LATEST_PYTHON}"
-
-        install_virtualenv $LATEST_PYTHON $NAME || exit 1
+        install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
@@ -1026,4 +1025,3 @@ HELP
 esac
 
 exit 0
-
