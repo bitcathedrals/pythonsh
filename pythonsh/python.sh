@@ -376,25 +376,29 @@ SHELL
       test -d $GIT || mkdir -p $GIT
       test -d $GIT/.git || git clone https://github.com/emacs-mirror/emacs.git $GIT
 
-      if [[ ! command -v autoconf ]]
+      command -v autoconf >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
       then
         echo >/dev/stderr "autoconf is required to build emacs - please install."
         exit 1
       fi
 
-      if [[ ! command -v automake ]]
+      command -v automake >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
       then
         echo >/dev/stderr "automake is required to build emacs - please install."
         exit 1
       fi
 
-      if [[ ! command -v libtool ]]
+      command -v libtool >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
       then
         echo >/dev/stderr "libtool is required to build emacs - please install."
         exit 1
       fi
 
-      if [[ ! command -v gcc ]]
+      command -v gcc >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
       then
         echo >/dev/stderr "gcc is required to build emacs - please install."
         exit 1
