@@ -86,7 +86,7 @@ function switch_release {
 }
 
 function switch_global {
-  if [[ -z \$1 ]]
+  if [[ -z $1 ]]
   then
     echo "you need to specify a virtual environment to switch to as the sole argument"
     return 1
