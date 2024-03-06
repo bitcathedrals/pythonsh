@@ -390,13 +390,6 @@ SHELL
         exit 1
       fi
 
-      command -v libtool >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "libtool is required to build emacs - please install."
-        exit 1
-      fi
-
       command -v gcc >/dev/null 2>&1
       if [[ $? -ne 0 ]]
       then
