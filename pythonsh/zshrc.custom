@@ -45,13 +45,11 @@ export PATH="$PYENV_ROOT/bin:$PATH"
 function launch_ssh_agent {
   if [[ `uname` == "Darwin" ]]
   then
-    echo "ssh-agent: on Darwin - not starting the ssh-agent."
     return
   fi
 
   if [[ -n "$SSH_CLIENT" ]]
   then
-    echo "ssh-agent: remote shell - not starting the agent."
     return
   fi
 
@@ -62,9 +60,9 @@ function launch_ssh_agent {
   else
     if kill -0 $SSH_AGENT_PID >/dev/null 2>&1
     then
-      echo "ssh-agent: already running."
+      return
     else
-      echo "ssh-agent: dead agent - starting a new ssh-agent."
+      echo >/dev/stderr "ssh-agent: dead agent - starting a new ssh-agent."
       eval $(ssh-agent -s)
     fi
   fi
@@ -72,5 +70,5 @@ function launch_ssh_agent {
 
 launch_ssh_agent
 
-
+export ZSHRC_CUSTOM_LOADED="yes"
 
