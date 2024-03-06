@@ -409,6 +409,13 @@ SHELL
 
       (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes --with-xpm=no --with-gif=no && make && make install)
     ;;
+    "tools-emacs-desktop")
+      LOCAL_DESKTOP=$HOME/.local/share/applications/
+      test -d $LOCAL_DESKTOP || mkdir -p $LOCAL_DESKTOP
+
+      cp emacs/emacs.desktop $LOCAL_DESKTOP/
+      cp emacs/emacs-icon.png $HOME/tools/
+    ;;
 #
 # virtual environments
 #
@@ -984,6 +991,7 @@ tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into 
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
 tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
+tools-emacs-desktop = install a user local emacs .desktop launcher
 
 [virtual commands]
 
