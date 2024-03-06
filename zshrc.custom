@@ -1,3 +1,7 @@
+
+PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$PATH"
+export PATH
+
 EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
 
 if [[ ! -x $EDITOR ]]
@@ -17,15 +21,11 @@ fi
 
 export EDITOR
 
-
 # if there is a file for crypto keys then add it
 if [[ -f $HOME/.crypto.sh ]]
 then
   source $HOME/.crypto.sh
 fi
-
-PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$PATH"
-export PATH
 
 export PYENV_ROOT="$HOME/.pyenv"
 
