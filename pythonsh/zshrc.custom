@@ -1,5 +1,5 @@
 
-PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$PATH"
+PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$HOME/homebrew/bin:$PATH"
 export PATH
 
 EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
