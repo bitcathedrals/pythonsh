@@ -24,11 +24,7 @@ function deactivate_if_needed {
 
   echo "$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
 
-  if ! pyenv deactivate
-  then
-    echo "deactive of $ver failed!"
-    return 1
-  fi
+  pyenv deactivate >/dev/null 2>&1
 
   return 0
 }
@@ -90,7 +86,7 @@ function switch_release {
 }
 
 function switch_global {
-  if [[ -z \$1 ]]
+  if [[ -z $1 ]]
   then
     echo "you need to specify a virtual environment to switch to as the sole argument"
     return 1
