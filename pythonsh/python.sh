@@ -407,7 +407,7 @@ SHELL
       TOOLS=$HOME/tools/local/
       test -d $TOOLS || mkdir -p $TOOLS
 
-      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes && make && make install)
+      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes --with-xpm=no --with-gif=no && make && make install)
     ;;
 #
 # virtual environments
