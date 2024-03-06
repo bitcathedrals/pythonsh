@@ -1,3 +1,7 @@
+
+PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$HOME/homebrew/bin:$PATH"
+export PATH
+
 EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
 
 if [[ ! -x $EDITOR ]]
@@ -17,41 +21,23 @@ fi
 
 export EDITOR
 
-
 # if there is a file for crypto keys then add it
 if [[ -f $HOME/.crypto.sh ]]
 then
   source $HOME/.crypto.sh
 fi
 
-PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$PATH"
-export PATH
-
 export PYENV_ROOT="$HOME/.pyenv"
-
-alias status='git status'
-alias diff='git diff'
-alias stat='git diffstat'
-alias commit='git commit'
-alias ff='git pull'
-alias pull='git pull --no-ff'
-alias push='git push'
-alias add='git add'
-alias co='git checkout'
-alias branch='git branch'
-
 export PATH="$PYENV_ROOT/bin:$PATH"
 
 function launch_ssh_agent {
   if [[ `uname` == "Darwin" ]]
   then
-    echo "ssh-agent: on Darwin - not starting the ssh-agent."
     return
   fi
 
   if [[ -n "$SSH_CLIENT" ]]
   then
-    echo "ssh-agent: remote shell - not starting the agent."
     return
   fi
 
@@ -62,9 +48,9 @@ function launch_ssh_agent {
   else
     if kill -0 $SSH_AGENT_PID >/dev/null 2>&1
     then
-      echo "ssh-agent: already running."
+      return
     else
-      echo "ssh-agent: dead agent - starting a new ssh-agent."
+      echo >/dev/stderr "ssh-agent: dead agent - starting a new ssh-agent."
       eval $(ssh-agent -s)
     fi
   fi
@@ -72,5 +58,5 @@ function launch_ssh_agent {
 
 launch_ssh_agent
 
-
+export ZSHRC_CUSTOM_LOADED="yes"
 

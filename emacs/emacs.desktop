@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Emacs(GIT)
+Terminal=false
+Type=Application
+Icon=/home/mattie/tools/emacs-icon.png
+StartupNotify=true
+Exec=/home/mattie/tools/local/bin/emacs

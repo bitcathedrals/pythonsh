@@ -255,123 +255,65 @@ case $1 in
       echo "installation completed"
     ;;
     "tools-zshrc")
-       echo "adding shell code to .zshrc, you may need to edit the file."
+      echo "adding shell code to .zshrc, you may need to edit the file."
 
-        cat >>~/.zshrc <<SHELL
-if [[ -f \$HOME/homebrew/bin/brew ]]
-then
-    eval "\$(\$HOME/homebrew/bin/brew shellenv)"
-else
-   which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
-fi
-
-test -f \$HOME/.zshrc.custom && source \$HOME/.zshrc.custom
-
-DEFAULT_PYPENV="\$HOME/.pyenv/"
-
-if ! command -v pyenv >/dev/null 2>&1
-then
-  test -z "\${PYENV_ROOT}" || export PYENV_ROOT="\$DEFAULT_PYENV"
-  export PATH="\$PATH:\$PYENV_ROOT/bin"
-fi
-
-eval "\$(pyenv init -)"
-
-test -f \$HOME/.zshrc.prompt && source \$HOME/.zshrc.prompt
-
-function deactivate_if_needed {
-  ver=\$(pyenv version)
-
-  echo "\$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
-
-  if ! pyenv deactivate
-  then
-    echo "deactive of \$ver failed!"
-    return 1
-  fi
-
-  return 0
-}
-
-function load_python_sh {
-  if test -f python.sh
-  then
-    source python.sh
-  else
-    echo "can\'t find python.sh - are you in the project root?"
-    return 1
-  fi
-
-  return 0
-}
-
-function switch_to_virtual {
-  environment=\$1
-
-  type=\$(echo "\$1" | cut -d ':' -f 1)
-  name=\$(echo "\$1" | cut -d ':' -f 2)
-
-  if [[ \$type == "project" ]]
-  then
-    load_python_sh || return 1
-    virt="\${VIRTUAL_PREFIX}_\${name}"
-  else
-    virt="\${name}"
-  fi
-
-  deactivate_if_needed || return 1
-
-  echo -n ">>>switching to: \${virt}..."
-
-  if pyenv activate "\${virt}"
-  then
-    echo "completed."
-  else
-    echo "FAILED!"
-    return 1
-  fi
-
-  return 0
-}
-
-function switch_dev {
-  if switch_to_virtual "project:dev" || return 1
-  return 0
-}
-
-function switch_test {
-  if switch_to_virtual "project:test" || return 1
-  return 0
-}
-
-function switch_release {
-  if switch_to_virtual "project:release" || return 1
-  return 0
-}
-
-function switch_global {
-  if [[ -z \$1 ]]
-  then
-    echo "you need to specify a virtual environment to switch to as the sole argument"
-    return 1
-  fi
-
-  switch_to_virtual "global:\${1}" || return 1
-
-  return 0
-}
-SHELL
+      cat <$PWD/pythonsh/zshrc.rc >>~/.zshrc
       echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
     ;;
     "tools-custom")
       echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-      cp zshrc.custom ~/.zshrc.custom
+      cp $PWD/pythonsh/zshrc.custom ~/.zshrc.custom
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
+    "tools-emacs")
+      GIT=$HOME/code/emacs
+      test -d $GIT || mkdir -p $GIT
+      test -d $GIT/.git || git clone https://github.com/emacs-mirror/emacs.git $GIT
 
+      command -v autoconf >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "autoconf is required to build emacs - please install autoconf."
+        exit 1
+      fi
+
+      command -v automake >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "automake is required to build emacs - please install automake."
+        exit 1
+      fi
+
+      command -v makeinfo >/dev/null 2>&1
+
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "makeinfo is required to build emacs - please install texinfo."
+        exit 1
+      fi
+
+      command -v gcc >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "gcc is required to build emacs - please install gcc."
+        exit 1
+      fi
+
+      TOOLS=$HOME/tools/local/
+      test -d $TOOLS || mkdir -p $TOOLS
+
+      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes --with-xpm=no --with-gif=no && make && make install)
+    ;;
+    "tools-emacs-desktop")
+      LOCAL_DESKTOP=$HOME/.local/share/applications/
+      test -d $LOCAL_DESKTOP || mkdir -p $LOCAL_DESKTOP
+
+      cp emacs/emacs.desktop $LOCAL_DESKTOP/
+      cp emacs/emacs-icon.png $HOME/tools/
+    ;;
 #
 # virtual environments
 #
@@ -946,6 +888,8 @@ tools-unix    = install pyen and pyenv virtual from source on UNIX (call again t
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
+tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
+tools-emacs-desktop = install a user local emacs .desktop launcher
 
 [virtual commands]
 
