@@ -371,7 +371,40 @@ SHELL
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/prompt.sh $HOME/.zshrc.prompt
     ;;
+    "tools-emacs")
+      GIT=$HOME/code/emacs
+      test -d $GIT || mkdir -p $GIT
+      test -d $GIT/.git || git clone https://github.com/emacs-mirror/emacs.git $GIT
 
+      if [[ ! command -v autoconf ]]
+      then
+        echo >/dev/stderr "autoconf is required to build emacs - please install."
+        exit 1
+      fi
+
+      if [[ ! command -v automake ]]
+      then
+        echo >/dev/stderr "automake is required to build emacs - please install."
+        exit 1
+      fi
+
+      if [[ ! command -v libtool ]]
+      then
+        echo >/dev/stderr "libtool is required to build emacs - please install."
+        exit 1
+      fi
+
+      if [[ ! command -v gcc ]]
+      then
+        echo >/dev/stderr "gcc is required to build emacs - please install."
+        exit 1
+      fi
+
+      TOOLS=$HOME/tools/local/
+      test -d $TOOLS || mkdir -p $TOOLS
+
+      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes && make && make install)
+    ;;
 #
 # virtual environments
 #
@@ -946,6 +979,7 @@ tools-unix    = install pyen and pyenv virtual from source on UNIX (call again t
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
+tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
 
 [virtual commands]
 
