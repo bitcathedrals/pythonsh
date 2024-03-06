@@ -101,3 +101,13 @@ function switch_global {
   return 0
 }
 
+alias status='git status'
+alias diff='git diff'
+alias stat='git diffstat'
+alias commit='git commit'
+alias ff='git pull'
+alias pull='git pull --no-ff'
+alias push='git push'
+alias add='git add'
+alias co='git checkout'
+alias branch='git branch'
