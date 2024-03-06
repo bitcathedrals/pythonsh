@@ -379,21 +379,28 @@ SHELL
       command -v autoconf >/dev/null 2>&1
       if [[ $? -ne 0 ]]
       then
-        echo >/dev/stderr "autoconf is required to build emacs - please install."
+        echo >/dev/stderr "autoconf is required to build emacs - please install autoconf."
         exit 1
       fi
 
       command -v automake >/dev/null 2>&1
       if [[ $? -ne 0 ]]
       then
-        echo >/dev/stderr "automake is required to build emacs - please install."
+        echo >/dev/stderr "automake is required to build emacs - please install automake."
+        exit 1
+      fi
+
+      command -v makeinfo >/dev/null 2>&1
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "makeinfo is required to build emacs - please install texinfo."
         exit 1
       fi
 
       command -v gcc >/dev/null 2>&1
       if [[ $? -ne 0 ]]
       then
-        echo >/dev/stderr "gcc is required to build emacs - please install."
+        echo >/dev/stderr "gcc is required to build emacs - please install gcc."
         exit 1
       fi
 
