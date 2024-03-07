@@ -50,6 +50,11 @@ function get_project {
 
 function get_host {
   prompt_host=`hostname`
+
+  if echo $prompt_host | grep -E '\w+\.\w+' >/dev/null 2>&1
+  then
+    prompt_host=`echo $prompt_host | cut -d '.' -f 1`
+  fi
 }
 
 function is_git {
