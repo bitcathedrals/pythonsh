@@ -266,7 +266,7 @@ case $1 in
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
-        cp pythonsh/prompt.sh $HOME/.zshrc.prompt
+        cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
     "tools-emacs")
       GIT=$HOME/code/emacs
