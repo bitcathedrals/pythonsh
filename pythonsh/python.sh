@@ -899,8 +899,10 @@ tools-emacs-desktop = install a user local emacs .desktop launcher
 [virtual commands]
 
 python-versions  = list the available python versions
-project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
+project-virtual  = create: dev and test virtual environments from settings in python.sh
 global-virtual   = (VERSION, NAME): create NAME virtual environment
+
+virtual-desotry  = destroy a project-virtual: specify -> dev|test|release
 
 project-destroy  = delete all the project virtual edenvironments
 global-destroy   = delete a global virtual environment
