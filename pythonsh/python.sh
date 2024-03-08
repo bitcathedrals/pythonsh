@@ -5,13 +5,14 @@ test -f python.sh && source python.sh
 export PIPENV_VERBOSITY=-1
 
 function add_src {
-    site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
-    echo "include_src: setting dev.pth in $site/dev.pth"
+  echo "include_src: setting dev.pth in $site/dev.pth"
 
-    test -d $site || mkdir -p $site
+  test -d $site || mkdir -p $site
 
-    cat python.paths | tr -s '\n' | sed -e "s,^,$PWD/," >"$site/dev.pth"
+  cat python.paths | grep -E '^/' >"$site/dev.pth"
+  cat python.paths | grep -v -E '^/' | tr -s '\n' | sed -e "s,^,$PWD/," >>"$site/dev.pth"
 }
 
 function remove_src {
@@ -129,7 +130,6 @@ function install_project_virtualenv {
 
   ENV_ONE=$2
   ENV_TWO=$3
-  ENV_THREE=$4
 
   install_virtualenv_python $VERSION || return 1
 
@@ -202,6 +202,81 @@ function find_catpip {
      echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
      exit 1
    fi
+}
+
+function deactivate_any {
+  if pyenv virtualenvs | grep -E '^\*'
+  then
+    echo "deactivating current release"
+    pyenv deactivate >/dev/null 2>&1
+  else
+    echo "no virtualenv active"
+  fi
+}
+
+function prepare_release {
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+
+  echo "prepare_release in: $site"
+  test -d $site || mkdir -p $site
+
+  deactivate_any
+
+  if pyenv virtualenvs | grep "${VIRTUAL_PREFIX}_release"
+  then
+    echo "deleting previous release environment ${VIRTUAL_PREFIX}_release"
+    pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
+  fi
+
+  if install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_release"
+  then
+    echo "release environment created."
+  else
+    echo "ERROR: creating virtual environment ${VIRTUAL_PREFIX}_release"
+    exit 1
+  fi
+
+  if pyenv activate "${VIRTUAL_PREFIX}_release"
+  then
+    echo "activated virtual environment: release."
+  else
+    echo "could not activate: ${VIRTUAL_PREFIX}_release"
+    exit 1
+  fi
+}
+
+function install_release {
+  prepare_release
+
+  if [[ -d build-fat ]]
+  then
+    rm -r build-fat
+    mkdir build-fat
+  else
+    mkdir build-fat
+  fi
+
+  $0 bootstrap
+
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+
+  for pkg in $(pyenv exec python pythonsh/pyutils/mkfat.py)
+  do
+    pkg=`echo $pkg | sed -e 's,^\\s*,,'`
+
+    if [[ -z "$pkg" ]]
+    then
+      continue
+    fi
+
+    cp -R $site/$pkg build-fat/
+  done
+
+  find build-fat -name '*.pypi' -print | xargs rm
+  find build-fat -name 'Pipfile' -print | xargs rm
+
+  base=$PWD
+  (cd build-fat && zip -r $base/${BUILD_NAME}-${VERSION}-py3-none-any.whl *)
 }
 
 
@@ -359,7 +434,6 @@ case $1 in
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
-        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
       shift
@@ -376,7 +450,9 @@ case $1 in
     "virtual-list")
         pyenv virtualenvs
     ;;
-
+    "build-fat")
+      install_release
+    ;;
 #
 # initialization commands
 #
@@ -402,7 +478,7 @@ case $1 in
          exit 1
        fi
 
-       export PIPENV_PIPFILE="$pipfile"; pipenv install
+       export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
     "bootstrap")
       $0 minimal || exit 1
@@ -942,7 +1018,10 @@ update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
 
+[build]
+
 build      = build packages
+build-fat  = build a fat package
 
 [submodule]
 modinit             = initialize and pull all submodules
