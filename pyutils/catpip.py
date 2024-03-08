@@ -46,17 +46,16 @@ def load_pythonsh():
                 print(f'fpython.sh: line: "{line}" is malformed', file=sys.stderr)
 
 def load_project():
-    with open(project_file, 'r') as f:
-        data = toml.load(f)
+    data = toml.load(project_file)
     
-        project = data['project']
+    project = data['project']
 
-        scripts = data['scripts']
+    scripts = data['scripts']
 
-        return {
-            'project': project,
-            'scripts': scripts
-        }
+    return {
+        'project': project,
+        'scripts': scripts
+    }
 
 def expand_version(version):
     if version == "*":
@@ -178,7 +177,7 @@ def build_requires(filename, parse, table):
                             text=True,
                             stdout=PIPE)
             
-            output = process.communicate()[0].decode()
+            output = process.communicate()[0]
 
             for line in output.split('\n'):
                 if not line:
@@ -194,8 +193,7 @@ def load_pypi(repo_file):
 
     print(f'loading pypi server: {repo_file}', file=sys.stderr)
 
-    with open(repo_file) as f:
-        parse = toml.load(f)
+    parse = toml.load(repo_file)
 
     if not parse or 'pypi' not in parse:
         return ""
@@ -217,12 +215,11 @@ def compile(*dirs):
         if os.path.isfile(pipfile):
             print (f'processing Pipfile: {pipfile}', file=sys.stderr)
 
-            with open(pipfile) as file:
-                parse = toml.load(file)
+            parse = toml.load(pipfile)
 
-                update_release(pipfile, parse)
-                update_build(pipfile, parse)
-                update_requires(pipfile, parse)
+            update_release(pipfile, parse)
+            update_build(pipfile, parse)
+            update_requires(pipfile, parse)
         else:
             print(f'module spec: {module} does not have Pipfile - skipping', 
                   file=sys.stderr)
@@ -336,9 +333,6 @@ def print_pyproject():
     
     if 'authors' in project:
         print(f'authors = "{project["authors"]}"')
-
- # we can't specify private repos with pyproject.toml
- #   print(f'dependencies = {pyproject_deps(release)}')
 
     if 'homepage' in project or 'repository' in project:
         print('[project.urls]')

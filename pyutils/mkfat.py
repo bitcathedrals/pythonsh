@@ -7,10 +7,7 @@ masked = {'virtualenv': True,
           'pip': True}
 
 def load_pipfile(masked):
-    parse = None
-
-    with open('Pipfile', 'r') as f:
-        parse = toml.load(f)
+    parse = toml.load('Pipfile')
 
     if 'dev-packages' in parse:
         for pkg in parse['dev-packages'].keys():
