@@ -276,9 +276,9 @@ def print_pipfile():
 
         for pkg in requires:
             if pkg == 'python-version':
-                print(f'python_version >={get_python_feature(requires[pkg])}')
-            else:
-                print(f'{pkg} = "{requires[pkg]}"')
+                continue
+
+            print(f'{pkg} = "{requires[pkg]}"')
 
 def pyproject_deps(table):
     deps = []
