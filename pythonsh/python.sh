@@ -147,12 +147,6 @@ function install_project_virtualenv {
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
-  if [[ -n $ENV_THREE ]]
-  then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_THREE}..."
-    install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
-  fi
-
   return 0
 }
 
@@ -323,7 +317,7 @@ case $1 in
     "project-virtual")
         setup_pyenv
 
-        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" "${VIRTUAL_PREFIX}_release" || exit 1
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
@@ -350,6 +344,17 @@ case $1 in
         install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
+    ;;
+    "virtual-destroy")
+      shift
+
+      if [[ -z $1 ]]
+      then
+        echo "pythonsh: give dev|test|release as the only argument of which env to delete"
+        exit 1
+      fi
+
+      pyenv virtualenv-delete "${VIRTUAL_PREFIX}_${1}"
     ;;
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
