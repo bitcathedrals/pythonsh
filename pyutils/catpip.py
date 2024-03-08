@@ -172,7 +172,7 @@ def build_requires(filename, parse, table):
             print('no python version found in requires section or python.sh: attempting to find latest.', 
                   file=sys.stderr)
             
-            pyenv_list_command = 'pyenv install -l | sed -e \'s,^ *,,\' | grep -E \'^[0-9]+\.[0-9]+\.[0-9]+$\' | sort -u -V -r'
+            pyenv_list_command = "pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -u -V -r"
 
             process = Popen([pyenv_list_command],shell=True,
                             text=True,
