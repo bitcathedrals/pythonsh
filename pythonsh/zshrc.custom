@@ -1,5 +1,21 @@
-ORIG_PATH="$PATH"
-export PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$HOME/homebrew/bin:$ORIG_PATH"
+
+function set_homebrew {
+  if [[ -d $HOME/homebrew ]]
+  then
+    eval $($HOME/homebrew/bin/brew shellenv)
+    return
+  fi
+
+  if [[ -d /opt/homebrew/ ]]
+  then
+    eval $(/opt/homebrew/bin/brew shellenv)
+    return
+  fi
+}
+
+set_homebrew
+
+export PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$PATH"
 
 function set_editor {
   EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
@@ -71,4 +87,3 @@ function launch_ssh_agent {
 launch_ssh_agent
 
 export ZSHRC_CUSTOM_LOADED="yes"
-
