@@ -205,50 +205,62 @@ function find_catpip {
 }
 
 function deactivate_any {
-  if pyenv virtualenvs | grep -E '^\*'
+  current=`pyenv virtualenvs | grep -E '^\*' | cut -d ' ' -f 2`
+
+  if [[ -n $current ]]
   then
-    echo "deactivating current release"
-    pyenv deactivate >/dev/null 2>&1
+    echo "deactivating current release: $current"
+    pyenv deactivate
   else
     echo "no virtualenv active"
   fi
 }
 
-function prepare_buildset {
-  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+function prepare_buildset_environment {
+  echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
 
-  echo "prepare_buildset in: $site"
-  test -d $site || mkdir -p $site
+  setup_pyenv
 
   deactivate_any
 
-  if pyenv virtualenvs | grep "${VIRTUAL_PREFIX}_build"
+  build_env="${VIRTUAL_PREFIX}_build"
+
+  if pyenv virtualenvs | grep $build_env
   then
-    echo "deleting previous buildset environment ${VIRTUAL_PREFIX}_build"
-    pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
+    echo >/dev/stderr "deleting previous buildset environment $build_env"
+    pyenv virtualenv-delete $build_env
   fi
 
-  if install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_build"
+  if install_project_virtualenv $PYTHON_VERSION $build_env
   then
-    echo "builset environment created."
+    echo "buildset environment created: $build_env"
   else
-    echo "ERROR: creating virtual environment ${VIRTUAL_PREFIX}_build"
+    echo "ERROR: creating virtual environment $build_env"
     exit 1
   fi
 
-  if pyenv activate "${VIRTUAL_PREFIX}_build"
+  if pyenv activate "$build_env"
   then
-    echo "activated virtual environment: build."
+    echo "pythonsh - buildset: activated build environement."
   else
-    echo "could not activate: ${VIRTUAL_PREFIX}_build"
-    exit 1
+    echo "pythonsh - buildset: could NOT activate build environment"
   fi
+
+  echo >/dev/stderr "pythonsh - buildset: bootstrapping environment."
+
+  $0 bootstrap
 }
 
-function build_buildset {
-  echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
 
-  prepare_release
+function build_buildset {
+  echo >/dev/stderr "pythonsh - buildset: starting buildset $VERSION"
+
+  prepare_buildset_environment
+
+  echo >/dev/stderr "pythonsh - buildset: building project wheel."
+  $0 build
+
+  echo >/dev/stderr "pythonsh - buildset: starting set build in $setdir"
 
   setdir=buildset
 
@@ -260,16 +272,6 @@ function build_buildset {
     mkdir $setdir
   fi
 
-  echo >/dev/stderr "pythonsh - buildset: starting set build in $setdir"
-
-  echo >/dev/stderr "pythonsh - buildset: "bootstrapping environment."
-  $0 bootstrap
-
-  echo >/dev/stderr "pythonsh - buildset: "building project wheel."
-  $0 build
-
-  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
-
   mkset="pyutils/mkset.py"
 
   if [[ -f $mkset ]]
@@ -279,6 +281,9 @@ function build_buildset {
     mkset="pythonsh/pyutils/mkset.py"
     echo >/dev/stderr "pythonsh - buildset: using $mkset"
   fi
+
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+  echo >/dev/stderr "pythonsh - buildset: copying out packages: $site"
 
   for pkg in $(pyenv exec python $mkset)
   do
@@ -296,7 +301,7 @@ function build_buildset {
   dist=$PWD/dist/
   test -d $dist || mkdir $dist
 
-  for pkg in ls $(dist/*.whl)
+  for pkg in $(ls dist/*.whl)
   do
     echo >/dev/stderr "pythonsh - buildset: installing built package: $pkg"
     (cd $setdir && unzip $pkg)
@@ -648,6 +653,7 @@ case $1 in
 
       test -f pyproject.toml && rm pyproject.toml
       test -d buildset && rm -r buildset
+      test -d dist && rm -r dist
     ;;
 
 #

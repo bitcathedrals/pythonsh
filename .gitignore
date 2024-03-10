@@ -1,3 +1,5 @@
 **/.DS_Store
 pyproject.toml
+dist/
+buildset/
 
