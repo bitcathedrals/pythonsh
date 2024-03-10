@@ -317,6 +317,47 @@ function build_buildset {
   echo "buildset done! $buildset"
 }
 
+function create_tag {
+  TYPE=$1
+
+  FEATURE=$2
+
+  if [[ -z $FEATURE ]]
+  then
+    echo "tag-${TYPE} requires the feature as the first argument"
+  fi
+
+  MESSAGE=$3
+
+  if [[ -z $MESSAGE ]]
+  then
+    echo "tag-${TYPE} requires description as the second argument"
+  fi
+
+  if git tag | grep "${TYPE}-${USER}/${FEATURE}"
+  then
+    COUNT=$(git tag | grep "${TYPE}-${USER}/${FEATURE}" | wc -l)
+
+    COUNT=$((COUNT + 1))
+
+    TAG_NAME="${TYPE}-${USER}/${FEATURE}(${COUNT})"
+  else
+    TAG_NAME="${TYPE}-${USER}/${FEATURE}(1)"
+  fi
+
+  echo "tag name is: $TAG_NAME"
+
+  read -p "create tag? [y/n]: " choice
+
+  if [[ $choice == "y" ]]
+  then
+    git tag -a $TAG_NAME -m $MESSAGE
+  else
+    echo "tag-alpha: aborting!"
+    exit 1
+  fi
+}
+
 case $1 in
   "version")
     echo "pythonsh version is: 0.12.0"
@@ -647,6 +688,22 @@ case $1 in
     "buildset")
       build_buildset
     ;;
+    "mkrelease")
+
+      setup_pyenv
+
+      deactivate_any
+
+      release_env="${VIRTUAL_PREFIX}_release"
+
+      if pyenv virtualenvs | grep $release_env
+      then
+        echo >/dev/stderr "deleting previous buildset environment $release_env"
+        pyenv virtualenv-delete $release_env
+      fi
+
+      install_project_virtualenv $PYTHON_VERSION "$release_env" || exit 1
+    ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
@@ -742,6 +799,20 @@ case $1 in
 #
 # version control
 #
+    "tag-alpha")
+      shift
+      FEATURE=$1
+      MESSAGE=$2
+
+      create_tag "alpha" "$FEATURE" "$MESSAGE"
+    ;;
+    "tag-beta")
+      shift
+      FEATURE=$1
+      MESSAGE=$2
+
+      create_tag "beta" "$FEATURE" "$MESSAGE"
+    ;;
     "track")
       shift
       git branch -u $1/$2
@@ -1039,14 +1110,6 @@ bootstrap        = two stage bootstrap of minimal, pipfile generate, install sou
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
 
-[using virtual and source paths]
-
-switch_dev       = switch to dev virtual environment
-switch_test      = switch to test virtual environment
-switch_build     = switch to the build virtual environment
-switch_release   = switch to release virtual environment
-
-
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
@@ -1071,6 +1134,7 @@ list       = list installed packages
 
 build      = build packages
 buildset   = build a package set
+mkrelease  = make the release environment
 
 [submodule]
 modinit             = initialize and pull all submodules
@@ -1081,6 +1145,8 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
+tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
+tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
