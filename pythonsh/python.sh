@@ -214,53 +214,73 @@ function deactivate_any {
   fi
 }
 
-function prepare_release {
+function prepare_buildset {
   site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
-  echo "prepare_release in: $site"
+  echo "prepare_buildset in: $site"
   test -d $site || mkdir -p $site
 
   deactivate_any
 
-  if pyenv virtualenvs | grep "${VIRTUAL_PREFIX}_release"
+  if pyenv virtualenvs | grep "${VIRTUAL_PREFIX}_build"
   then
-    echo "deleting previous release environment ${VIRTUAL_PREFIX}_release"
-    pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
+    echo "deleting previous buildset environment ${VIRTUAL_PREFIX}_build"
+    pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
   fi
 
-  if install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_release"
+  if install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_build"
   then
-    echo "release environment created."
+    echo "builset environment created."
   else
-    echo "ERROR: creating virtual environment ${VIRTUAL_PREFIX}_release"
+    echo "ERROR: creating virtual environment ${VIRTUAL_PREFIX}_build"
     exit 1
   fi
 
-  if pyenv activate "${VIRTUAL_PREFIX}_release"
+  if pyenv activate "${VIRTUAL_PREFIX}_build"
   then
-    echo "activated virtual environment: release."
+    echo "activated virtual environment: build."
   else
-    echo "could not activate: ${VIRTUAL_PREFIX}_release"
+    echo "could not activate: ${VIRTUAL_PREFIX}_build"
     exit 1
   fi
 }
 
-function install_release {
+function build_buildset {
+  echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
+
   prepare_release
 
-  if [[ -d build-fat ]]
+  setdir=buildset
+
+  if [[ -d $setdir ]]
   then
-    rm -r build-fat
-    mkdir build-fat
+    rm -r $setdir
+    mkdir $setdir
   else
-    mkdir build-fat
+    mkdir $setdir
   fi
 
+  echo >/dev/stderr "pythonsh - buildset: starting set build in $setdir"
+
+  echo >/dev/stderr "pythonsh - buildset: "bootstrapping environment."
   $0 bootstrap
+
+  echo >/dev/stderr "pythonsh - buildset: "building project wheel."
+  $0 build
 
   site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
-  for pkg in $(pyenv exec python pythonsh/pyutils/mkfat.py)
+  mkset="pyutils/mkset.py"
+
+  if [[ -f $mkset ]]
+  then
+    echo >/dev/stderr "pythonsh - buildset: using $mkset"
+  else
+    mkset="pythonsh/pyutils/mkset.py"
+    echo >/dev/stderr "pythonsh - buildset: using $mkset"
+  fi
+
+  for pkg in $(pyenv exec python $mkset)
   do
     pkg=`echo $pkg | sed -e 's,^\\s*,,'`
 
@@ -269,16 +289,28 @@ function install_release {
       continue
     fi
 
-    cp -R $site/$pkg build-fat/
+    echo >/dev/stderr "pythonsh - buildset: copying $pkg"
+    cp -R $site/$pkg $setdir/
   done
 
-  find build-fat -name '*.pypi' -print | xargs rm
-  find build-fat -name 'Pipfile' -print | xargs rm
+  dist=$PWD/dist/
+  test -d $dist || mkdir $dist
 
-  base=$PWD
-  (cd build-fat && zip -r $base/${BUILD_NAME}-${VERSION}-py3-none-any.whl *)
+  for pkg in ls $(dist/*.whl)
+  do
+    echo >/dev/stderr "pythonsh - buildset: installing built package: $pkg"
+    (cd $setdir && unzip $pkg)
+  done
+
+  find $setdir -name '*.pypi' -print | xargs rm
+  find $setdir -name 'Pipfile' -print | xargs rm
+
+  buildset=$dist/${BUILD_NAME}-set-${VERSION}-py3-none-any.whl
+
+  (cd $setdir && zip -r $buildset *)
+
+  echo "buildset done! $buildset"
 }
-
 
 case $1 in
   "version")
@@ -434,6 +466,8 @@ case $1 in
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
+        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
+        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
       shift
@@ -449,9 +483,6 @@ case $1 in
     ;;
     "virtual-list")
         pyenv virtualenvs
-    ;;
-    "build-fat")
-      install_release
     ;;
 #
 # initialization commands
@@ -512,6 +543,9 @@ case $1 in
 #
 # python commands
 #
+    "site")
+      pyenv exec python -c 'import site; print(site.getsitepackages()[0])'
+    ;;
     "test")
         shift
         pyenv exec python -m pytest tests $@
@@ -604,9 +638,16 @@ case $1 in
       $0 project >pyproject.toml
 
       pyenv exec python -m build
-
+    ;;
+    "buildset")
+      build_buildset
+    ;;
+    "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
+
+      test -f pyproject.toml && rm pyproject.toml
+      test -d buildset && rm -r buildset
     ;;
 
 #
@@ -996,7 +1037,9 @@ project          = generate a pyproject.toml file
 
 switch_dev       = switch to dev virtual environment
 switch_test      = switch to test virtual environment
+switch_build     = switch to the build virtual environment
 switch_release   = switch to release virtual environment
+
 
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
@@ -1021,7 +1064,7 @@ list       = list installed packages
 [build]
 
 build      = build packages
-build-fat  = build a fat package
+buildset   = build a package set
 
 [submodule]
 modinit             = initialize and pull all submodules

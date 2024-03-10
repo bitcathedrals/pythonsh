@@ -15,4 +15,3 @@ pytest-dependency = {version = "*", index = "pypi"}
 pipenv = {version = "*", index = "pypi"}
 pip = {version = "*", index = "pypi"}
 version-parser = {version = "*", index = "pypi"}
-[requires]
