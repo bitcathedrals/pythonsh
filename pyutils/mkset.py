@@ -13,7 +13,7 @@ def load_pipfile(masked):
         for pkg in parse['dev-packages'].keys():
             masked[pkg] = True
 
-def load_packages(masked):
+def print_packages(masked):
     process = Popen(["pipenv","run","pip","freeze"],
                     text=True,
                     stdout=PIPE,
@@ -36,7 +36,7 @@ def load_packages(masked):
 
 def exec():
     load_pipfile(masked)
-    load_packages(masked)
+    print_packages(masked)
 
 if __name__ == '__main__':
     exec()
