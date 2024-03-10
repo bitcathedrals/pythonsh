@@ -1,0 +1,213 @@
+* Pythonsh tooling, version control, best practices
+
+I have extensive experience in professional and personal projects with
+Python. From that experience clearly one of the most poorly thought
+out and vexing aspects of coding is just getting the code to
+run.
+
+Getting it to run on one developer's machine is just the beginning,
+makeing it portable to other developers is another hurdle. And finally
+building a good release to the end users is yet another hurdle.
+
+** The plethora of tools
+
+A developer typically uses language tools, IDE tools, version control tools,
+artifact repositories, and dependency managers. All these tools are used
+without any integration into a cohesive tool-chain.
+
+- Running code is fragmented process due to the use of either plain
+  system interpreters, tox for multiple python versions, or pyenv for
+  isolated virtual environment environments. Developers are often
+  unaware of the different strengths and weaknesses of the tools and
+  just copy the first thing they find on the internet.
+
+- Python has many different versions, and each milestone introduces
+  new features that code can become dependent on. Installation can be
+  by a OS package, Open Source package managers like homebrew, or
+  virtual environment interpreters like pyenv. This fragmentation
+  leads to chaos with developers often not having a firm grasp on
+  what python their code is actually running on.
+
+- Many times without good version control practices or artifactorys
+  the sharing of code can be as bad as cut and paste or sending files
+  over slack.
+
+- Backwards compatibility is an assumption with no explicit guarantee.
+  Practices for maintaining release metadata that allow a project to
+  rebuild a release from a given source version, interpreter, and
+  module environment are not even considered much less implemented.
+
+- Builds cannot be reproduced later if necessary which
+  is not a professional way to build and distribute software. It
+  should always be possible to reconstruct builds for any release.
+
+- The python build system is frankly a disaster. It is both layered
+  and fragmented with the latest standards encouraging this dumpster
+  fire instead of putting the flames out.It’s origins are setuptools
+  with an executable config and an outdated egg format.
+
+  The current format wheel files are still based on setuptools and
+  layer on top of eggs for metadata construction. There are two major
+  conventions for project layout:
+
+  python in the root of the tree, or python in a “src” sub-directory.
+  setuptools can be configured either by an archaic executable, a
+  setup.py file which requires execution of the setup.py to drive the
+  build process embedding the entire build process in a rigid
+  script
+
+  The second option is to configure setuptools with a setup.cfg
+  file. This is much more sane but it is sabotaged by an archaic
+  format that is basically just a config to drive the generation of a
+  setup.py file. New tools and standards have been setup to deal
+
+  with issues like the fact that a pypi package repository has to
+  execute untrusted code just to get the version number and metadata
+  for the project. The pep 517 standard address this by putting
+  pyproject.toml file.
+
+  However this file is a complete mess as it creating keys for
+  backend package managers with no policy or standards across them.
+
+** Version Control
+
+  Version controll with git is often black magic for developers.
+  Since they dont understand git they often paddle in the shallow
+  end of the pool using only pull,add,commit, and push.
+
+  If a merge comes up they often throw up their hands and ask for
+  help. Since git is more toolkit than tool a workflow must be
+  established and everyone needs to stick to it.
+
+  I think git flow is the best after struggling with different
+  workflows for years.
+
+** building
+
+  Building should be done in an isolated environtment. tox allows
+  for tests and such to execute in different environments but this
+  will dissapear as older python is phased out.
+
+  Clearly the most important thing is to focus on virtual environments
+  where seperate environments can be maintained in a peristent way
+  mirroring the different environments, dev, test, and release that
+  the development evironment dictates.
+
+** Workflow
+
+*** Source Workflow
+
+  In source workflow you type:
+
+#+BEGIN_SRC bash :shebang "#! /usr/bin/env bash" :tangle "scripts/clone-into-existing.sh"
+  # 1 = the repo, 2 = the clone dir, 3 is the feature branch to start
+  git clone $1 $2 $3
+  cd $2
+
+  echo "choose main as the name of the release trunk"
+
+  # choose main as the main branch
+  git flow init
+
+  # if pythonsh is already in the repo use this to check it out
+  git submodule update --init
+
+  (cd pythonsh && git checkout develop)
+
+  # this installs the directories in python.paths into site-packages
+  # so the source is included in builds.
+  ./py.sh add-paths
+
+  # create the virtual environments
+  ./py.sh project-virtual
+
+  # install dependencies
+  ./py.sh bootstrap
+
+  # start from develop
+  git checkout develop
+
+  # start the feature branch
+  git flow feature start $3
+#+END_SRC
+
+  to initialize the development environment
+
+- It creates main/master as the release branch
+- It creates develop as the development trunk
+- It creates "feature" parented by develop as developer workspaces
+- It creates the virtual environments
+- It installs a shim to get the source into the environment
+- It installs all the packages
+
+  When starting work a feature branch is created from develop. The developer
+  makes his changes, pulls from develop to bring in other work, and eventually
+  when complete he squashes his feature branch and merges it into develop.
+
+  With this model many programmers can share code efficiently, and the
+  ugly mess of development in the form of incremental commits gets
+  squashed into clean additions to the development trunk.
+
+- When it is time for a release a release branch is created and any release
+  changes are made and develop is merged into main. The release is then
+  merged back into develop.
+
+  This flow is very effective at giving develops a lot of room to work
+  while integrating code easily, and keeping history clean.
+
+
+*** Environment workflow
+
+  The envronment workflow is a progression from dev -> test -> release.
+
+  It starts with the version control workflow, where a developer has
+  a feature branch checked out. Thee developer is using the "dev"
+  virtual environment and he bangs on the code until it looks good
+  and passes all tests.
+
+#+BEGIN_SRC bash
+  switch_dev
+  ./py.sh test
+#+END_SRC
+
+  During development new packages may be added, or newer versions
+  pulled in.
+
+#+BEGIN_SRC bash :shebang "#! /usr/bin/env bash" :tangle "scripts/update-packages.sh"
+  ./py.sh update
+  ./py.sh test
+#+END_SRC
+
+
+  When the developer things things are ready he switches to the test
+  virtual environment.
+
+  He performs a:
+
+#+BEGIN_SRC bash :shebang "#! /usr/bin/env bash" :tangle "scripts/start-testing.sh"
+  switch_test
+  # install the latest package set and test.
+  ./py.sh all
+  ./py.sh test
+#+END_SRC:
+
+  Inevitably some bugs might pop up so he fixes them up and continues
+  working until the tests are passed.
+
+  When the tests pass he is staged for release. He performs a build
+  or a build-set constructing packages. 
+
+#+BEGIN_SRC: bash
+  ./py.sh build
+
+#+END_SRC:
+
+  when the testing is done he performs an alpha tag
+
+
+
+  when the release is done he performs  a release from the test repository.
+  The packages are then uploaded to a package server.
+
+  He then switches back to the dev repository, and pulls any fixes made in
+  the test repository. 
