@@ -165,7 +165,7 @@ without any integration into a cohesive tool-chain.
   virtual environment and he bangs on the code until it looks good
   and passes all tests.
 
-#+BEGIN_SRC bash
+#+BEGIN_SRC bash :tangle "scripts/examples.sh"
   switch_dev
   ./py.sh test
 #+END_SRC
@@ -195,19 +195,113 @@ without any integration into a cohesive tool-chain.
   working until the tests are passed.
 
   When the tests pass he is staged for release. He performs a build
-  or a build-set constructing packages. 
+  or a build-set constructing packages. If the build goes well then
+  an alpa tag is created.
 
-#+BEGIN_SRC: bash
+#+BEGIN_SRC: bash :tangle  "scripts/examples.sh"
   ./py.sh build
 
+
+  # commit files, especially Pipfile, and Pipfile.lock
+
+  # squash the feature branch down to a single commit and give it
+  # in convetional commit format
+
+
+  ./py.sh tag-alpha "feature" "message"
 #+END_SRC:
 
-  when the testing is done he performs an alpha tag
+ [[https://www.conventionalcommits.org/en/v1.0.0/][conventional commmits]]
+
+  At this point the feature branch is closed with a finish.
+
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  git flow feature finish COMMIT
+#+END_SRC:
+
+  Sometimes there are fixes that need to be made to the
+  development branch. They should be done on a feature
+  branch named "fix-{description}"
+
+** Release
+
+  The release process is designed to test the package and
+  integration or black box test the functionality of the
+  package.
+
+*** Types of packages
+
+  There are two types of packages. Singular packages created
+  by the python build module. The second type is a buildset
+  package which is an abbreviation for built set. it's
+  a zip named like a wheel, except it's a all the runtime
+  dependencies gathered from the test virtual environment.
+
+  to start the release proccess a release environment is
+  created.
+
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  ./py.sh mkrelease
+
+  switch_release
+
+  pipenv install <package>
+#+END_SRC:
+
+   At that point the release is tested. If the release
+   is deemed ok a beta is cut.
+
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  ./py.sh tag-beta "feature" "message"
+
+  switch_release
+
+  pipenv install <package>
+#+END_SRC:
 
 
+  Code takes time bake, and so rushing into a release
+  is not a good idea. after some time has passed and
+  a few final fixes are made it's time for the
+  full release process to start.
 
-  when the release is done he performs  a release from the test repository.
-  The packages are then uploaded to a package server.
+  The git-flow mechanism for release is started.
 
-  He then switches back to the dev repository, and pulls any fixes made in
-  the test repository. 
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  ./py.sh start <version>
+#+END_SRC:
+
+   This initiates a series of checks. it fetches from origin
+   and checks if there are any unapplied commits on main or
+   develop.
+
+   It also checks that pyenv is available and that the tree
+   is not dirty.
+
+   It then asks to proceed and starts a git-flow release process.
+   Once the release has started it:
+
+-  merges develop into the main trunk.
+-  regenerates the Pipfile.lock and copies it to a release/ dir
+-  commits all the changes
+
+   Then all the coder has to do is inspect the release to make
+   sure everything is ok. Then the release is finalized.
+
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  ./py.sh release
+#+END_SRC:
+
+   A series of commits are triggered merging the release branch
+   into main, and back into develop. a tag is also created
+   which needs to start with "release-", but that is not automatic
+   so some care is required.
+
+   Once the release is final a push on main and develop and tags
+   is performed by: upload.
+
+#+BEGIN_SRC: bash :tangle "scripts/examples.sh"
+  ./py.sh upload
+#+END_SRC:
+ 
+
