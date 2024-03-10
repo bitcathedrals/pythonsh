@@ -271,14 +271,15 @@ def print_pipfile():
             version = get_pipfile_version(build[pkg].version)
             print(f'{pkg} = {open_brace}version = "{version}", index = "{build[pkg].index}"{close_brace}')
 
+
+    if 'python-version' in requires:
+        del requires['python-version']
+
     if requires:
         print('[requires]')
 
-        for pkg in requires:
-            if pkg == 'python-version':
-                continue
-
-            print(f'{pkg} = "{requires[pkg]}"')
+        for entry in requires:
+            print(f'{entry} = "{requires[entry]}"')
 
 def pyproject_deps(table):
     deps = []
@@ -321,11 +322,8 @@ def print_pyproject():
         print(f'version = "{pythonsh["VERSION"]}"')
 
     if 'LICENSE' in pythonsh:
-        print(f'license = "{project["LICENSE"]}')
+        print(f'license = \"{project["LICENSE"]}\"')
 
-    if 'python-version' in requires:
-        print(f'python-version >={requires["python-version"]}')
-    
     print(f'readme = "README.md"')
 
     if 'description' in project:

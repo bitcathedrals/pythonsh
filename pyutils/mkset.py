@@ -31,9 +31,12 @@ def load_packages(masked):
         
         if spec[0] in masked:
             continue
-        else:
-            print(spec[0])
 
-if __name__ == '__main__':
+        print(spec[0])
+
+def exec():
     load_pipfile(masked)
     load_packages(masked)
+
+if __name__ == '__main__':
+    exec()
