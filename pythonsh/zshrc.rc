@@ -80,6 +80,11 @@ function switch_test {
   return 0
 }
 
+function switch_build {
+  if switch_to_virtual "project:build" || return 1
+  return 0
+}
+
 function switch_release {
   if switch_to_virtual "project:release" || return 1
   return 0
