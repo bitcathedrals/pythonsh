@@ -477,8 +477,9 @@ case $1 in
     "global-virtual")
         shift
 
-        VERSION="$1"
-        NAME="$2"
+        NAME="$1"
+
+        VERSION="${2:-$PYTHON_VERSION}"
 
         if [[ -z "$VERSION" ]]
         then
@@ -1094,7 +1095,7 @@ tools-emacs-desktop = install a user local emacs .desktop launcher
 
 python-versions  = list the available python versions
 project-virtual  = create: dev and test virtual environments from settings in python.sh
-global-virtual   = (VERSION, NAME): create NAME virtual environment
+global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
 
 virtual-desotry  = destroy a project-virtual: specify -> dev|test|release
 
@@ -1113,6 +1114,7 @@ project          = generate a pyproject.toml file
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
+site       = print out the path to site-packages
 
 [python commands]
 
