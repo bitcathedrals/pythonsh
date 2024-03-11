@@ -16,4 +16,13 @@ then
   ENV=""
 fi
 
-sed <$script -e "s,@DEFAULT@,\"$ENV\",g"
+shift
+
+if [[ -n $1 ]]
+then
+  HARDCODE="$*"
+else
+  HARDCODE=""
+fi
+
+sed <$script -e "s,@DEFAULT@,\"$ENV\",g" | sed -e "s,@HARDCODE@,$HARDCODE,g"

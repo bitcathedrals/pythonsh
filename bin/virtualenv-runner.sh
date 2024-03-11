@@ -23,4 +23,4 @@ fi
 
 shift
 
-exec pyenv exec $@
+exec pyenv exec @HARDCODE@ $@
