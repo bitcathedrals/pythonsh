@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 
-script=$HOME/code/pythonsh/bin/virtualenv-runner.sh
+script=`dirname $0`
+script="${script}/virtualenv-runner.sh"
 
 ENV=$1
 
