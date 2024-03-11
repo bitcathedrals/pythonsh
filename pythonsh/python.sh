@@ -688,7 +688,25 @@ case $1 in
       shift
 
       shdir=`dirname $0`
-      ${shdir}/../bin/mkrunner.sh $@
+
+      dist="${shdir}/pythonsh/bin/mkrunner.sh"
+
+      if [[ -f $dist ]]
+      then
+        $dist $@
+        exit 0
+      fi
+
+      internal="${shdir}/../bin/mkrunner.sh"
+
+      if [[ -f $internal ]]
+      then
+        $internal $@
+        exit 0
+      fi
+
+      echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
+      exit 1
     ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
