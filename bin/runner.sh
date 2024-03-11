@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-ENV=${1:-""}
+ENV="$1"
 
 if [[ -z $ENV ]]
 then
@@ -8,7 +8,7 @@ then
   exit 1
 fi
 
-DEFAULT_PYPENV="$HOME/.pyenv/"
+DEFAULT_PYENV="$HOME/.pyenv/"
 export PATH="$DEFAULT_PYENV:$PATH"
 
 eval "$(pyenv init -)"
@@ -23,4 +23,4 @@ fi
 
 shift
 
-exec pyenv exec $@
+exec pyenv exec  $@

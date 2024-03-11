@@ -7,13 +7,7 @@ ENV=$1
 
 if [[ -z $ENV ]]
 then
-  echo >/dev/stderr "mkrunner.sh: no ENV given as arg(1). exiting."
-  exit 1
-fi
-
-if [[ $ENV == "none" ]]
-then
-  ENV=""
+  ENV='\$1'
 fi
 
 shift
