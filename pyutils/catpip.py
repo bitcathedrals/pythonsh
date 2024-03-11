@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 from collections import namedtuple
 from subprocess import Popen, PIPE
+
 from version_parser import Version
 
 package_spec = namedtuple('package_spec', ['name','version', 'index'])
@@ -345,18 +346,29 @@ def print_pyproject():
         for name, path in project['scripts'].items():
             print(f'{name} = "{path}"')
 
+def check_for_test ():
+    if sys.argv[1] == "test":
+        print("catpip: ok.", file=sys.stderr)
+        sys.exit(0)
+
 def pipfile(pipdirs):
+    check_for_test()
+
     compile(*pipdirs)
     
     print_pipfile()
 
 def project(pipdirs):
+    check_for_test()
+
     compile(*pipdirs)
     load_project()
 
     print_pyproject()
 
 if __name__ == '__main__':
+    check_for_test()
+
     pipdirs = sys.argv[2:]
 
     if sys.argv[1] == 'pipfile':

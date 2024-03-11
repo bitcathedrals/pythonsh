@@ -486,6 +486,17 @@ case $1 in
     "virtual-list")
         pyenv virtualenvs
     ;;
+    "virtual-current")
+      current=`pyenv virtualenvs | grep -E '^\*'`
+
+      if [[ -z $current ]]
+      then
+        echo >/dev/stderr "pythonsh virtual-current: no virtualenv activated."
+        exit 1
+      fi
+
+      echo "$current" | cut -d ' ' -f 2
+    ;;
 #
 # initialization commands
 #
@@ -903,6 +914,35 @@ case $1 in
     "start")
       shift
 
+      # if python project check for python
+      if [[ -f Pipfile ]]
+      then
+        if $0 virtual-current
+        then
+          echo ">>>virtual environment found"
+        else
+          echo "ERROR: no virtual environment activated!"
+          exit 1
+        fi
+
+        if pyenv exec python --version >/dev/null 2>&1
+        then
+          echo ">>> pyenv python found."
+        else
+          echo ">>> pyenv python NOT FOUND! exiting now!"
+          exit 1
+        fi
+
+        find_catpip
+        if eval "pyenv exec python $catpip test"
+        then
+          echo ">>> catpip found."
+        else
+          echo ">>> catpip NOT FOUND! exiting now!"
+          exit 1
+        fi
+      fi
+
       $0 check
 
       read -p "Proceed? [y/n]: " proceed
@@ -917,18 +957,6 @@ case $1 in
 
       VERSION="$1"
       resume=""
-
-      # if python project check for python
-      if [[ -f Pipfile ]]
-      then
-        if pyenv exec python --version >/dev/null 2>&1
-        then
-          echo ">>> pyenv python found."
-        else
-          echo ">>> pyenv python NOT FOUND! exiting now!"
-          exit 1
-        fi
-      fi
 
       if [[ $VERSION == "resume" ]]
       then
@@ -1076,12 +1104,13 @@ python-versions  = list the available python versions
 project-virtual  = create: dev and test virtual environments from settings in python.sh
 global-virtual   = (VERSION, NAME): create NAME virtual environment
 
-virtual-desotry  = destroy a project-virtual: specify -> dev|test|release
+virtual-destroy  = destroy a project-virtual: specify -> dev|test|release
 
 project-destroy  = delete all the project virtual edenvironments
 global-destroy   = delete a global virtual environment
 
 virtual-list     = list virtual environments
+virtual-current  = show the current virtual environment if any
 
 [initialization]
 
