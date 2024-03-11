@@ -415,52 +415,6 @@ case $1 in
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
-    "tools-emacs")
-      GIT=$HOME/code/emacs
-      test -d $GIT || mkdir -p $GIT
-      test -d $GIT/.git || git clone https://github.com/emacs-mirror/emacs.git $GIT
-
-      command -v autoconf >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "autoconf is required to build emacs - please install autoconf."
-        exit 1
-      fi
-
-      command -v automake >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "automake is required to build emacs - please install automake."
-        exit 1
-      fi
-
-      command -v makeinfo >/dev/null 2>&1
-
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "makeinfo is required to build emacs - please install texinfo."
-        exit 1
-      fi
-
-      command -v gcc >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "gcc is required to build emacs - please install gcc."
-        exit 1
-      fi
-
-      TOOLS=$HOME/tools/local/
-      test -d $TOOLS || mkdir -p $TOOLS
-
-      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes --with-xpm=no --with-gif=no && make && make install)
-    ;;
-    "tools-emacs-desktop")
-      LOCAL_DESKTOP=$HOME/.local/share/applications/
-      test -d $LOCAL_DESKTOP || mkdir -p $LOCAL_DESKTOP
-
-      cp emacs/emacs.desktop $LOCAL_DESKTOP/
-      cp emacs/emacs-icon.png $HOME/tools/
-    ;;
 #
 # virtual environments
 #
@@ -1088,8 +1042,6 @@ tools-unix    = install pyen and pyenv virtual from source on UNIX (call again t
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
-tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
-tools-emacs-desktop = install a user local emacs .desktop launcher
 
 [virtual commands]
 
