@@ -415,8 +415,7 @@ case $1 in
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
-    "tools-emacs")
-    ;;
+
 #
 # virtual environments
 #
@@ -433,8 +432,9 @@ case $1 in
     "global-virtual")
         shift
 
-        VERSION="$1"
-        NAME="$2"
+        NAME="$1"
+
+        VERSION="${2:-$PYTHON_VERSION}"
 
         if [[ -z "$VERSION" ]]
         then
@@ -1095,14 +1095,12 @@ tools-unix    = install pyen and pyenv virtual from source on UNIX (call again t
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
-tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
-tools-emacs-desktop = install a user local emacs .desktop launcher
 
 [virtual commands]
 
 python-versions  = list the available python versions
 project-virtual  = create: dev and test virtual environments from settings in python.sh
-global-virtual   = (VERSION, NAME): create NAME virtual environment
+global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
 
 virtual-destroy  = destroy a project-virtual: specify -> dev|test|release
 
@@ -1122,6 +1120,7 @@ project          = generate a pyproject.toml file
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
+site       = print out the path to site-packages
 
 [python commands]
 
