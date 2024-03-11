@@ -20,6 +20,7 @@ PATH="$HOME/code/utilities/bin:$PATH"
 PATH="$HOME/code/security/bin:$PATH"
 PATH="$HOME/code/pythonsh/bin:$PATH"
 PATH="$HOME/code/docker/bin:$PATH"
+PATH="$HOME/code/grail/bin:$PATH"
 
 export PATH
 
