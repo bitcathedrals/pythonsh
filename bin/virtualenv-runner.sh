@@ -1,11 +1,22 @@
 #! /usr/bin/env bash
 
-ENV=@DEFAULT@
+DEFAULT=@DEFAULT@
+ARG=$1
 
-if [[ -z $ENV ]]
+ENVIRONMENT=""
+
+if [[ -n $DEFAULT ]]
 then
-  echo >/dev/stderr "virtual-runner.sh: no evironment was given! exiting."
-  exit 1
+  ENVIRONMENT=$DEFAULT
+else
+  if [[ -z $ARG ]]
+  then
+    echo >/dev/stderr "virtualenv-runner.sh: no environment arg given! exiting."
+    exit 1
+  fi
+
+  ENVIRONMENT=$ARG
+  shift
 fi
 
 DEFAULT_PYENV="$HOME/.pyenv/"
@@ -13,14 +24,37 @@ export PATH="$DEFAULT_PYENV:$PATH"
 
 eval "$(pyenv init -)"
 
-pyenv activate $ENV
+RESTORE=""
 
-if [[ $? -ne 0 ]]
+if pyenv version | grep "system"
 then
-  echo >/dev/stderr "virtual-runner.sh: pyenv activate $ENV failed! exiting."
-  exit 1
+  pyenv activate $ENVIRONMENT >/dev/null 2>&1
+  if [[ $? -ne 0 ]]
+  then
+    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
+    exit 1
+  fi
+else
+  if pyenv version | grep -v "$ENVIRONMENT"
+  then
+    RESTORE=`pyenv version | cut -d ' ' -f 1`
+
+    pyenv activate $ENVIRONMENT >/dev/null 2>&1
+
+    if [[ $? -ne 0 ]]
+    then
+      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
+      exit 1
+    fi
+  fi
 fi
 
-shift
+pyenv exec @HARDCODE@ $@
+exit_code=$?
 
-exec pyenv exec @HARDCODE@ $@
+if [[ -n $RESTORE ]]
+then
+  pyenv activate $RESTORE >/dev/null 2>&1
+fi
+
+exit $exit_code
