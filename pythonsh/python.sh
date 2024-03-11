@@ -671,6 +671,20 @@ case $1 in
 
       install_project_virtualenv $PYTHON_VERSION "$release_env" || exit 1
     ;;
+    "simple")
+      shift
+
+      PKG=$1
+      shift
+
+      if [[ -z $PKG ]]
+      then
+        echo >/dev/stderr "pythonsh: simple - no pkg or packages given"
+      fi
+
+      pyenv exec python -m pip install $PKG $@
+    ;;
+
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
@@ -1140,6 +1154,7 @@ list       = list installed packages
 
 [build]
 
+simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
