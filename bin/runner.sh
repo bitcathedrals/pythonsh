@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-ENV=${1:-@DEFAULT@}
+ENV=${1:-""}
 
 if [[ -z $ENV ]]
 then
