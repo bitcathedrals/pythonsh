@@ -15,7 +15,13 @@ function set_homebrew {
 
 set_homebrew
 
-export PATH="$HOME/tools/local/bin:$HOME/code/utilities/bin:$HOME/code/security/bin:$HOME/code/pythonsh/bin:$PATH"
+PATH="$HOME/tools/local/bin:$PATH"
+PATH="$HOME/code/utilities/bin:$PATH"
+PATH="$HOME/code/security/bin:$PATH"
+PATH="$HOME/code/pythonsh/bin:$PATH"
+PATH="$HOME/code/docker/bin:$PATH"
+
+export PATH
 
 function set_editor {
   EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
