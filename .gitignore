@@ -1,2 +1,7 @@
 **/.DS_Store
+pyproject.toml
+dist/
+buildset/
+docker/Dockerfile
+docker/Dockerfile.*
 

@@ -5,13 +5,14 @@ test -f python.sh && source python.sh
 export PIPENV_VERBOSITY=-1
 
 function add_src {
-    site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
 
-    echo "include_src: setting dev.pth in $site/dev.pth"
+  echo "include_src: setting dev.pth in $site/dev.pth"
 
-    test -d $site || mkdir -p $site
+  test -d $site || mkdir -p $site
 
-    cat python.paths | tr -s '\n' | sed -e "s,^,$PWD/," >"$site/dev.pth"
+  cat python.paths | grep -E '^/' >"$site/dev.pth"
+  cat python.paths | grep -v -E '^/' | tr -s '\n' | sed -e "s,^,$PWD/," >>"$site/dev.pth"
 }
 
 function remove_src {
@@ -129,7 +130,6 @@ function install_project_virtualenv {
 
   ENV_ONE=$2
   ENV_TWO=$3
-  ENV_THREE=$4
 
   install_virtualenv_python $VERSION || return 1
 
@@ -145,12 +145,6 @@ function install_project_virtualenv {
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
     install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
-  fi
-
-  if [[ -n $ENV_THREE ]]
-  then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_THREE}..."
-    install_virtualenv $LATEST_PYTHON $ENV_THREE || return 1
   fi
 
   return 0
@@ -210,6 +204,159 @@ function find_catpip {
    fi
 }
 
+function deactivate_any {
+  current=`pyenv virtualenvs | grep -E '^\*' | cut -d ' ' -f 2`
+
+  if [[ -n $current ]]
+  then
+    echo "deactivating current release: $current"
+    pyenv deactivate
+  else
+    echo "no virtualenv active"
+  fi
+}
+
+function prepare_buildset_environment {
+  echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
+
+  setup_pyenv
+
+  deactivate_any
+
+  build_env="${VIRTUAL_PREFIX}_build"
+
+  if pyenv virtualenvs | grep $build_env
+  then
+    echo >/dev/stderr "deleting previous buildset environment $build_env"
+    pyenv virtualenv-delete $build_env
+  fi
+
+  if install_project_virtualenv $PYTHON_VERSION $build_env
+  then
+    echo "buildset environment created: $build_env"
+  else
+    echo "ERROR: creating virtual environment $build_env"
+    exit 1
+  fi
+
+  if pyenv activate "$build_env"
+  then
+    echo "pythonsh - buildset: activated build environement."
+  else
+    echo "pythonsh - buildset: could NOT activate build environment"
+  fi
+
+  echo >/dev/stderr "pythonsh - buildset: bootstrapping environment."
+
+  $0 bootstrap
+}
+
+
+function build_buildset {
+  echo >/dev/stderr "pythonsh - buildset: starting buildset $VERSION"
+
+  prepare_buildset_environment
+
+  echo >/dev/stderr "pythonsh - buildset: building project wheel."
+  $0 build
+
+  echo >/dev/stderr "pythonsh - buildset: starting set build in $setdir"
+
+  setdir=buildset
+
+  if [[ -d $setdir ]]
+  then
+    rm -r $setdir
+    mkdir $setdir
+  else
+    mkdir $setdir
+  fi
+
+  mkset="pyutils/mkset.py"
+
+  if [[ -f $mkset ]]
+  then
+    echo >/dev/stderr "pythonsh - buildset: using $mkset"
+  else
+    mkset="pythonsh/pyutils/mkset.py"
+    echo >/dev/stderr "pythonsh - buildset: using $mkset"
+  fi
+
+  site=`pyenv exec python -c 'import site; print(site.getsitepackages()[0])'`
+  echo >/dev/stderr "pythonsh - buildset: copying out packages: $site"
+
+  for pkg in $(pyenv exec python $mkset)
+  do
+    pkg=`echo $pkg | sed -e 's,^\\s*,,'`
+
+    if [[ -z "$pkg" ]]
+    then
+      continue
+    fi
+
+    echo >/dev/stderr "pythonsh - buildset: copying $pkg"
+    cp -R $site/$pkg $setdir/
+  done
+
+  dist=$PWD/dist/
+  test -d $dist || mkdir $dist
+
+  for pkg in $(ls dist/*.whl)
+  do
+    echo >/dev/stderr "pythonsh - buildset: installing built package: $pkg"
+    (cd $setdir && unzip $pkg)
+  done
+
+  find $setdir -name '*.pypi' -print | xargs rm
+  find $setdir -name 'Pipfile' -print | xargs rm
+
+  buildset=$dist/${BUILD_NAME}-set-${VERSION}-py3-none-any.whl
+
+  (cd $setdir && zip -r $buildset *)
+
+  echo "buildset done! $buildset"
+}
+
+function create_tag {
+  TYPE=$1
+
+  FEATURE=$2
+
+  if [[ -z $FEATURE ]]
+  then
+    echo "tag-${TYPE} requires the feature as the first argument"
+  fi
+
+  MESSAGE=$3
+
+  if [[ -z $MESSAGE ]]
+  then
+    echo "tag-${TYPE} requires description as the second argument"
+  fi
+
+  if git tag | grep "${TYPE}-${USER}/${FEATURE}"
+  then
+    COUNT=$(git tag | grep "${TYPE}-${USER}/${FEATURE}" | wc -l)
+
+    COUNT=$((COUNT + 1))
+
+    TAG_NAME="${TYPE}-${USER}/${FEATURE}(${COUNT})"
+  else
+    TAG_NAME="${TYPE}-${USER}/${FEATURE}(1)"
+  fi
+
+  echo "tag name is: $TAG_NAME"
+
+  read -p "create tag? [y/n]: " choice
+
+  if [[ $choice == "y" ]]
+  then
+    git tag -a $TAG_NAME -m $MESSAGE
+  else
+    echo "tag-alpha: aborting!"
+    exit 1
+  fi
+}
 
 case $1 in
   "version")
@@ -266,53 +413,7 @@ case $1 in
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
-        cp pythonsh/prompt.sh $HOME/.zshrc.prompt
-    ;;
-    "tools-emacs")
-      GIT=$HOME/code/emacs
-      test -d $GIT || mkdir -p $GIT
-      test -d $GIT/.git || git clone https://github.com/emacs-mirror/emacs.git $GIT
-
-      command -v autoconf >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "autoconf is required to build emacs - please install autoconf."
-        exit 1
-      fi
-
-      command -v automake >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "automake is required to build emacs - please install automake."
-        exit 1
-      fi
-
-      command -v makeinfo >/dev/null 2>&1
-
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "makeinfo is required to build emacs - please install texinfo."
-        exit 1
-      fi
-
-      command -v gcc >/dev/null 2>&1
-      if [[ $? -ne 0 ]]
-      then
-        echo >/dev/stderr "gcc is required to build emacs - please install gcc."
-        exit 1
-      fi
-
-      TOOLS=$HOME/tools/local/
-      test -d $TOOLS || mkdir -p $TOOLS
-
-      (cd $GIT && ./autogen.sh && ./configure --prefix=$TOOLS --with-x-toolkit=gtk3 --with-native-compilation=yes --with-xpm=no --with-gif=no && make && make install)
-    ;;
-    "tools-emacs-desktop")
-      LOCAL_DESKTOP=$HOME/.local/share/applications/
-      test -d $LOCAL_DESKTOP || mkdir -p $LOCAL_DESKTOP
-
-      cp emacs/emacs.desktop $LOCAL_DESKTOP/
-      cp emacs/emacs-icon.png $HOME/tools/
+        cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
 #
 # virtual environments
@@ -323,15 +424,16 @@ case $1 in
     "project-virtual")
         setup_pyenv
 
-        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" "${VIRTUAL_PREFIX}_release" || exit 1
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
     "global-virtual")
         shift
 
-        VERSION="$1"
-        NAME="$2"
+        NAME="$1"
+
+        VERSION="${2:-$PYTHON_VERSION}"
 
         if [[ -z "$VERSION" ]]
         then
@@ -351,9 +453,21 @@ case $1 in
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
+    "virtual-destroy")
+      shift
+
+      if [[ -z $1 ]]
+      then
+        echo "pythonsh: give dev|test|release as the only argument of which env to delete"
+        exit 1
+      fi
+
+      pyenv virtualenv-delete "${VIRTUAL_PREFIX}_${1}"
+    ;;
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
+        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
@@ -371,7 +485,6 @@ case $1 in
     "virtual-list")
         pyenv virtualenvs
     ;;
-
 #
 # initialization commands
 #
@@ -397,7 +510,7 @@ case $1 in
          exit 1
        fi
 
-       export PIPENV_PIPFILE="$pipfile"; pipenv install
+       export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
     "bootstrap")
       $0 minimal || exit 1
@@ -431,6 +544,9 @@ case $1 in
 #
 # python commands
 #
+    "site")
+      pyenv exec python -c 'import site; print(site.getsitepackages()[0])'
+    ;;
     "test")
         shift
         pyenv exec python -m pytest tests $@
@@ -523,9 +639,33 @@ case $1 in
       $0 project >pyproject.toml
 
       pyenv exec python -m build
+    ;;
+    "buildset")
+      build_buildset
+    ;;
+    "mkrelease")
 
+      setup_pyenv
+
+      deactivate_any
+
+      release_env="${VIRTUAL_PREFIX}_release"
+
+      if pyenv virtualenvs | grep $release_env
+      then
+        echo >/dev/stderr "deleting previous buildset environment $release_env"
+        pyenv virtualenv-delete $release_env
+      fi
+
+      install_project_virtualenv $PYTHON_VERSION "$release_env" || exit 1
+    ;;
+    "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
+
+      test -f pyproject.toml && rm pyproject.toml
+      test -d buildset && rm -r buildset
+      test -d dist && rm -r dist
     ;;
 
 #
@@ -614,6 +754,20 @@ case $1 in
 #
 # version control
 #
+    "tag-alpha")
+      shift
+      FEATURE=$1
+      MESSAGE=$2
+
+      create_tag "alpha" "$FEATURE" "$MESSAGE"
+    ;;
+    "tag-beta")
+      shift
+      FEATURE=$1
+      MESSAGE=$2
+
+      create_tag "beta" "$FEATURE" "$MESSAGE"
+    ;;
     "track")
       shift
       git branch -u $1/$2
@@ -888,14 +1042,14 @@ tools-unix    = install pyen and pyenv virtual from source on UNIX (call again t
 tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom        = install zshrc.cujstom
 tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
-tools-emacs         = clone, configure, build, and install emacs into \$HOME/tools/local
-tools-emacs-desktop = install a user local emacs .desktop launcher
 
 [virtual commands]
 
 python-versions  = list the available python versions
-project-virtual  = create: dev, test, and release virtual environments from settings in python.sh
-global-virtual   = (VERSION, NAME): create NAME virtual environment
+project-virtual  = create: dev and test virtual environments from settings in python.sh
+global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
+
+virtual-desotry  = destroy a project-virtual: specify -> dev|test|release
 
 project-destroy  = delete all the project virtual edenvironments
 global-destroy   = delete a global virtual environment
@@ -909,15 +1063,10 @@ bootstrap        = two stage bootstrap of minimal, pipfile generate, install sou
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
 
-[using virtual and source paths]
-
-switch_dev       = switch to dev virtual environment
-switch_test      = switch to test virtual environment
-switch_release   = switch to release virtual environment
-
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
+site       = print out the path to site-packages
 
 [python commands]
 
@@ -935,7 +1084,11 @@ update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
 
+[build]
+
 build      = build packages
+buildset   = build a package set
+mkrelease  = make the release environment
 
 [submodule]
 modinit             = initialize and pull all submodules
@@ -946,6 +1099,8 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
+tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
+tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree

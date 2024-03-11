@@ -1,8 +1,8 @@
-if [[ -f \$HOME/homebrew/bin/brew ]]
+if [[ -f $HOME/homebrew/bin/brew ]]
 then
-    eval "\$(\$HOME/homebrew/bin/brew shellenv)"
+    eval `$HOME/homebrew/bin/brew shellenv`
 else
-   which brew >/dev/null 2>&1 && eval "\$(brew shellenv)"
+   command -v brew >/dev/null 2>&1 && eval `brew shellenv`
 fi
 
 test -z "$ZSHRC_CUSTOM_LOADED" -a -f $HOME/.zshrc.custom && source $HOME/.zshrc.custom
@@ -20,7 +20,7 @@ eval "$(pyenv init -)"
 test -f $HOME/.zshrc.prompt && source $HOME/.zshrc.prompt
 
 function deactivate_if_needed {
-  ver=\$(pyenv version)
+  ver=$(pyenv version)
 
   echo "$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
 
@@ -77,6 +77,11 @@ function switch_dev {
 
 function switch_test {
   if switch_to_virtual "project:test" || return 1
+  return 0
+}
+
+function switch_build {
+  if switch_to_virtual "project:build" || return 1
   return 0
 }
 

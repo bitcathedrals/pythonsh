@@ -7,6 +7,7 @@ export PYENV_VIRTUALENV_DISABLE_PROMPT=1
 virtual_environment="?"
 git_branch="?"
 project_name="?"
+prompt_host="?"
 
 function get_pyenv {
   environment=`pyenv version`
@@ -46,6 +47,16 @@ function get_project {
   project_name=`basename $PWD`
 }
 
+
+function get_host {
+  prompt_host=`hostname`
+
+  if echo $prompt_host | grep -E '\w+\.\w+' >/dev/null 2>&1
+  then
+    prompt_host=`echo $prompt_host | cut -d '.' -f 1`
+  fi
+}
+
 function is_git {
   test -d .git && return 0
 
@@ -59,11 +70,12 @@ function pythonsh_prompt_update {
     get_branch
     get_project
 
-    export PS1="[${virtual_environment}] ${project_name}:${git_branch} -> "
+    export PS1="<${prompt_host}> [${virtual_environment}] ${project_name}:${git_branch} -> "
   else
-    export PS1="-> "
+    export PS1="<${prompt_host}> -> "
   fi
 }
 
+get_host
 
 precmd_functions+=( pythonsh_prompt_update )
