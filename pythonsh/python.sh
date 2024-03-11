@@ -684,7 +684,12 @@ case $1 in
 
       pyenv exec python -m pip install $PKG $@
     ;;
+    "runner")
+      shift
 
+      shdir=`dirname $0`
+      ${shdir}/../bin/mkrunner.sh $@
+    ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
@@ -1158,6 +1163,7 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
+runner     = execute mkrunner.sh to build a runner
 
 [submodule]
 modinit             = initialize and pull all submodules
