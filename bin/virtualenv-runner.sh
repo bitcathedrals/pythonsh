@@ -8,7 +8,7 @@ then
   exit 1
 fi
 
-DEFAULT_PYPENV="$HOME/.pyenv/"
+DEFAULT_PYENV="$HOME/.pyenv/"
 export PATH="$DEFAULT_PYENV:$PATH"
 
 eval "$(pyenv init -)"
