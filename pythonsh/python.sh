@@ -1053,7 +1053,7 @@ case $1 in
         then
           echo -n ">>>regenerating pyproject.toml."
 
-          $0 project
+          $0 project >pyproject.toml
           git add pyproject.toml
         fi
       fi
