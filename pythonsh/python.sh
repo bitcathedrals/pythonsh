@@ -415,6 +415,7 @@ case $1 in
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
         cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
+
 #
 # virtual environments
 #
@@ -484,6 +485,17 @@ case $1 in
     ;;
     "virtual-list")
         pyenv virtualenvs
+    ;;
+    "virtual-current")
+      current=`pyenv virtualenvs | grep -E '^\*'`
+
+      if [[ -z $current ]]
+      then
+        echo >/dev/stderr "pythonsh virtual-current: no virtualenv activated."
+        exit 1
+      fi
+
+      echo "$current" | cut -d ' ' -f 2
     ;;
 #
 # initialization commands
@@ -659,6 +671,43 @@ case $1 in
 
       install_project_virtualenv $PYTHON_VERSION "$release_env" || exit 1
     ;;
+    "simple")
+      shift
+
+      PKG=$1
+      shift
+
+      if [[ -z $PKG ]]
+      then
+        echo >/dev/stderr "pythonsh: simple - no pkg or packages given"
+      fi
+
+      pyenv exec python -m pip install $PKG $@
+    ;;
+    "runner")
+      shift
+
+      shdir=`dirname $0`
+
+      dist="${shdir}/pythonsh/bin/mkrunner.sh"
+
+      if [[ -f $dist ]]
+      then
+        $dist $@
+        exit 0
+      fi
+
+      internal="${shdir}/../bin/mkrunner.sh"
+
+      if [[ -f $internal ]]
+      then
+        $internal $@
+        exit 0
+      fi
+
+      echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
+      exit 1
+    ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
@@ -754,6 +803,30 @@ case $1 in
 #
 # version control
 #
+    "begin")
+      shift
+      name=$1
+
+      if [[ -z $name ]]
+      then
+        echo "pythonsh begin: requires a name as an argument"
+        exit 1
+      fi
+
+      git flow feature start $name
+    ;;
+    "end")
+      shift
+      name=$1
+
+      if [[ -z $name ]]
+      then
+        echo "pythonsh end: requires a name as an argument"
+        exit 1
+      fi
+
+      git flow feature finish $name
+    ;;
     "tag-alpha")
       shift
       FEATURE=$1
@@ -878,6 +951,35 @@ case $1 in
     "start")
       shift
 
+      # if python project check for python
+      if [[ -f Pipfile ]]
+      then
+        if $0 virtual-current
+        then
+          echo ">>>virtual environment found"
+        else
+          echo "ERROR: no virtual environment activated!"
+          exit 1
+        fi
+
+        if pyenv exec python --version >/dev/null 2>&1
+        then
+          echo ">>> pyenv python found."
+        else
+          echo ">>> pyenv python NOT FOUND! exiting now!"
+          exit 1
+        fi
+
+        find_catpip
+        if eval "pyenv exec python $catpip test"
+        then
+          echo ">>> catpip found."
+        else
+          echo ">>> catpip NOT FOUND! exiting now!"
+          exit 1
+        fi
+      fi
+
       $0 check
 
       read -p "Proceed? [y/n]: " proceed
@@ -892,18 +994,6 @@ case $1 in
 
       VERSION="$1"
       resume=""
-
-      # if python project check for python
-      if [[ -f Pipfile ]]
-      then
-        if pyenv exec python --version >/dev/null 2>&1
-        then
-          echo ">>> pyenv python found."
-        else
-          echo ">>> pyenv python NOT FOUND! exiting now!"
-          exit 1
-        fi
-      fi
 
       if [[ $VERSION == "resume" ]]
       then
@@ -963,7 +1053,7 @@ case $1 in
         then
           echo -n ">>>regenerating pyproject.toml."
 
-          $0 project
+          $0 project >pyproject.toml
           git add pyproject.toml
         fi
       fi
@@ -1049,12 +1139,13 @@ python-versions  = list the available python versions
 project-virtual  = create: dev and test virtual environments from settings in python.sh
 global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
 
-virtual-desotry  = destroy a project-virtual: specify -> dev|test|release
+virtual-destroy  = destroy a project-virtual: specify -> dev|test|release
 
 project-destroy  = delete all the project virtual edenvironments
 global-destroy   = delete a global virtual environment
 
 virtual-list     = list virtual environments
+virtual-current  = show the current virtual environment if any
 
 [initialization]
 
@@ -1086,9 +1177,11 @@ list       = list installed packages
 
 [build]
 
+simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
+runner     = execute mkrunner.sh to build a runner
 
 [submodule]
 modinit             = initialize and pull all submodules
