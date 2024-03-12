@@ -49,9 +49,15 @@ def load_pythonsh():
 def load_project():
     data = toml.load(project_file)
     
-    project = data['project']
+    if 'project' in data:
+        project = data['project']
+    else:
+        project = {}
 
-    scripts = data['scripts']
+    if 'scripts' in data:
+        scripts = data['scripts']
+    else:
+        scripts = {}
 
     return {
         'project': project,
