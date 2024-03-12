@@ -830,20 +830,64 @@ case $1 in
     "tag-alpha")
       shift
       FEATURE=$1
+
+      if [[ -z $FEATURE ]]
+      then
+        echo >/dev/stderr "pythonsh: tag-alpha - a feature argument (1) is missing"
+        exit 1
+      fi
+
       MESSAGE=$2
+
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh tag-alpha - a messsage argument (2) is missing."
+        exit 1
+      fi
 
       create_tag "alpha" "$FEATURE" "$MESSAGE"
     ;;
     "tag-beta")
       shift
+
       FEATURE=$1
+
+      if [[ -z $FEATURE ]]
+      then
+        echo >/dev/stderr "pythonsh: tag-beta - a feature argument (1) is missing"
+        exit 1
+      fi
+
       MESSAGE=$2
+
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh tag-beta - a messsage argument (2) is missing."
+        exit 1
+      fi
 
       create_tag "beta" "$FEATURE" "$MESSAGE"
     ;;
     "track")
       shift
-      git branch -u $1/$2
+
+      REMOTE=$1
+
+      if [[ -z $REMOTE ]]
+      then
+        echo >/dev/stderr "pythonsh: track - a remote (1) is missing"
+        exit 1
+      fi
+
+      BRANCH=$2
+
+      if [[ -z $BRANCH ]]
+      then
+        echo >/dev/stderr "pythonsh track - a branch (2) is missing."
+        exit 1
+      fi
+
+      git branch -u $REMOTE/$BRANCH
     ;;
     "info")
       git branch -vv
@@ -863,12 +907,6 @@ case $1 in
     ;;
     "pull")
         git pull --no-ff
-    ;;
-    "sub")
-        git submodule update --remote
-    ;;
-    "init")
-        git submodule update --init --recursive
     ;;
     "staged")
         git diff --cached
@@ -1176,8 +1214,6 @@ verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
-sub        = update submodules
-init       = init any bare submodules
 staged     = show staged changes
 merges     = show merges only
 history    = show commit history
