@@ -294,8 +294,9 @@ def pyproject_deps(table):
             else:
                 deps.append(f'"{pkg} ~= {ver}"')
         else:
-            print(f'skipping package: {pkg} from private repo {spec.index}')
-
+            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output')
+            return None
+        
     return "[" + ",".join(deps) + "]"
 
 def print_pyproject():
@@ -324,6 +325,11 @@ def print_pyproject():
 
     if 'LICENSE' in pythonsh:
         print(f'license = \"{project["LICENSE"]}\"')
+
+    deps = pyproject_deps(release)
+
+    if deps is not None and len(deps) > 0:
+        print(f'dependencies = %s' % deps)
 
     print(f'readme = "README.md"')
 
