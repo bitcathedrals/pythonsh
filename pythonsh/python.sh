@@ -982,6 +982,8 @@ case $1 in
 
       $0 check
 
+      echo "EDITOR is: $EDITOR ... correct?"
+
       read -p "Proceed? [y/n]: " proceed
 
       if [[ $proceed = "y" ]]
