@@ -997,24 +997,14 @@ case $1 in
 
       if [[ $VERSION == "resume" ]]
       then
-        resume=$2
+        resume=$1
         echo "attempting to resume at point: $resume"
 
-        if [[ $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+        if [[ $resume == "pipfile" || $resume == "commit" ]]
         then
           source "python.sh"
         else
-          echo "resume must be either: \"merge\" or \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
-          exit 1
-        fi
-      else
-        if git diff --quiet
-        then
-          echo ">>>working tree clean - proceeding with release: $VERSION"
-        else
-          echo "working tree dirty - terminating release:"
-
-          git status
+          echo "resume must be either: \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
           exit 1
         fi
       fi
@@ -1051,32 +1041,17 @@ case $1 in
 
         if [[ -f Pipfile ]]
         then
-          echo -n ">>>regenerating pyproject.toml."
+          echo -n ">>>regenerating Pipfilel and pyproject.toml."
 
+          $0 pipfile >Pipfile
           $0 project >pyproject.toml
+
+          git add Pipfile
           git add pyproject.toml
         fi
       fi
 
-      if [[ -z $resume || $resume == "merge" ]]
-      then
-        echo -n ">>>merging work from develop in 3 seconds: "
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
-
-        if git merge --no-ff develop
-        then
-          echo "merge ok!"
-        else
-          echo "error result from merge, probably a conflict, please clean up manually and restart with ./py.sh start resume pipfile"
-        fi
-      fi
-
-      if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
+      if [[ -z $resume || $resume == "pipfile" ]]
       then
         if [[ -f Pipfile ]]
         then
@@ -1096,7 +1071,7 @@ case $1 in
         fi
       fi
 
-      if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
+      if [[ -z $resume || $resume == "pipfile" || $resume == "commit" ]]
       then
         echo ">>>commiting bump to to $VERSION"
 
@@ -1219,7 +1194,7 @@ start      = initiate an EDITOR session to update VERSION in python.sh, reload c
 
              for the first time pass version as an argument: "./py.sh start 1.0.0"
 
-             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile|commit]
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [pipfile|commit]
              to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
