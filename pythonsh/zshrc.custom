@@ -1,8 +1,25 @@
+function set_macos_path_helper {
+  # this sets up macos path from /etc/path.d plus manpages
+  helper=/usr/libexec/path_helper
+
+  if [[ -x $helper ]]
+  then
+    eval "$($helper)"
+  fi
+}
 
 function set_homebrew {
+  # brew can be in three different locations
+
   if [[ -d $HOME/homebrew ]]
   then
     eval $($HOME/homebrew/bin/brew shellenv)
+    return
+  fi
+
+  if [[ -x /usr/local/bin/brew ]]
+  then
+    eval $(/usr/local/bin/brew shellenv)
     return
   fi
 
@@ -13,6 +30,7 @@ function set_homebrew {
   fi
 }
 
+set_macos_path_helper
 set_homebrew
 
 PATH="$HOME/tools/local/bin:$PATH"
