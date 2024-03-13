@@ -1,3 +1,5 @@
+#+bibliography bibliography.bib
+
 * Pythonsh tooling, version control, best practices
 
 I have extensive experience in professional and personal projects with
@@ -46,6 +48,10 @@ without any integration into a cohesive tool-chain.
   fire instead of putting the flames out.It’s origins are setuptools
   with an executable config and an outdated egg format.
 
+- basic best practices such as the storage and use of secrets is
+  anarchy. Developers still fequently put credentials in the
+  code. (my utilities repo: wallet handles this)
+
 The current format wheel files are still based on setuptools and
 layer on top of eggs for metadata construction. There are two major
 conventions for project layout:
@@ -82,16 +88,100 @@ established and everyone needs to stick to it.
 I think git flow is the best after struggling with different
 workflows for years.
 
-** building
+*** workflows
 
-Building should be done in an isolated environtment. tox allows
-for tests and such to execute in different environments but this
-will dissapear as older python is phased out.
+There are two basic variations on workflows.
+- develop on trunk, branch for release
+- develop on branch, merge to trunk which is stable.
 
-Clearly the most important thing is to focus on virtual environments
-where seperate environments can be maintained in a peristent way
-mirroring the different environments, dev, test, and release that
-the development evironment dictates.
+**** Develop on Trunk
+
+First having chaos on the default branch is a recipe for
+disaster as the developer has to make sure he has the
+right branch checked out.
+
+For consumers of the code having the trunk be devel
+means that the default checkout is most likely broke
+in dozens of ways. This is not a good experience.
+
+**** Develop on a branch
+
+The alternative is for main/master to be stable, and
+developers only merge finished work into it. This
+is intuitive since a default checkout works.
+
+**** Git Flow
+
+git flow is a workflow supported by reliable and intuitive
+tooling.
+
+In git flow all of the shared development is on "develop"
+and developers work in isolated branches from develop
+and merge into develop.
+
+When the develop branch is stabalized and has had
+time to bake it is merged into main/master and a
+new stable point has been reached.
+
+After over a decade of using git I cannot stress enough
+the value of git flow to an organization or team. It's
+thorough and insightful model is the best there is.
+
+*** installing pythonsh
+
+pythonsh has a script pysh-install.sh that
+when called with:
+
+- private = my personal ssh checkout for development
+- public  = https checkout for client consumption
+
+This script will install a git submodule pythonsh and create a symlink
+to py.sh for the CLI interface.
+
+*** installing git flow
+
+git flow is in various packages on various systems,
+with various versions. Clearly this chaos must
+be avoided and installing from source is simple
+with pythonsh:
+
+#+BEGIN_SRC bash
+./py.sh tools-unix
+#
+
+This installs all the pyenv tools from source. Note that
+re-executing this will update them.
+
+*** pythonsh shell tooling.
+
+It can be very confusing keeping track of what virtualenv, git branch and the git status.
+also paths have to be set for various tools and code run on different systems. For this
+pythonsh provides shell tools.
+
+#+BEGIN_SRC bash
+./py.sh tools-zshrc
+./py.sh tools-custom
+./py.sh tools-prompt
+#
+
+tools-zshrc sets up functions like: switch_dev, switch_test, switch_release
+to switch between different virtualenvs and also loads zshrc.custom which
+sets paths and does things like setup ssh-agent if necessary.
+
+#+BEGIN_SRC org
+<work> [system] pythonsh:develop(*) ->
+#+END_SRC
+
+This is what the prompt looks like:
+
+- work is the system name so you dont get confused when remoting into other systems
+- system is the virtualenv which is not activated in this case.
+- pythonsh is the repository you are at.
+- develop is the current branch
+- () encloses * and + , where * = dirty, and + = staged changes
+
+When in the root of the repository all this information is displayed,
+in sub directories or other directories only the host is shown
 
 ** Project Workflow
 
@@ -199,17 +289,13 @@ an alpa tag is created.
 #+BEGIN_SRC org
 ./py.sh build
 
-
 ,# commit files, especially Pipfile, and Pipfile.lock
 
 ,# squash the feature branch down to a single commit and give it
 ,# in conventional commit format
 
-
 ./py.sh tag-alpha "feature" "message"
 #+END_SRC
-
-[[https://www.conventionalcommits.org/en/v1.0.0/][conventional commmits]]
 
 At this point the feature branch is closed with a finish.
 
@@ -220,55 +306,6 @@ git flow feature finish COMMIT
 Sometimes there are fixes that need to be made to the
 development branch. They should be done on a feature
 branch named "fix-{description}"
-
-** Release
-
-The release process is designed to test the package and
-integration or black box test the functionality of the
-package.
-
-*** Types of packages
-
-There are two types of packages. Singular packages created
-by the python build module. The second type is a buildset
-package which is an abbreviation for built set. it's
-a zip named like a wheel, except it's a all the runtime
-dependencies gathered from the test virtual environment.
-
-buildset packages are used when there are private packages
-in the mix and we need to be able to install all the
-dependencies in one shot.
-
-If all the dependencies are public the dependencies
-will be inserted into the pyproject.toml file and
-hey will be installed normally by pip or pipenv.
-
-to start the release proccess a release environment is
-created.
-
-#+BEGIN_SRC org
-./py.sh mkrelease
-
-switch_release
-
-pipenv install <package>
-#+END_SRC
-
-At that point the release is tested. If the release
-is deemed ok a beta is cut.
-
-#+BEGIN_SRC org
-./py.sh tag-beta "feature" "message"
-
-switch_release
-
-pipenv install <package>
-#+END_SRC
-
-Code takes time bake, and so rushing into a release
-is not a good idea. after some time has passed and
-a few final fixes are made it's time for the
-full release process to start.
 
 *** Release Process
 
@@ -361,10 +398,6 @@ no changes added to commit (use "git add" and/or "git commit -a")
 <devil> [pastepipe_dev] pastepipe:develop(*) ->
 #+END_SRC
 
-Note also the prompt. I'll cover that later, but it is generated by
-pythonsh. There is a shell alias for status -> git status so
-I don't have to type git every time.
-
 *** info
 
 #+BEGIN_SRC org
@@ -414,7 +447,6 @@ delta      = show diff between feature and develop or last release and develop
 log        = show log between feature and develop or last release and develop
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
-
 #+END_SRC
 
 - history shows oneline logs in the repo
@@ -454,4 +486,68 @@ tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and me
 tagging is important for making a file set for alpha or beta releases. by drawing
 a line across the repository the entire state of the repo can be checked out.
 
+
+** Release
+
+The release process is designed to test the package and
+integration or black box test the functionality of the
+package.
+
+*** building
+
+Building should be done in an isolated environtment. tox allows
+for tests and such to execute in different environments but this
+will dissapear as older python is phased out.
+
+Clearly the most important thing is to focus on virtual environments
+where seperate environments can be maintained in a peristent way
+mirroring the different environments, dev, test, and release that
+the development evironment dictates.
+
+
+*** Types of packages
+
+There are two types of packages. Singular packages created
+by the python build module. The second type is a buildset
+package which is an abbreviation for built set. it's
+a zip named like a wheel, except it's a all the runtime
+dependencies gathered from the test virtual environment.
+
+buildset packages are used when there are private packages
+in the mix and we need to be able to install all the
+dependencies in one shot.
+
+If all the dependencies are public the dependencies
+will be inserted into the pyproject.toml file and
+hey will be installed normally by pip or pipenv.
+
+to start the release proccess a release environment is
+created.
+
+#+BEGIN_SRC org
+./py.sh mkrelease
+
+switch_release
+
+pipenv install <package>
+#+END_SRC
+
+At that point the release is tested. If the release
+is deemed ok a beta is cut.
+
+#+BEGIN_SRC org
+./py.sh tag-beta "feature" "message"
+
+switch_release
+
+pipenv install <package>
+#+END_SRC
+
+Code takes time bake, and so rushing into a release
+is not a good idea. after some time has passed and
+a few final fixes are made it's time for the
+full release process to start.
+
+
+#+print_bibliography
 
