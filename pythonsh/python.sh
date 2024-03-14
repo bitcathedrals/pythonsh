@@ -930,12 +930,19 @@ case $1 in
         echo ">>>showing history"
         git log --oneline
     ;;
-    "log")
+    "ahead")
         root_to_branch
 
-        echo ">>>showing log between $root and $branch"
+        echo ">>>showing commits in $branch not $root (parent)"
         git log "${root}..${branch}" --oneline
     ;;
+    "behind")
+        root_to_branch
+
+        echo ">>>showing commits in $root (parent) not $branch"
+        git log "${branch}..${root}" --oneline
+    ;;
+
     "graph")
         root_to_branch
 
@@ -1219,7 +1226,9 @@ merges     = show merges only
 history    = show commit history
 summary    = show diffstat of summary between feature and develop or last release and develop
 delta      = show diff between feature and develop or last release and develop
-log        = show log between feature and develop or last release and develop
+ahead      = show log of commits in branch but not in parent
+behind     = show log of commit in parent but not branch
+
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
 sync       = merge from the root branch commits not in this branch no ff
