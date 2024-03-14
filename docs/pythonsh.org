@@ -307,47 +307,6 @@ Sometimes there are fixes that need to be made to the
 development branch. They should be done on a feature
 branch named "fix-{description}"
 
-*** Release Process
-
-The git-flow mechanism for release is started.
-
-#+BEGIN_SRC org
-./py.sh start <version>
-#+END_SRC
-
-This initiates a series of checks. it fetches from origin
-and checks if there are any unapplied commits on main or
-develop.
-
-It also checks that pyenv is available and that the tree
-is not dirty.
-
-It then asks to proceed and starts a git-flow release process.
-Once the release has started it:
-
--  has the user edit the python.sh file to bump the version
--  regenerates the Pipfile.lock and copies it to a release/ dir
--  commits all the changes
-
-Then all the coder has to do is inspect the release to make
-sure everything is ok. Then the release is finalized.
-
-#+BEGIN_SRC org
-./py.sh release
-#+END_SRC
-
-A series of commits are triggered merging the release branch
-into main, and back into develop. a tag is also created
-which needs to start with "release-", but that is not automatic
-so some care is required.
-
-Once the release is final a push on main and develop and tags
-is performed by: upload.
-
-#+BEGIN_SRC org
-./py.sh upload
-#+END_SRC
- 
 ** Pythonsh version control features
 
 Circling back to Version Control Practices we begin with the version)
@@ -505,21 +464,282 @@ mirroring the different environments, dev, test, and release that
 the development evironment dictates.
 
 
-*** Types of packages
+*** Virtual Environments
 
-There are two types of packages. Singular packages created
-by the python build module. The second type is a buildset
-package which is an abbreviation for built set. it's
-a zip named like a wheel, except it's a all the runtime
-dependencies gathered from the test virtual environment.
+Python package management takes place in virtual environments.
+These are directories that have a python built from source
+and a set of installed packages.
 
-buildset packages are used when there are private packages
-in the mix and we need to be able to install all the
-dependencies in one shot.
+When you "activate" a virtual environment and your shell
+is correctly set you can execute programs, including
+python, in that environment.
 
-If all the dependencies are public the dependencies
-will be inserted into the pyproject.toml file and
-hey will be installed normally by pip or pipenv.
+**** Virtual Environment Stucture
+
+A project has four virtual environments
+
+- dev: for development
+- test: for pre-release testing
+- build: for building a release
+- release: for testing release packages
+
+The build environment is created and destroyed
+automatically. The release environment is
+created as needed.
+
+the "dev" and "test" environments are the commonly
+used ones. With the shell setup by py.sh typing
+
+- "switch_dev" = switch to development environment
+- "switch_test" = switch to test environment
+
+**** Virtual environment creation
+
+The environments are created by two commands:
+
+- ./py.sh project-virtual
+- ./py.sh bootstrap
+
+The "project-virtual" command creates the
+virtual environments according to the settings
+in python.sh
+
+**** python.sh
+
+python.sh is the master file for pythonsh.
+It contains all the variables needed to
+generate python files.
+
+The idea is that there is one master file,
+and all the other files are generated from
+it so they are all synchronized.
+
+Unfortunately python has numerous redundancies
+so syncing them up is key, and best done
+with a single master file.
+
+Here is an example from pythonsh itself:
+
+#+BEGIN_SRC bash
+,# pythonsh configuration file
+VERSION=0.14.0
+
+PACKAGES=pyutils
+SOURCE=.
+
+BUILD_NAME=pythonsh
+
+DOCKER_VERSION="0.1.0"
+
+VIRTUAL_PREFIX='pythonsh'
+PYTHON_VERSION='3.12'
+#+END_SRC bash
+
+- VERSION = the version of the repository
+- PACKAGES = packages that comprise the project
+- SOURCE = the directory containing the package sources. it is typically: "src/"
+- BUILD_NAME = the name of the built packages
+- VIRTUAL_PREFIX = the prefix for the virtualenvs. pythonsh = "pythonsh_dev" etc...
+- PYTHON_VERSION = what python version to install/use
+ 
+From this the following packages are generated:
+
+- pyproject.toml = PEP517 build template. contains build system directives and runtime dependencies
+- Pipfile = Dependency management. sections for repositories, dependencies, and other variables.
+
+When the virtual environments are created the latest possible PYTHON
+matching the PYTHON_VERSION is installed. This is done
+automatically. If a interpreter has already been built for that
+version it is re-used.
+
+Then the virtualenvs are created by
+
+#+BEGIN_SRC bash
+./py.sh project-virtual
+#+END_SRC
+
+This creates VIRTUAL_PREFIX-{dev,test}
+
+Then the environment is bootstrapped.
+
+**** boostrap
+
+#+BEGIN_SRC bash
+./py.sh bootstrap
+#+END_SRC
+
+There are many steps to a bootstrap
+
+- The pip command is upgraded, pipenv is installed
+- ./py.sh minimal which installs only the packages needed by pythonsh itself
+- then a search is made of the source directories for .pypi and Pipfile
+
+This is unique to pythonsh. Normally all Pipfile instances are
+singluar and at the root of the tree. However pythonsh is built to
+find fragments of Pipfile in source directories, and installed
+packages.
+
+The .pypi fils define repositories. Typically for open-source projects
+only the central pypi repository is used. However for commercial
+projects private artifact repositories are used as well.
+
+- now all the .pypi repos and fragements are merged by the highest version
+
+This merging process reduces tangled dependencies by syncing all the
+dependencies at the teir 1 packages.
+
+- The root Pipfile is written with the packages are installed.
+
+- A second pass then searches installed packages for fragments and merges those
+
+This second pass allows us to gather Pipfile fragments from installed
+packages from the first pass.
+
+- Now the final install takes place with all the teir-1 and teir-2 dependencies synced.
+
+- at both stages vulnerability checks are performed.
+
+- finally pyproject.toml is written for the PEP517 build "build" module.
+
+The pyproject.toml build file contains all of the information needed to build
+the package.
+
+It is not currently possible to specifiy additional repositories with
+a setuptools backend in pyproject.toml. This means that if there are
+private repositories it's not possible to specify the dependencies.
+
+When all of the packages are on pypi a dependencies list will be written
+to pyproject.toml. If there are other repositories dependencies will be
+supressed but the rest of the file will be written.
+
+This is the boostrap process. The end result is that the active
+virtualenv will contain a highly homogenous package set for the
+project.
+
+Actually pyproject.toml is not generated until a package build
+is performed but the two files: Pipfile and pyproject.toml share
+a context.
+
+*** Sources
+
+The next step is to get the source code into the virtualenv.
+There is a way to make it possible by using "editable" packages,
+however I prefer a second approach. It is possible to put ".pth"
+packages into site-packages in the virtual environment.
+
+#+BEGIN_SRC bash
+show-paths = list .pth source paths
+add-paths  = install .pth source paths into the python environment
+rm-paths   = remove .pth source paths
+site       = print out the path to site-packages
+#+END_SRC
+
+- show-paths: shows all the paths in the virtual environment
+- add-paths: installs a pth file generated from python.paths in the repo root
+- rm-paths: removes the .pth file
+- site: prints out the virtualenv site-packages directory location
+
+Although some would discourage .pth files they are ultimately far
+more flexible than editable packages. They can contain both absolute
+and relative paths.
+
+*** Python commands
+
+#+BEGIN_SRC bash
+test    = run pytests
+python  = execute python in pyenv
+repl    = execute ptpython in pyenv
+run     = run a command in pyenv
+#+END_SRC
+
+The python commands include all of the basic functionality for python
+development.
+
+- test = run unit tests
+- python = run a python file
+- repl = run a ptpython interactive repl
+- run = run a command in the virtual environment
+
+*** Package commands
+
+#+BEGIN_SRC python
+versions   = display the versions of python and installed packages
+locked     = update from lockfile
+all        = update pip and pipenv install dependencies and dev, lock and check
+update     = update installed packages, lock and check
+remove     = uninstall the listed packages
+list       = list installed packages
+#+END_SRC
+
+- versions = display the versions of installed packages
+- locked = update the lockfile, which is a file of pinned packages
+- all = update pip, pipenv, and install packages including dev packages
+- update = update packages to the latest possible versions
+- remove = remove a package
+- list = show all installed packages in a dependency graph
+
+*** Release Commands
+
+#+BEGIN_SRC
+check      = fetch main, develop from origin and show log of any pending changes
+start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
+             snapshot Pipfile if present, and start a git flow release with VERSION
+
+             for the first time pass version as an argument: "./py.sh start 1.0.0"
+
+             if you encounter a problem you can fix it and resume with ./py.sh start resume [pipfile|commit]
+             to resume at that point in the flow.
+release    = execute git flow release finish with VERSION
+upload     = push main and develop branches and tags to remote
+#+END_SRC
+
+- check = performs checks to make sure that there are no unmerged upstream changes
+
+The check looks for a dirty repository, unmerged upstream commits, and vulnerable
+packages.
+
+- start = perform checks and initiate a release. <version> is the argument with the version to release.
+
+Many checks are performed including checks to make sure that necessary commands are installed,
+calling check, if there is a Pipfile indicating that it's a python project then it checks
+for a active virtualenv, and that a $EDITOR is set for commits.
+
+If everything is ok, it prompts to proceed.
+
+- then the editor is launced to update the python.sh. It is added and committed automatically.
+
+- the release process then copies the Pipfile and Pipfile.lock to the release/ directory preserving the information needed to re-build the code later.
+
+- the git flow release command then drops back to the shell to inspect the release.
+
+At this point release packages can be built and tested. If the testing
+goes well the next step is to run ./py.sh release to finalise the
+release.
+
+#+BEGIN_SRC bash
+./py.sh release
+#+END_SRC
+
+The release command merges the release branch back into main, and then
+develop, tagging the release as well.
+
+#+BEGIN_SRC bash
+./py.sh upload
+#+END_SRC
+
+Upload is the final step: it pushes "main" "develop" and tags to
+upstream.
+
+*** Release - Building & Testing
+
+There are two types of packages. Singular packages created by the
+python build module. The second type is a buildset package which is an
+abbreviation for built set. it's a zip named like a wheel, except it's
+a all the runtime dependencies gathered from the test virtual
+environment.
+
+buildset packages are used when there are private packages in the mix
+and we need to be able to install all the dependencies in one shot.
 
 to start the release proccess a release environment is
 created.
@@ -548,6 +768,4 @@ is not a good idea. after some time has passed and
 a few final fixes are made it's time for the
 full release process to start.
 
-
 #+print_bibliography
-
