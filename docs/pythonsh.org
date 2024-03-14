@@ -305,7 +305,7 @@ git flow feature finish COMMIT
 
 Sometimes there are fixes that need to be made to the
 development branch. They should be done on a feature
-branch named "fix-\{description\}"
+branch named "fix-{description}"
 
 ** Pythonsh version control features
 
@@ -558,7 +558,7 @@ Then the virtualenvs are created by
 ./py.sh project-virtual
 #+END_SRC
 
-This creates VIRTUAL_PREFIX-\{dev,test\}
+This creates VIRTUAL_PREFIX-{dev,test}
 
 Then the environment is bootstrapped.
 
