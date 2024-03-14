@@ -147,7 +147,7 @@ with pythonsh:
 
 #+BEGIN_SRC bash
 ./py.sh tools-unix
-#
+#+END_SRC
 
 This installs all the pyenv tools from source. Note that
 re-executing this will update them.
@@ -162,7 +162,7 @@ pythonsh provides shell tools.
 ./py.sh tools-zshrc
 ./py.sh tools-custom
 ./py.sh tools-prompt
-#
+#+END_SRC
 
 tools-zshrc sets up functions like: switch_dev, switch_test, switch_release
 to switch between different virtualenvs and also loads zshrc.custom which
@@ -277,7 +277,7 @@ switch_test
 ,# install the latest package set and test.
 ./py.sh all
 ./py.sh test
-#+END_SRC:
+#+END_SRC
 
 Inevitably some bugs might pop up so he fixes them up and continues
 working until the tests are passed.
@@ -533,7 +533,7 @@ DOCKER_VERSION="0.1.0"
 
 VIRTUAL_PREFIX='pythonsh'
 PYTHON_VERSION='3.12'
-#+END_SRC bash
+#+END_SRC
 
 - VERSION = the version of the repository
 - PACKAGES = packages that comprise the project
@@ -662,7 +662,7 @@ development.
 
 *** Package commands
 
-#+BEGIN_SRC python
+#+BEGIN_SRC bash
 versions   = display the versions of python and installed packages
 locked     = update from lockfile
 all        = update pip and pipenv install dependencies and dev, lock and check
@@ -680,7 +680,7 @@ list       = list installed packages
 
 *** Release Commands
 
-#+BEGIN_SRC
+#+BEGIN_SRC bash
 check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
@@ -768,4 +768,4 @@ is not a good idea. after some time has passed and
 a few final fixes are made it's time for the
 full release process to start.
 
-#+print_bibliography
+#+print_bibliography:
