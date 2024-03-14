@@ -168,7 +168,7 @@ tools-zshrc sets up functions like: switch_dev, switch_test, switch_release
 to switch between different virtualenvs and also loads zshrc.custom which
 sets paths and does things like setup ssh-agent if necessary.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 <work> [system] pythonsh:develop(*) ->
 #+END_SRC
 
@@ -253,7 +253,7 @@ a feature branch checked out. Thee developer is using the "dev"
 virtual environment and he bangs on the code until it looks good
 and passes all tests.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 switch_dev
 ./py.sh test
 #+END_SRC
@@ -261,7 +261,7 @@ switch_dev
 During development new packages may be added, or newer versions
 pulled in.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 ./py.sh update
 ./py.sh test
 #+END_SRC
@@ -271,7 +271,7 @@ virtual environment.
 
 He performs a:
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 switch_test
 
 ,# install the latest package set and test.
@@ -286,7 +286,7 @@ When the tests pass he is staged for release. He performs a build
 or a build-set constructing packages. If the build goes well then
 an alpa tag is created.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 ./py.sh build
 
 ,# commit files, especially Pipfile, and Pipfile.lock
@@ -299,7 +299,7 @@ an alpa tag is created.
 
 At this point the feature branch is closed with a finish.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 git flow feature finish COMMIT
 #+END_SRC
 
@@ -312,7 +312,7 @@ branch named "fix-{description}"
 Circling back to Version Control Practices we begin with the version)
 control features of pythonsh.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
@@ -337,7 +337,7 @@ sync       = merge from the root branch commits not in this branch no ff
 
 This is a example of using status:
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 <devil> [pastepipe_dev] pastepipe:develop(*) -> status
 On branch develop
 Your branch is up to date with 'origin/develop'.
@@ -359,7 +359,7 @@ no changes added to commit (use "git add" and/or "git commit -a")
 
 *** info
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 <devil> [pastepipe_dev] pastepipe:develop(*) -> ./py.sh info
 ,*  develop 41eb5d6 [origin/develop] (fix) update the pythonsh infrastructure
   main    384168c [origin/main] (pull) pull latest pythonsh
@@ -371,7 +371,7 @@ command.
 
 *** track
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 #+END_SRC
 
@@ -379,7 +379,7 @@ sometimes you need to set the upstream for a branch. track makes this easy.
 
 *** fetch & pull
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
 #+END_SRC
@@ -389,7 +389,7 @@ them. pull is basically fetch + merge.
 
 *** staged
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 staged     = show staged changes
 #+END_SRC
 
@@ -398,7 +398,7 @@ showing the unstaged changes is a shell alias.
 
 *** The advanced view into repository
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 merges     = show merges only
 history    = show commit history
 summary    = show diffstat of summary between feature and develop or last release and develop
@@ -427,7 +427,7 @@ trunk, or the main trunk.
 This intelligence means a single command can be used in three
 different contexts with no additional arguments.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 sync       = merge from the root branch commits not in this branch no ff
 #+END_SRC
 
@@ -437,7 +437,7 @@ into the feature branch.
 
 *** tagging
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
 tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
 #+END_SRC
@@ -744,7 +744,7 @@ and we need to be able to install all the dependencies in one shot.
 to start the release proccess a release environment is
 created.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 ./py.sh mkrelease
 
 switch_release
@@ -755,7 +755,7 @@ pipenv install <package>
 At that point the release is tested. If the release
 is deemed ok a beta is cut.
 
-#+BEGIN_SRC org
+#+BEGIN_SRC bash
 ./py.sh tag-beta "feature" "message"
 
 switch_release
