@@ -111,7 +111,7 @@ is intuitive since a default checkout works.
 **** Git Flow
 
 git flow is a workflow supported by reliable and intuitive
-tooling. [[cite:&nil]]
+tooling. [[cite:&flow]]
 
 In git flow all of the shared development is on "develop"
 and developers work in isolated branches from develop
