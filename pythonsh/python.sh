@@ -722,6 +722,7 @@ case $1 in
 #
     "modinit")
       git submodule init
+      git submodule update --init
     ;;
     "modadd")
       shift
