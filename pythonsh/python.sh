@@ -947,7 +947,6 @@ MESSAGE
     if [[ -n $syncs ]]
     then
       cat <<MESSAGE
-
 * syncs
 
 $syncs
