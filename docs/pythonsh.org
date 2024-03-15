@@ -1,56 +1,246 @@
-conventional commits [[cite:&nil]]o are a standard for formatting
-commit messages. they look like this.
+* Pythonsh tooling, version control, best practices
 
-#+BEGIN_SRC
-(feat) add a new dialog for listing reports
+I have extensive experience in professional and personal projects with
+Python. From that experience clearly one of the most poorly thought
+out and vexing aspects of coding is just getting the code to
+run.
+
+Getting it to run on one developer's machine is just the beginning,
+makeing it portable to other developers is another hurdle. And finally
+building a good release to the end users is yet another hurdle.
+
+** The plethora of tools
+
+A developer typically uses language tools, IDE tools, version control tools,
+artifact repositories, and dependency managers. All these tools are used
+without any integration into a cohesive tool-chain.
+
+- Running code is fragmented process due to the use of either plain
+  system interpreters, tox for multiple python versions, or pyenv for
+  isolated virtual environment environments. Developers are often
+  unaware of the different strengths and weaknesses of the tools and
+  just copy the first thing they find on the internet.
+
+- Python has many different versions, and each milestone introduces
+  new features that code can become dependent on. Installation can be
+  by a OS package, Open Source package managers like homebrew, or
+  virtual environment interpreters like pyenv. This fragmentation
+  leads to chaos with developers often not having a firm grasp on
+  what python their code is actually running on.
+
+- Many times without good version control practices or artifactorys
+  the sharing of code can be as bad as cut and paste or sending files
+  over slack.
+
+- Backwards compatibility is an assumption with no explicit guarantee.
+  Practices for maintaining release metadata that allow a project to
+  rebuild a release from a given source version, interpreter, and
+  module environment are not even considered much less implemented.
+
+- Builds cannot be reproduced later if necessary which
+  is not a professional way to build and distribute software. It
+  should always be possible to reconstruct builds for any release.
+
+- The python build system is frankly a disaster. It is both layered
+  and fragmented with the latest standards encouraging this dumpster
+  fire instead of putting the flames out.It’s origins are setuptools
+  with an executable config and an outdated egg format.
+
+- basic best practices such as the storage and use of secrets is
+  anarchy. Developers still fequently put credentials in the
+  code. (my utilities repo: wallet handles this)
+
+The current format wheel files are still based on setuptools and
+layer on top of eggs for metadata construction. There are two major
+conventions for project layout:
+
+python in the root of the tree, or python in a “src” sub-directory.
+setuptools can be configured either by an archaic executable, a
+setup.py file which requires execution of the setup.py to drive the
+build process embedding the entire build process in a rigid
+script
+
+The second option is to configure setuptools with a setup.cfg
+file. This is much more sane but it is sabotaged by an archaic
+format that is basically just a config to drive the generation of a
+setup.py file. New tools and standards have been setup to deal
+
+with issues like the fact that a pypi package repository has to
+execute untrusted code just to get the version number and metadata
+for the project. The pep 517 standard address this by putting
+pyproject.toml file.
+
+However this file is a complete mess as it creating keys for
+backend package managers with no policy or standards across them.
+
+** Version Control
+
+Version controll with git is often black magic for developers.
+Since they dont understand git they often paddle in the shallow
+end of the pool using only pull,add,commit, and push.
+
+If a merge comes up they often throw up their hands and ask for
+help. Since git is more toolkit than tool a workflow must be
+established and everyone needs to stick to it.
+
+I think git flow is the best after struggling with different
+workflows for years.
+
+*** workflows
+
+There are two basic variations on workflows.
+- develop on trunk, branch for release
+- develop on branch, merge to trunk which is stable.
+
+**** Develop on Trunk
+
+First having chaos on the default branch is a recipe for
+disaster as the developer has to make sure he has the
+right branch checked out.
+
+For consumers of the code having the trunk be devel
+means that the default checkout is most likely broke
+in dozens of ways. This is not a good experience.
+
+**** Develop on a branch
+
+The alternative is for main/master to be stable, and
+developers only merge finished work into it. This
+is intuitive since a default checkout works.
+
+**** Git Flow
+
+git flow is a workflow supported by reliable and intuitive
+tooling. [[cite:&nil]]
+
+In git flow all of the shared development is on "develop"
+and developers work in isolated branches from develop
+and merge into develop.
+
+When the develop branch is stabalized and has had
+time to bake it is merged into main/master and a
+new stable point has been reached.
+
+After over a decade of using git I cannot stress enough
+the value of git flow to an organization or team. It's
+thorough and insightful model is the best there is.
+
+*** installing pythonsh
+
+pythonsh has a script pysh-install.sh that
+when called with:
+
+- private = my personal ssh checkout for development
+- public  = https checkout for client consumption
+
+This script will install a git submodule pythonsh and create a symlink
+to py.sh for the CLI interface.
+
+*** installing git flow
+
+git flow is in various packages on various systems,
+with various versions. Clearly this chaos must
+be avoided and installing from source is simple
+with pythonsh:
+
+#+BEGIN_SRC bash
+./py.sh tools-unix
 #+END_SRC
 
-This is actually quite crucial to a project as it makes it
-possible to comprehend the repo history with one line logs.
+This installs all the pyenv tools from source. Note that
+re-executing this will update them.
 
-There are a few basic ones in the standard, but I have expanded
-on them to encompass all the scenarios I encounter.
+*** pythonsh shell tooling.
 
-To really understand the power of conventional commits you have
-to consider the tooling. What if it was possible to generate
-release notes entirely from commits ?
+It can be very confusing keeping track of what virtualenv, git branch and the git status.
+also paths have to be set for various tools and code run on different systems. For this
+pythonsh provides shell tools.
 
-Pythonsh does!
+#+BEGIN_SRC bash
+./py.sh tools-zshrc
+./py.sh tools-custom
+./py.sh tools-prompt
+#+END_SRC
 
-Here are the standard elements with my extension.
+tools-zshrc sets up functions like: switch_dev, switch_test, switch_release
+to switch between different virtualenvs and also loads zshrc.custom which
+sets paths and does things like setup ssh-agent if necessary.
 
-- (feat) new features. A oneliner is either sufficient or some prose is added below
-  the main commit line.
-- (fix) this is primarily for development. They belong on feature branches.
-  fixes are corrections to code that has not been released yet.
-- (bug) bugs are defects in code that has been released. They need to be
-  included in the release notes
-- (issue) issues are bugs that have been reported by users and have a ticket assigned.
-- (sync) a fast-forward. This is done only on the trunks: develop and main where they
-  are histories that are stable, and consist entirely of merges.
- 
-  The other use case is for third party submodules. since .gitmodules and git internals
-  remember the commit sync'd its not a good idea to introduce local commits. That will
-  get ugly.
+#+BEGIN_SRC bash
+<work> [system] pythonsh:develop(*) ->
+#+END_SRC
 
-  For (syc) is is critical that the date be in the one-liner as dependencies are
-  being updated and this has a large impact on the release.
+This is what the prompt looks like:
 
-- (pull) for working on feature branches, pull is for pulling changes into the
-  feature branches
-- (merge) merge is for pulling from and to the trunk.
-- (release) releases are alpha and beta releases. The actual release process with
-  git flow release start is more complex and is documented below
-- (alpha) both tag and possibly a commit this indicates it's a beta candidate
-  and the developer wants to tag/commit to establish a baseline
-- (beta) This is on the develop trunk and indicates that this is a point from
-  which beta_fix and beta_<feature branch> should be branched off this point.
+- work is the system name so you dont get confused when remoting into other systems
+- system is the virtualenv which is not activated in this case.
+- pythonsh is the repository you are at.
+- develop is the current branch
+- () encloses * and + , where * = dirty, and + = staged changes
 
-This systematic annotating of the history makes it possible to understand
-the changes far beyond cryptic and poor commit messsages.
+When in the root of the repository all this information is displayed,
+in sub directories or other directories only the host is shown
 
-This also allows for tools that help insert commit messages, and generate
-entire release notes into merge commits and the like.
+** Project Workflow
+
+*** Source Workflow
+
+#+BEGIN_SRC bash :shebang "#! /usr/bin/env bash" :tangle "scripts/clone-into-existing.sh"
+,# 1 = the repo, 2 = the clone dir, 3 is the feature branch to start
+git clone $1 $2 $3
+cd $2
+
+echo "choose main as the name of the release trunk"
+
+,# choose main as the main branch
+git flow init
+
+,# if pythonsh is already in the repo use this to check it out
+git submodule update --init
+
+(cd pythonsh && git checkout develop)
+
+,# this installs the directories in python.paths into site-packages
+,# so the source is included in builds.
+./py.sh add-paths
+
+,# create the virtual environments
+./py.sh project-virtual
+
+,# install dependencies
+./py.sh bootstrap
+
+,# start from develop
+git checkout develop
+
+,# start the feature branch
+git flow feature start $3
+#+END_SRC
+
+to initialize the development environment
+
+- It creates main/master as the release branch
+- It creates develop as the development trunk
+- It creates "feature" parented by develop as developer workspaces
+- It creates the virtual environments
+- It installs a shim to get the source into the environment
+- It installs all the packages
+
+When starting work a feature branch is created from develop. The developer
+makes his changes, pulls from develop to bring in other work, and eventually
+when complete he squashes his feature branch and merges it into develop.
+
+With this model many programmers can share code efficiently, and the
+ugly mess of development in the form of incremental commits gets
+squashed into clean additions to the development trunk.
+
+When it is time for a release a release branch is created and any release
+changes are made and develop is merged into main. The release is then
+merged back into develop.
+
+This flow is very effective at giving develops a lot of room to work
+while integrating code easily, and keeping history clean.
+
 
 *** Package Managment, Test, and Build
 
@@ -111,46 +301,39 @@ At this point the feature branch is closed with a finish.
 git flow feature finish COMMIT
 #+END_SRC
 
+Sometimes there are fixes that need to be made to the
+development branch. They should be done on a feature
+branch named "fix-{description}"
+
 ** Pythonsh version control features
 
-Circling back to Version Control Practices we begin with the version
+Circling back to Version Control Practices we begin with the version)
 control features of pythonsh.
 
-There are several aliases built into the zshrc file for quick git commands
-
 #+BEGIN_SRC bash
-alias status='git status'
-alias diff='git diff'
-alias stat='git diffstat'
-alias commit='git commit'
-alias ff='git pull'
-alias pull='git pull --no-ff'
-alias push='git push'
-alias add='git add'
-alias co='git checkout'
-alias branch='git branch'
-alias merge='git merge --no-ff'
+[version control]
+track <1> <2>  = set upstream tracking 1=remote 2=branch
+tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
+tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
+info       = show branches, tracking, and status
+verify     = show log with signatures for verification
+status     = git state, submodule state, diffstat for changes in tree
+fetch      = fetch main, develop, and current branch
+pull       = pull current branch no ff
+staged     = show staged changes
+merges     = show merges only
+history    = show commit history
+summary    = show diffstat of summary between feature and develop or last release and develop
+delta      = show diff between feature and develop or last release and develop
+log        = show log between feature and develop or last release and develop
+graph      = show history between feature and develop or last release and develop
+upstream   = show upstream changes that havent been merged yet
+sync       = merge from the root branch commits not in this branch no ff
 #+END_SRC
 
+*** status
 
-*** fast-forward vs. merge
-
-fast-forward with git seems slick, all the commits get appended and
-it's flashy. However it's a disaster in most cases for this simple reason:
-
-fast-forward can't be undone. Your stuck with those commits without some
-really nasty git hacking. A merge on the other hand can be reverted.
-
-The best place for a ff, is when you are pulling a submodule upstream and
-you dont want to introduce local commits, and you have no ownership of the
-code.
-
-For this reason the pull and merge aliases add the "--no-ff" option
-to force a commit to be created.
-
-*** The status alias
-
-Here is an example of the status command output:
+This is a example of using status:
 
 #+BEGIN_SRC bash
 <devil> [pastepipe_dev] pastepipe:develop(*) -> status
@@ -171,42 +354,6 @@ Untracked files:
 no changes added to commit (use "git add" and/or "git commit -a")
 <devil> [pastepipe_dev] pastepipe:develop(*) ->
 #+END_SRC
-
-*** Overview of pythonsh git functions
-
-- track <1> <2>
-- tag-alpha <feat> <msg>
-- tag-beta  <feat> <msg>
-- info
-- verify
-- status
-- fetch
-- pull
-- staged
-- merges
-- history
-- summary
-- delta
-- ahead
-- behind
-- graph
-- upstream
-- sync
-
-*** Details of pythonsh git functions
-
-- track = sets up upstream branch tracking. This is a simple utility
-- tag-alpha
-
-when development has reached an alpha state for a feature and the
-programmer wants to create a milestone after quashing he creates
-a alpha tag. This command ensures proper formatting since the
-prefixes of the tags is used by the tools for filtering etc.
-
-- tag-beta
-
-Beta tags are for develop trunk milestones. Beta tags are
-for building in test.
 
 *** info
 
@@ -244,44 +391,126 @@ them. pull is basically fetch + merge.
 staged     = show staged changes
 #+END_SRC
 
-show staged changes. Note that git diff showing the unstaged changes
-is a shell alias.
+show staged changes. Note that git diff
+showing the unstaged changes is a shell alias.
 
 *** The advanced view into repository
 
--merges = show merges only
--history = show commit history
--summary= show diffstat of summary between feature and develop or last release and develop
--delta = show diff between feature and develop or last release and develop
--graph = show history between feature and develop or last release and develop
--upstream = show upstream changes that havent been merged yet
+#+BEGIN_SRC bash
+merges     = show merges only
+history    = show commit history
+summary    = show diffstat of summary between feature and develop or last release and develop
+delta      = show diff between feature and develop or last release and develop
+log        = show log between feature and develop or last release and develop
+graph      = show history between feature and develop or last release and develop
+upstream   = show upstream changes that havent been merged yet
+#+END_SRC
 
-*** ahead and behind
+- history shows oneline logs in the repo
+- summary shows a diffstat summary against the parent
+- delta shows a diff summary against the parent
+- log shows the logs agains the parent
+- graph shows a ascii graph of the repo history
+- upstream shows changes from upstream that haven't been merged
+- merges show merges only
 
-- ahead
-- behind
+The most powerful feature is "agains the parent". What this means
+is that pythonsh detects if it's on a feature branch, the develop
+trunk, or the main trunk.
 
-The most powerful feature is "agains the parent". What this means is
-that pythonsh detects if it's on a feature branch, the develop trunk,
-or the main trunk.
-
-- ahead
- - if on a feature branch it's a log develop -> feature
- - if on the develop branch it's a diff from main -> develop
- - if on main it's a diff from the last tag -> main
-- behind
- - if on a feature branch its a log of what is in develop but not in feature
- - if on a develop branch it shows what is in main, but not develop
- - if on main it looks at the last tag
+- if on a feature branch it's a diff from develop -> feature
+- if on the develop branch it's a diff from main -> develop
+- if on main it's a diff from the last tag -> main
 
 This intelligence means a single command can be used in three
 different contexts with no additional arguments.
 
-- sync = merge from the root branch commits not in this branch no ff
+#+BEGIN_SRC bash
+sync       = merge from the root branch commits not in this branch no ff
+#+END_SRC
 
 sync is a tool to pull changes from the parent into the current branch. This
 is used for when development work on the develop trunk needs to be merged
 into the feature branch.
+
+*** tagging
+
+#+BEGIN_SRC bash
+tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
+tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
+#+END_SRC
+
+tagging is important for making a file set for alpha or beta releases. by drawing
+a line across the repository the entire state of the repo can be checked out.
+
+*** Conventional Commits and Reports
+
+Sometimes there are fixes that need to be made to the
+development branch. They should be done on a feature
+branch named "fix-{description}"
+
+conventional commits   are a standard for formatting
+commit messages. they look like this.
+
+#+BEGIN_SRC
+(feat) add a new dialog for listing reports
+#+END_SRC
+
+This is actually quite crucial to a project as it makes it
+possible to comprehend the repo history with one line logs.
+
+There are a few basic ones in the standard, but I have expanded
+on them to encompass all the scenarios I encounter.
+
+To really understand the power of conventional commits you have
+to consider the tooling. What if it was possible to generate
+release notes entirely from commits ?
+
+Pythonsh does!
+
+Here are the standard elements with my extension.
+
+- (feat) new features. A oneliner is either sufficient or some prose is added below
+  the main commit line.
+- (fix) this is primarily for development. They belong on feature branches.
+  fixes are corrections to code that has not been released yet.
+- (bug) bugs are defects in code that has been released. They need to be
+  included in the release notes
+- (issue) issues are bugs that have been reported by users and have a ticket assigned.
+- (sync) a fast-forward. This is done only on the trunks: develop and main where they
+  are histories that are stable, and consist entirely of merges.
+ 
+  The other use case is for third party submodules. since .gitmodules and git internals
+  remember the commit sync'd its not a good idea to introduce local commits. That will
+  get ugly.
+
+  For (syc) is is critical that the date be in the one-liner as dependencies are
+  being updated and this has a large impact on the release.
+
+- (pull) for working on feature branches, pull is for pulling changes into the
+  feature branches
+- (merge) merge is for pulling from and to the trunk.
+- (release) releases are alpha and beta releases. The actual release process with
+  git flow release start is more complex and is documented below
+- (alpha) both tag and possibly a commit this indicates it's a beta candidate
+  and the developer wants to tag/commit to establish a baseline
+- (beta) This is on the develop trunk and indicates that this is a point from
+  which beta_fix and beta_<feature branch> should be branched off this point.
+- (refactor) a change to make development or maintenance easier that has no impact on functionality
+This systematic annotating of the history makes it possible to understand
+the changes far beyond cryptic and poor commit messsages.
+
+This also allows for tools that help insert commit messages, and generate
+entire release notes into merge commits and the like.
+
+#+BEGIN_SRC bash
+./py.sh report (1) = message
+#+END_SRC
+
+This generates a report of the commits organized by type. if you include
+a message it's ready to insert as a commit, if you just want  the report
+you can give anything for the message.
+
 
 ** Release
 
