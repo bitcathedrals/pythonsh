@@ -890,6 +890,70 @@ case $1 in
 
       git branch -u $REMOTE/$BRANCH
     ;;
+    "report")
+      message=$1
+
+      if [[ -z $message ]]
+      then
+        echo >/dev/stderr "pythonsh: report - a message (1) is missing"
+        exit 1
+      fi
+
+      features=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(feat\)')
+
+      echo "features is: $features"
+
+      bugs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(bug\)')
+      issues=$($0 ahead | cut -d ' ' -f 2- |  grep -E '\(issue\)')
+      syncs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(sync\)')
+      fixes=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(fix\)')
+
+      # fixes should be here? but it's useful for generating
+      # reports on feature branches
+      cat <<MESSAGE
+$message
+MESSAGE
+
+      if [[ -n $features ]]
+      then
+        cat <<MESSAGE
+
+* features
+
+$features
+MESSAGE
+      fi
+
+      if [[ -n $bugs ]]
+      then
+       cat <<MESSAGE
+
+* bugs
+
+$bugs
+MESSAGE
+     fi
+
+    if [[ -n $fixes ]]
+    then
+      cat <<MESSAGE
+
+* fixes
+
+$fixes
+MESSAGE
+    fi
+
+    if [[ -n $syncs ]]
+    then
+      cat <<MESSAGE
+
+* syncs
+
+$syncs
+MESSAGE
+      fi
+    ;;
     "info")
       git branch -vv
     ;;
