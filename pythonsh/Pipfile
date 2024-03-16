@@ -1,6 +1,5 @@
 [packages]
 toml =  "*"
-version-parser = "*"
 
 [dev-packages]
 build = "*"
@@ -13,6 +12,8 @@ pytest-dependency = "*"
 
 pipenv = "*"
 pip = "*"
+
+version-parser = "*"
 
 [requires]
 python_version = "3.12"

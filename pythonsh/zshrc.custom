@@ -1,0 +1,114 @@
+function set_macos_path_helper {
+  # this sets up macos path from /etc/path.d plus manpages
+  helper=/usr/libexec/path_helper
+
+  if [[ -x $helper ]]
+  then
+    eval "$($helper)"
+  fi
+}
+
+function set_homebrew {
+  # brew can be in three different locations
+
+  if [[ -d $HOME/homebrew ]]
+  then
+    eval $($HOME/homebrew/bin/brew shellenv)
+    return
+  fi
+
+  if [[ -x /usr/local/bin/brew ]]
+  then
+    eval $(/usr/local/bin/brew shellenv)
+    return
+  fi
+
+  if [[ -d /opt/homebrew/ ]]
+  then
+    eval $(/opt/homebrew/bin/brew shellenv)
+    return
+  fi
+}
+
+set_macos_path_helper
+set_homebrew
+
+PATH="$HOME/tools/local/bin:$PATH"
+PATH="$HOME/code/utilities/bin:$PATH"
+PATH="$HOME/code/security/bin:$PATH"
+PATH="$HOME/code/pythonsh/bin:$PATH"
+PATH="$HOME/code/docker/bin:$PATH"
+PATH="$HOME/code/grail/bin:$PATH"
+
+export PATH
+
+function set_editor {
+  EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
+
+  if [[ -x $EDITOR ]]
+  then
+    export EDITOR
+    return 0
+  fi
+
+  if command -v emacsclient >/dev/null 2>&1
+  then
+    export EDITOR=emacsclient
+    return 0
+  fi
+
+  if command -v nano >/dev/null 2>&1
+  then
+    export EDITOR=nano
+    return 0
+  fi
+
+  echo >/dev/stderr "WARNING: zshrc.custom no editor found!"
+  return 1
+}
+
+set_editor
+
+# if there is a file for crypto keys then add it
+if [[ -f $HOME/.crypto.sh ]]
+then
+  source $HOME/.crypto.sh
+fi
+
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+
+function launch_ssh_agent {
+  if [[ `uname` == "Darwin" ]]
+  then
+    return
+  fi
+
+  if [[ $TERM == "eterm-color" ]]
+  then
+    return
+  fi
+
+  if [[ -n "$SSH_CLIENT" ]]
+  then
+    return
+  fi
+
+  if [[ -z "$SSH_AGENT_PID" ]]
+  then
+    echo "ssh-agent: no SSH env var - starting a new ssh-agent."
+    eval $(ssh-agent -s)
+  else
+    if kill -0 $SSH_AGENT_PID >/dev/null 2>&1
+    then
+      return
+    else
+      echo >/dev/stderr "ssh-agent: dead agent - starting a new ssh-agent."
+      eval $(ssh-agent -s)
+    fi
+  fi
+}
+
+launch_ssh_agent
+
+export ZSHRC_CUSTOM_LOADED="yes"

@@ -1,0 +1,36 @@
+* This is a tool for building a docker layer
+
+ Start from debian as it is the most stable system. Use
+ the stable rolling release. Label it and install
+ git and python.
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.python
+FROM debian:stable as DEBIAN
+
+LABEL "com.gaugesecurity" = "GaugeSecurity"
+LABEL version = "@VERSION@"
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update && apt install python3 git
+#+END_SRC
+
+ do everything in /home, copy in pythonsh files, and install pyenv
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.python
+RUN test -d /home || mkdir /home
+WORKDIR /home
+ENV HOME=/home/
+#+END_SRC
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.python
+COPY ../py.sh ../python.sh ../scripts/virtualenv-runner.sh .
+RUN chmod u+x py.sh &&  chmod u+x virtualenv-runner.sh && ./py.sh tools-unix
+#+END_SRC
+
+ now install the python version into a environment 
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.python
+RUN ./py.sh global-virtual "python"
+#+END_SRC
+
+ This should produce a working python layer.

@@ -6,6 +6,7 @@ name = "pypi"
 
 [packages]
 toml = {version = "*", index = "pypi"}
+version-parser = {version = "*", index = "pypi"}
 [dev-packages]
 build = {version = "*", index = "pypi"}
 ptpython = {version = "*", index = "pypi"}
@@ -14,4 +15,5 @@ pytest-ordering = {version = "*", index = "pypi"}
 pytest-dependency = {version = "*", index = "pypi"}
 pipenv = {version = "*", index = "pypi"}
 pip = {version = "*", index = "pypi"}
-version-parser = {version = "*", index = "pypi"}
+[requires]
+python_version = "3.12"
