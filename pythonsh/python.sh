@@ -891,25 +891,12 @@ case $1 in
       git branch -u $REMOTE/$BRANCH
     ;;
     "report")
-      message=$1
-
-      if [[ -z $message ]]
-      then
-        echo >/dev/stderr "pythonsh: report - a message (1) is missing"
-        exit 1
-      fi
-
       features=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(feat\)')
       bugs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(bug\)')
       issues=$($0 ahead | cut -d ' ' -f 2- |  grep -E '\(issue\)')
       syncs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(sync\)')
       fixes=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(fix\)')
-
-      # fixes should be here? but it's useful for generating
-      # reports on feature branches
-      cat <<MESSAGE
-$message
-MESSAGE
+      refactor=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(refactor\)')
 
       if [[ -n $features ]]
       then
@@ -947,6 +934,15 @@ MESSAGE
 * syncs
 
 $syncs
+MESSAGE
+      fi
+
+    if [[ -n $refactor ]]
+    then
+      cat <<MESSAGE
+* refactor
+
+$refactor
 MESSAGE
       fi
     ;;
@@ -1276,6 +1272,7 @@ summary    = show diffstat of summary between feature and develop or last releas
 delta      = show diff between feature and develop or last release and develop
 ahead      = show log of commits in branch but not in parent
 behind     = show log of commit in parent but not branch
+report     = generate a report of all the changes ahead grouped by type
 
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
