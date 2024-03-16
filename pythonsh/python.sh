@@ -1032,12 +1032,10 @@ MESSAGE
         echo "===> remember to pull deps with update if warranted <==="
 
         echo "===> fetching new commits from remote <==="
-        git fetch origin main
         git fetch origin develop
 
         echo "===> showing unmerged differences <===="
 
-        git log main..origin/main --oneline
         git log develop..origin/develop --oneline
 
         echo "===> checking if working tree is dirty <==="
