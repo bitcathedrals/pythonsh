@@ -983,6 +983,9 @@ MESSAGE
     "merges")
         git log --merges --oneline
     ;;
+    "releases")
+        git tag | grep release | sort -V
+    ;;
     "history")
         echo ">>>showing history"
         git log --oneline
@@ -999,7 +1002,6 @@ MESSAGE
         echo ">>>showing commits in $root (parent) not $branch"
         git log "${branch}..${root}" --oneline
     ;;
-
     "graph")
         root_to_branch
 
@@ -1267,6 +1269,7 @@ fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
 staged     = show staged changes
 merges     = show merges only
+releases   = show releases (tags)
 history    = show commit history
 summary    = show diffstat of summary between feature and develop or last release and develop
 delta      = show diff between feature and develop or last release and develop
