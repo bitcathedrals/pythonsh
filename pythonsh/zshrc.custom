@@ -53,13 +53,13 @@ function set_editor {
 
   if command -v emacsclient >/dev/null 2>&1
   then
-    EDITOR=emacsclient
+    export EDITOR=emacsclient
     return 0
   fi
 
   if command -v nano >/dev/null 2>&1
   then
-    EDITOR=nano
+    export EDITOR=nano
     return 0
   fi
 
