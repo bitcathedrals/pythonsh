@@ -459,8 +459,11 @@ commit messages. they look like this.
 This is actually quite crucial to a project as it makes it
 possible to comprehend the repo history with one line logs.
 
-There are a few basic ones in the standard, but I have expanded
-on them to encompass all the scenarios I encounter.
+*** Conventional Commits
+
+Conventional commits [[cite:&conventional]] is a standard for
+semantics and formatting of commits. I use it as a starting
+point, and add a couple such as refactor, and sync.
 
 To really understand the power of conventional commits you have
 to consider the tooling. What if it was possible to generate
@@ -484,7 +487,7 @@ Here are the standard elements with my extension.
   remember the commit sync'd its not a good idea to introduce local commits. That will
   get ugly.
 
-  For (syc) is is critical that the date be in the one-liner as dependencies are
+  For (sync) is is critical that the date be in the one-liner as dependencies are
   being updated and this has a large impact on the release.
 
 - (pull) for working on feature branches, pull is for pulling changes into the
@@ -497,6 +500,7 @@ Here are the standard elements with my extension.
 - (beta) This is on the develop trunk and indicates that this is a point from
   which beta_fix and beta_<feature branch> should be branched off this point.
 - (refactor) a change to make development or maintenance easier that has no impact on functionality
+
 This systematic annotating of the history makes it possible to understand
 the changes far beyond cryptic and poor commit messsages.
 
