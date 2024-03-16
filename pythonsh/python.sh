@@ -1167,7 +1167,8 @@ MESSAGE
 
       echo ">>>commiting bump to to $VERSION"
 
-      git commit -m "(release) release version: $VERSION"
+      # don't do a automatic commit so a release summary can be inserted
+      git commit
 
       echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
