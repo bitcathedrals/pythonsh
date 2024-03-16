@@ -900,9 +900,6 @@ case $1 in
       fi
 
       features=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(feat\)')
-
-      echo "features is: $features"
-
       bugs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(bug\)')
       issues=$($0 ahead | cut -d ' ' -f 2- |  grep -E '\(issue\)')
       syncs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(sync\)')
