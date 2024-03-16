@@ -1077,6 +1077,7 @@ MESSAGE
         fi
 
         find_catpip
+
         if eval "pyenv exec python $catpip test"
         then
           echo ">>> catpip found."
@@ -1101,90 +1102,76 @@ MESSAGE
       fi
 
       VERSION="$1"
-      resume=""
 
-      if [[ $VERSION == "resume" ]]
+      echo -n "initiating git flow release start with version: $VERSION"
+
+      git flow release start $VERSION
+
+      if [[ $? -ne 0 ]]
       then
-        resume=$1
-        echo "attempting to resume at point: $resume"
-
-        if [[ $resume == "pipfile" || $resume == "commit" ]]
-        then
-          source "python.sh"
-        else
-          echo "resume must be either: \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
-          exit 1
-        fi
+        echo "git flow release start $VERSION FAILED!"
+        exit 1
       fi
 
-      if [[ -z $resume ]]
+      echo -n ">>>please edit python.sh with an updated version in 3 seconds."
+      sleep 1
+      echo -n "."
+      sleep 1
+      echo -n "."
+      sleep 1
+
+      $EDITOR python.sh || exit 1
+      git add python.sh
+
+      echo ">>>re-loading python.sh"
+      source python.sh
+
+      echo ">>>recording release."
+
+      test -d releases || mkdir releases
+
+      if [[ -f Pipfile ]]
       then
-        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
-        sleep 1
+        echo ">>>regenerating Pipfile and pyproject.toml."
 
-        git flow release start $VERSION
+        $0 pipfile >Pipfile
+        $0 project >pyproject.toml
 
-        if [[ $? -ne 0 ]]
-        then
-          echo "git flow release start $VERSION FAILED!"
-          exit 1
-        fi
+        git add Pipfile
+        git add pyproject.toml
 
-        echo -n ">>>please edit python.sh with an updated version in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo -n "."
-        sleep 1
+        pipenv lock
+        git add Pipfile.lock
 
-        $EDITOR python.sh || exit 1
-        git add python.sh
+        echo ">>>recording Pipfile and pyproject.toml."
 
-        echo ">>>re-loading python.sh"
-        source python.sh
+        VER_PIP="releases/Pipfile-$VERSION"
+        VER_LOCK="releases/Pipfile.lock-$VERSION"
 
-        if [[ -f Pipfile ]]
-        then
-          echo -n ">>>regenerating Pipfilel and pyproject.toml."
+        test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
+        test -f Pipfile && cp Pipfile $VER_PIP
 
-          $0 pipfile >Pipfile
-          $0 project >pyproject.toml
-
-          git add Pipfile
-          git add pyproject.toml
-        fi
+        test -f $VER_PIP && git add $VER_PIP
+        test -f $VER_LOCK && git add $VER_LOCK
       fi
 
-      if [[ -z $resume || $resume == "pipfile" ]]
+      VER_PYTHONSH="releases/python.sh-${VERSION}"
+
+      echo ">>>recording python.sh"
+
+      cp python.sh $VER_PYTHONSH
+
+      if [[ $? -ne 0 ]]
       then
-        if [[ -f Pipfile ]]
-        then
-          test -d releases || mkdir releases
-          test -f Pipfile && pipenv lock
-
-          git add Pipfile.lock
-
-          VER_PIP="releases/Pipfile-$VERSION"
-          VER_LOCK="releases/Pipfile.lock-$VERSION"
-
-          test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
-          test -f Pipfile && cp Pipfile $VER_PIP
-
-          test -f $VER_PIP && git add $VER_PIP
-          test -f $VER_LOCK && git add $VER_LOCK
-        fi
+        echo ">>>FAILED! could not record python.sh into ${VER_PYTHONSH}"
+        exit 1
       fi
 
-      if [[ -z $resume || $resume == "pipfile" || $resume == "commit" ]]
-      then
-        echo ">>>commiting bump to to $VERSION"
+      git add $VER_PYTHONSH
 
-        git commit -m "(release) release version: $VERSION"
-      fi
+      echo ">>>commiting bump to to $VERSION"
+
+      git commit -m "(release) release version: $VERSION"
 
       echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
@@ -1300,10 +1287,8 @@ check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
 
-             for the first time pass version as an argument: "./py.sh start 1.0.0"
+             for the first time pass version as an argument e.g: "./py.sh start 1.0.0"
 
-             if you encounter a problem you can fix it and resume with ./py.sh start resume [pipfile|commit]
-             to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
 
