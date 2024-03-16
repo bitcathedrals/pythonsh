@@ -359,8 +359,66 @@ function create_tag {
 }
 
 function get_last_commit_type {
-  last=`git tag | grep release | sort -V | tail -n 1`
-  git log --oneline "${last}..develop" | cut -d ' ' -f 2- | grep -E "^\(${1}\)"
+  if [[ $1 == "release" ]]
+  then
+    last=`git tag | grep release | sort -V | tail -n 1`
+    git log --oneline "${last}..develop" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  else
+    root_to_branch
+    git log --oneline "${root}..${branch}" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  fi
+}
+
+function print_report {
+  if [[ -n $features ]]
+  then
+    cat <<MESSAGE
+
+* features
+
+$features
+MESSAGE
+ fi
+
+ if [[ -n $bugs ]]
+ then
+   cat <<MESSAGE
+
+* bugs
+
+$bugs
+MESSAGE
+  fi
+
+  if [[ -n $fixes ]]
+  then
+    cat <<MESSAGE
+
+* fixes
+
+$fixes
+MESSAGE
+  fi
+
+  if [[ -n $syncs ]]
+  then
+  cat <<MESSAGE
+
+* syncs
+
+$syncs
+MESSAGE
+  fi
+
+  if [[ -n $refactor ]]
+  then
+      cat <<MESSAGE
+
+* refactor
+
+$refactor
+MESSAGE
+  fi
 }
 
 case $1 in
@@ -895,63 +953,25 @@ case $1 in
 
       git branch -u $REMOTE/$BRANCH
     ;;
-    "report")
-      features=`get_last_commit_type feat`
-      bugs=`get_last_commit_type bug`
-      issues=`get_last_commit_type issue`
-      syncs=`get_last_commit_type sync`
-      fixes=`get_last_commit_type fix`
-      refactor=`get_last_commit_type refactor`
+    "release-report")
+      features=`get_last_commit_type release feat`
+      bugs=`get_last_commit_type release bug`
+      issues=`get_last_commit_type release issue`
+      syncs=`get_last_commit_type release sync`
+      fixes=`get_last_commit_type release fix`
+      refactor=`get_last_commit_type release refactor`
 
-      if [[ -n $features ]]
-      then
-        cat <<MESSAGE
+      print_report
+    ;;
+    "status-report")
+      features=`get_last_commit_type status feat`
+      bugs=`get_last_commit_type status bug`
+      issues=`get_last_commit_type status issue`
+      syncs=`get_last_commit_type status sync`
+      fixes=`get_last_commit_type status fix`
+      refactor=`get_last_commit_type status refactor`
 
-* features
-
-$features
-MESSAGE
-      fi
-
-      if [[ -n $bugs ]]
-      then
-       cat <<MESSAGE
-
-* bugs
-
-$bugs
-MESSAGE
-     fi
-
-    if [[ -n $fixes ]]
-    then
-      cat <<MESSAGE
-
-* fixes
-
-$fixes
-MESSAGE
-    fi
-
-    if [[ -n $syncs ]]
-    then
-      cat <<MESSAGE
-
-* syncs
-
-$syncs
-MESSAGE
-      fi
-
-    if [[ -n $refactor ]]
-    then
-      cat <<MESSAGE
-
-* refactor
-
-$refactor
-MESSAGE
-      fi
+      print_report
     ;;
     "info")
       git branch -vv
@@ -1281,7 +1301,9 @@ summary    = show diffstat of summary between feature and develop or last releas
 delta      = show diff between feature and develop or last release and develop
 ahead      = show log of commits in branch but not in parent
 behind     = show log of commit in parent but not branch
-report     = generate a report of all the changes ahead grouped by type
+
+release-report  = generate a report of changes since last release
+status-report = generate a report of changes ahead of the trunk
 
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
