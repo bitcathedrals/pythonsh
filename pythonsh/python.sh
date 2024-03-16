@@ -358,6 +358,11 @@ function create_tag {
   fi
 }
 
+function get_last_commit_type {
+  last=`git tag | grep release | sort -V | tail -n 1`
+  git log --oneline "${last}..develop" | cut -d ' ' -f 2- | grep -E "^\(${1}\)"
+}
+
 case $1 in
   "version")
     echo "pythonsh version is: 0.12.0"
@@ -891,12 +896,12 @@ case $1 in
       git branch -u $REMOTE/$BRANCH
     ;;
     "report")
-      features=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(feat\)')
-      bugs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(bug\)')
-      issues=$($0 ahead | cut -d ' ' -f 2- |  grep -E '\(issue\)')
-      syncs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(sync\)')
-      fixes=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(fix\)')
-      refactor=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(refactor\)')
+      features=`get_last_commit_type feat`
+      bugs=`get_last_commit_type bug`
+      issues=`get_last_commit_type issue`
+      syncs=`get_last_commit_type sync`
+      fixes=`get_last_commit_type fix`
+      refactor=`get_last_commit_type refactor`
 
       if [[ -n $features ]]
       then
@@ -931,6 +936,7 @@ MESSAGE
     if [[ -n $syncs ]]
     then
       cat <<MESSAGE
+
 * syncs
 
 $syncs
@@ -940,6 +946,7 @@ MESSAGE
     if [[ -n $refactor ]]
     then
       cat <<MESSAGE
+
 * refactor
 
 $refactor
