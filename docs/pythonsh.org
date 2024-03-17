@@ -1,4 +1,53 @@
-* Pythonsh tooling, version control, best practices
+#+LATEX_CLASS: article
+#+TITLE: Gauge Security Development Automation
+#+AUTHOR: Michael Mattie
+
+#+LATEX: \pagebreak
+
+* Introduction
+
+What school teaches is how to write code. What experience as a paid
+professional developer teaches you is how to build business assets.
+
+Business assets go beyond code to include API's, integrations,
+teams, and releases.
+
+Just because you can write a binary search doesn't mean you know about
+merging, building, releasing, devops, maintenance, and operations -
+how to deliver large and small.
+
+In fact many students come out of school only knowing how to write
+homework, not how to integrate into a team building business assets
+on a deadline.
+
+New programmers think unit tests are their safety net until they hit a
+wall on merging, integration, release, devops, and operations.
+
+The truth is that devops was invented because the tools of the trade
+have become so complex that they warrant a position of their own.
+
+At Gauge Security we have experienced these issues and grown up in
+Disney, Comcast, Oracle, and Amazon. We have seen the failures in
+other companies.
+
+In all these organizations developers huddled around their limited
+knowledge of tools, like a swimmer clinging to a life vest. Instead of
+solving issues with tools, the tools were the issue, day in and day
+out.
+
+Starting in 2020 I tried to sort out this mess with automation. It
+started as a Makefile, then a bash script called manage.sh, and finally
+PythonSh. The idea was to build correct tool use into a single command,
+with intelligence to tailor it to a context and scenario.
+
+You are going to see the result of 20+ years of experience, and 4 years
+of baking into a mature, effective, and innovative tool.
+
+Let's get started!
+
+#+LATEX: \pagebreak
+
+* Gauge Security (PythonSh) - Automation is Innovation.
 
 I have extensive experience in professional and personal projects with
 Python. From that experience clearly one of the most poorly thought
@@ -71,7 +120,7 @@ I call this the "Tool Tax". What usually falls out from the vast array
 of tools is that the developer skims 10% of the tools capability, but
 does not know how to use, not use, or fix any of it.
 
-Mostly the developer tries to survive off blocks and stack overflow
+Mostly the developer tries to survive off blogs and stack overflow
 searching by their task for solutions, but often just digging the hole
 deeper, and deeper.
 
@@ -248,7 +297,7 @@ from there all commands are in the form:
 #+END_SRC
 
 Most commands are a single command, few take arguments. They
-accomplish a task with as much intelligence as possible so
+ccomplish a task with as much intelligence as possible so
 arguments don't have to be a stumbling block, and it
 speeds things up.
 
@@ -984,6 +1033,8 @@ all the ingredients baked into the release.
 
 - upload: the upload command pushes the main and development trunks
   upstream.
+
+#+LATEX: \appendix
 
 * Appendix
 
