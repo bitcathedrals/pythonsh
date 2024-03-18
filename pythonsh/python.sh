@@ -32,7 +32,7 @@ function root_to_branch {
         then
             root="main"
         else
-            root=$(git tag | sort -V | tail -n 1)
+            root=$(git tag | grep release | sort -V | tail -n 1)
         fi
     else
         root='develop'
