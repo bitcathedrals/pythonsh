@@ -421,6 +421,24 @@ MESSAGE
   fi
 }
 
+function check_python_environment {
+  if $0 virtual-current
+  then
+    echo ">>>virtual environment found"
+  else
+    echo "ERROR: no virtual environment activated!"
+    exit 1
+  fi
+
+  if pyenv exec python --version >/dev/null 2>&1
+  then
+    echo ">>> pyenv python found."
+  else
+    echo ">>> pyenv python NOT FOUND! exiting now!"
+    exit 1
+  fi
+}
+
 case $1 in
   "version")
     echo "pythonsh version is: 0.12.0"
@@ -588,6 +606,8 @@ case $1 in
        export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
     "bootstrap")
+      check_python_environment
+      
       $0 minimal || exit 1
 
       # generate the initial pipfile getting deps out of the source tree
@@ -1083,21 +1103,7 @@ case $1 in
       # if python project check for python
       if [[ -f Pipfile ]]
       then
-        if $0 virtual-current
-        then
-          echo ">>>virtual environment found"
-        else
-          echo "ERROR: no virtual environment activated!"
-          exit 1
-        fi
-
-        if pyenv exec python --version >/dev/null 2>&1
-        then
-          echo ">>> pyenv python found."
-        else
-          echo ">>> pyenv python NOT FOUND! exiting now!"
-          exit 1
-        fi
+        check_python_environment
 
         find_catpip
 
