@@ -1001,6 +1001,9 @@ case $1 in
 
       echo "[changes]"
       git diff | diffstat
+
+      echo "[untracked]"
+      git ls-files -o --exclude-standard
     ;;
     "verify")
       exec git log --show-signature $@
