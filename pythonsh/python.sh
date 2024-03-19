@@ -32,7 +32,7 @@ function root_to_branch {
         then
             root="main"
         else
-            root=$(git tag | sort -V | tail -n 1)
+            root=$(git tag | grep release | sort -V | tail -n 1)
         fi
     else
         root='develop'
@@ -358,6 +358,87 @@ function create_tag {
   fi
 }
 
+function get_last_commit_type {
+  if [[ $1 == "release" ]]
+  then
+    last=`git tag | grep release | sort -V | tail -n 1`
+    git log --oneline "${last}..develop" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  else
+    root_to_branch
+    git log --oneline "${root}..${branch}" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  fi
+}
+
+function print_report {
+  if [[ -n $features ]]
+  then
+    cat <<MESSAGE
+
+* features
+
+$features
+MESSAGE
+ fi
+
+ if [[ -n $bugs ]]
+ then
+   cat <<MESSAGE
+
+* bugs
+
+$bugs
+MESSAGE
+  fi
+
+  if [[ -n $fixes ]]
+  then
+    cat <<MESSAGE
+
+* fixes
+
+$fixes
+MESSAGE
+  fi
+
+  if [[ -n $syncs ]]
+  then
+  cat <<MESSAGE
+
+* syncs
+
+$syncs
+MESSAGE
+  fi
+
+  if [[ -n $refactor ]]
+  then
+      cat <<MESSAGE
+
+* refactor
+
+$refactor
+MESSAGE
+  fi
+}
+
+function check_python_environment {
+  if $0 virtual-current
+  then
+    echo ">>>virtual environment found"
+  else
+    echo "ERROR: no virtual environment activated!"
+    exit 1
+  fi
+
+  if pyenv exec python --version >/dev/null 2>&1
+  then
+    echo ">>> pyenv python found."
+  else
+    echo ">>> pyenv python NOT FOUND! exiting now!"
+    exit 1
+  fi
+}
+
 case $1 in
   "version")
     echo "pythonsh version is: 0.12.0"
@@ -525,6 +606,8 @@ case $1 in
        export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
     "bootstrap")
+      check_python_environment
+      
       $0 minimal || exit 1
 
       # generate the initial pipfile getting deps out of the source tree
@@ -890,61 +973,25 @@ case $1 in
 
       git branch -u $REMOTE/$BRANCH
     ;;
-    "report")
-      features=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(feat\)')
-      bugs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(bug\)')
-      issues=$($0 ahead | cut -d ' ' -f 2- |  grep -E '\(issue\)')
-      syncs=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(sync\)')
-      fixes=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(fix\)')
-      refactor=$($0 ahead | cut -d ' ' -f 2- | grep -E '^\(refactor\)')
+    "release-report")
+      features=`get_last_commit_type release feat`
+      bugs=`get_last_commit_type release bug`
+      issues=`get_last_commit_type release issue`
+      syncs=`get_last_commit_type release sync`
+      fixes=`get_last_commit_type release fix`
+      refactor=`get_last_commit_type release refactor`
 
-      if [[ -n $features ]]
-      then
-        cat <<MESSAGE
+      print_report
+    ;;
+    "status-report")
+      features=`get_last_commit_type status feat`
+      bugs=`get_last_commit_type status bug`
+      issues=`get_last_commit_type status issue`
+      syncs=`get_last_commit_type status sync`
+      fixes=`get_last_commit_type status fix`
+      refactor=`get_last_commit_type status refactor`
 
-* features
-
-$features
-MESSAGE
-      fi
-
-      if [[ -n $bugs ]]
-      then
-       cat <<MESSAGE
-
-* bugs
-
-$bugs
-MESSAGE
-     fi
-
-    if [[ -n $fixes ]]
-    then
-      cat <<MESSAGE
-
-* fixes
-
-$fixes
-MESSAGE
-    fi
-
-    if [[ -n $syncs ]]
-    then
-      cat <<MESSAGE
-* syncs
-
-$syncs
-MESSAGE
-      fi
-
-    if [[ -n $refactor ]]
-    then
-      cat <<MESSAGE
-* refactor
-
-$refactor
-MESSAGE
-      fi
+      print_report
     ;;
     "info")
       git branch -vv
@@ -1056,21 +1103,7 @@ MESSAGE
       # if python project check for python
       if [[ -f Pipfile ]]
       then
-        if $0 virtual-current
-        then
-          echo ">>>virtual environment found"
-        else
-          echo "ERROR: no virtual environment activated!"
-          exit 1
-        fi
-
-        if pyenv exec python --version >/dev/null 2>&1
-        then
-          echo ">>> pyenv python found."
-        else
-          echo ">>> pyenv python NOT FOUND! exiting now!"
-          exit 1
-        fi
+        check_python_environment
 
         find_catpip
 
@@ -1167,7 +1200,8 @@ MESSAGE
 
       echo ">>>commiting bump to to $VERSION"
 
-      git commit -m "(release) release version: $VERSION"
+      # don't do a automatic commit so a release summary can be inserted
+      git commit
 
       echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
@@ -1273,7 +1307,9 @@ summary    = show diffstat of summary between feature and develop or last releas
 delta      = show diff between feature and develop or last release and develop
 ahead      = show log of commits in branch but not in parent
 behind     = show log of commit in parent but not branch
-report     = generate a report of all the changes ahead grouped by type
+
+release-report  = generate a report of changes since last release
+status-report = generate a report of changes ahead of the trunk
 
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
