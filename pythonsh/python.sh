@@ -995,6 +995,12 @@ case $1 in
     ;;
     "info")
       git branch -vv
+
+      echo "[staged]"
+      git diff --staged | diffstat
+
+      echo "[changes]"
+      git diff | diffstat
     ;;
     "verify")
       exec git log --show-signature $@
