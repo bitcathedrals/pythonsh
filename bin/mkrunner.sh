@@ -5,18 +5,22 @@ script="${script}/virtualenv-runner.sh"
 
 ENV=$1
 
-if [[ -z $ENV ]]
+if [[ -n $ENV ]]
 then
-  ENV='\$1'
+  ENV=$1
+  shift
+else
+  echo >/dev/stderr "mkrunner.sh: pyenv environment must be the first arg. exiting."
+  exit 1
 fi
-
-shift
 
 if [[ -n $1 ]]
 then
   HARDCODE="$*"
 else
-  HARDCODE=""
+  echo >/dev/stderr "mkrunner.sh pyenv command plus optional arguments must be the second arg. exiting."
+  exit 1
 fi
+
 
 sed <$script -e "s,@DEFAULT@,\"$ENV\",g" | sed -e "s,@HARDCODE@,$HARDCODE,g"

@@ -767,12 +767,12 @@ case $1 in
 
       pyenv exec python -m pip install $PKG $@
     ;;
-    "runner")
+    "mkrunner")
       shift
 
       shdir=`dirname $0`
 
-      dist="${shdir}/pythonsh/bin/mkrunner.sh"
+      dist="${shdir}/bin/mkrunner.sh"
 
       if [[ -f $dist ]]
       then
@@ -911,7 +911,7 @@ case $1 in
 
       git flow feature finish $name
     ;;
-    "tag-alpha")
+    "alpha")
       shift
       FEATURE=$1
 
@@ -931,7 +931,7 @@ case $1 in
 
       create_tag "alpha" "$FEATURE" "$MESSAGE"
     ;;
-    "tag-beta")
+    "beta")
       shift
 
       FEATURE=$1
@@ -1290,7 +1290,8 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
-runner     = execute mkrunner.sh to build a runner
+
+mkrunner   = execute mkrunner.sh to build a runner
 
 [submodule]
 modinit             = initialize and pull all submodules
@@ -1301,8 +1302,8 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
-tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
-tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
+alpha      = <feat> <msg> = create an alpha tag with the feature branch name and message
+beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree

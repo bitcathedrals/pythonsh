@@ -49,7 +49,7 @@ else
   fi
 fi
 
-pyenv exec @HARDCODE@ $@
+pyenv exec @ENTRYPOINT@ $@
 exit_code=$?
 
 if [[ -n $RESTORE ]]
