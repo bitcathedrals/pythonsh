@@ -3,7 +3,7 @@
 script=`dirname $0`
 script="${script}/virtualenv-runner.sh"
 
-ENV=$1
+ENV=${1:-"python"}
 
 if [[ -n $ENV ]]
 then
