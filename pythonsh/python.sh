@@ -791,6 +791,11 @@ case $1 in
       echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
       exit 1
     ;;
+    "docker-update")
+      (cd docker &&\
+         org-compile.sh docker-python.org &&\
+         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile)
+    ;;
     "docker")
       if [[ -z $DOCKER_USER ]]
       then
@@ -811,8 +816,6 @@ case $1 in
       fi
 
       (cd docker &&\
-         org-compile.sh docker-python.org &&\
-         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile &&\
          dock-build.sh build $DOCKER_USER "pythonsh" "$DOCKER_VERSION/${PYTHON_VERSION}")
 
       if [[ $? -eq 0 ]]
@@ -1323,6 +1326,9 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
+
+docker-update = regenerate the Dockerfile
+docker        = build the PythonSh docker
 
 mkrunner   = execute mkrunner.sh to build a runner
 
