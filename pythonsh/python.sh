@@ -797,6 +797,7 @@ case $1 in
          ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile)
     ;;
     "docker")
+
       if [[ -z $DOCKER_USER ]]
       then
         echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
@@ -815,13 +816,19 @@ case $1 in
         exit 1
       fi
 
+      full_version=$(show_all_python_versions | grep $PYTHON_VERSION | sort -V | tail -n 1)
+
+      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]-python[${full_version}]"
+
+      cp py.sh python.sh docker
+
       (cd docker &&\
-         dock-build.sh build $DOCKER_USER "pythonsh" "$DOCKER_VERSION/${PYTHON_VERSION}")
+         dock-build.sh build $DOCKER_USER "pythonsh" "${DOCKER_VERSION}-${full_version}")
 
       if [[ $? -eq 0 ]]
       then
         echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
-        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}/{PYTHON_VERSION}" >Dockerfile.pythonsh
+        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}-${full_version}" >Dockerfile.pythonsh
       else
         echo "docker FAILED! exit code was $?"
         exit 1
