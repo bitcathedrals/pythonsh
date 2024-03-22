@@ -1,4 +1,4 @@
-b#! /usr/bin/env bash
+#! /usr/bin/env bash
 
 script=`dirname $0`
 template=${script}/Dockerfile.template
