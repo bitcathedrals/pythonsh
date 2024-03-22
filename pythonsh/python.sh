@@ -607,7 +607,7 @@ case $1 in
     ;;
     "bootstrap")
       check_python_environment
-      
+
       $0 minimal || exit 1
 
       # generate the initial pipfile getting deps out of the source tree
@@ -790,6 +790,39 @@ case $1 in
 
       echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
       exit 1
+    ;;
+    "docker")
+      if [[ -z $DOCKER_USER ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $DOCKER_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $PYTHON_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      (cd docker &&\
+         org-compile.sh docker-python.org &&\
+         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile &&\
+         dock-build.sh build $DOCKER_USER "pythonsh" "$DOCKER_VERSION/${PYTHON_VERSION}")
+
+      if [[ $? -eq 0 ]]
+      then
+        echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
+        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}/{PYTHON_VERSION}" >Dockerfile.pythonsh
+      else
+        echo "docker FAILED! exit code was $?"
+        exit 1
+      fi
     ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
