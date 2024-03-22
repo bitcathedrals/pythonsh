@@ -10,22 +10,29 @@ FROM alpine:3.19.1
 LABEL docker-version = "@DOCKER_VERSION@"
 LABEL python-python = "@PYTHON_VERSION@"
 
-RUN apk update && apk add git python3 apk add gcc autoconf automake libtool libssl1.1 libssl1.1-dev
+RUN apk update && apk add git python3 gcc autoconf automake libtool openssl openssl-dev bash build-base
 
 #+END_SRC
 
-Create the home tree and set it as home.
+Create the home tree and set it as home. Then export a working
+HOME,PATH,and PYENV_ROOT
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 RUN test -d /home || mkdir /home
-WORKDIR /home
+WORKDIR /home/
+
+ENV SHELL=/bin/bash
 ENV HOME=/home/
+ENV PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/home/.pyenv/bin::"
+ENV PYENV_ROOT="/home/.pyenv/"
 #+END_SRC
 
 Create the installation of the "python" virtualenv. We do not boostrap deliberately
 as this could create a lot of churn putting the module installation at this level.
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-COPY py.sh python.sh
-RUN chmod u+x ./py.sh && ./py.sh tools-unix && ./py.sh global-virtual "python"
+COPY py.sh python.sh .
+RUN chmod u+x ./py.sh && ./py.sh tools-unix
+
+RUN pyenv init - >exec.sh && echo "./py.sh global-virtual python" >>exec.sh bash exec.sh
 #+END_SRC
