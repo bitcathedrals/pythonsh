@@ -797,6 +797,8 @@ case $1 in
     #
 
     "mklauncher")
+      shift
+
       command -v mklauncher.sh >/dev/null 2>&1
 
       if [[ $? -ne 0 ]]
@@ -804,9 +806,6 @@ case $1 in
         echo >/dev/stderr "pythonsh: could not find mklauncher.sh"
         exit 1
       fi
-
-      shift
-      program=$1
 
       if [[ -z $1 ]]
       then
