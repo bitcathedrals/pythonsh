@@ -796,6 +796,26 @@ case $1 in
     # docker
     #
 
+    "mklauncher")
+      command -v mklauncher.sh >/dev/null 2>&1
+
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "pythonsh: could not find mklauncher.sh"
+        exit 1
+      fi
+
+      shift
+      program=$1
+
+      if [[ -z $1 ]]
+      then
+        echo >/dev/stderr "pythonsh: no program given for mklauncher"
+        exit 1
+      fi
+
+      mklauncher.sh $@
+    ;;
     "docker-update")
       (cd docker &&\
          org-compile.sh docker-python.org &&\
@@ -1339,7 +1359,10 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
+mkrunner   = <program> <args....> make a runner that sets/restores environment for
+             host python commands
 
+mklauncher     = <program> <args....> make a simple launcher for python docker
 docker-update  = regenerate the Dockerfile from the .org file
 docker-build   = build the PythonSh docker layer
 docker-release = record a docker release
