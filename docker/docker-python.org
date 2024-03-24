@@ -18,22 +18,18 @@ libffi-dev xz-dev shadow
 ENV SHELL=/bin/bash
 #+END_SRC
 
-Create the home tree, and tmpdir, and set home. Then export common
-environment variables.
 
-#+BEGIN_SRC docker-build :tangle Dockerfile.template
-ENV HOME=/home
-WORKDIR /home
-RUN test -d $HOME || mkdir $HOME
-#+END_SRC
-
-Create a un-privelaged user, setup permissions, homedirectory, then
+Create a un-privelaged user, setup permissions, home directory, then
 set user for Dockerfile
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 ENV USER=python
-RUN adduser $USER && chown $USER $HOME && chmod 755 $HOME && usermod -d $HOME -m $USER
+ENV HOME=/home
+
+RUN adduser -D -h $HOME $USER && chown $USER $HOME && chmod 755 $HOME
+
 USER $USER
+WORKDIR /home
 #+END_SRC
 
 Setup the tool installation directories.

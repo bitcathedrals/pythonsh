@@ -10,13 +10,13 @@ libffi-dev xz-dev shadow
 
 ENV SHELL=/bin/bash
 
-ENV HOME=/home
-WORKDIR /home
-RUN test -d $HOME || mkdir $HOME
-
 ENV USER=python
-RUN adduser $USER && chown $USER $HOME && chmod 755 $HOME && usermod -d $HOME -m $USER
+ENV HOME=/home
+
+RUN adduser -D -h $HOME $USER && chown $USER $HOME && chmod 755 $HOME
+
 USER $USER
+WORKDIR /home
 
 ENV TMPDIR=$HOME/tmp
 RUN test -d $TMPDIR || mkdir -p $TMPDIR
