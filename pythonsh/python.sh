@@ -95,7 +95,7 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
+  export PYTHON_CONFIGURE_OPTS="--enable-optimizations --without-ensurepip"
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
@@ -453,10 +453,10 @@ case $1 in
 # tooling
 #
     "tools-unix")
-      echo "installing python environment tools for UNIX"
+      echo "installing pyenv for UNIX"
 
       PYENV_ROOT="$HOME/.pyenv"
-      TOOLS="$HOME/tools"
+      TOOLS="$HOME/tools/"
 
       test -d $TOOLS || mkdir $TOOLS
       test -d "$TOOLS/local" || mkdir "$TOOLS/local"
@@ -470,22 +470,35 @@ case $1 in
         git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
       fi
 
+      echo "installing virtualenv for UNIX"
+
       VIRTUAL="$TOOLS/pyenv-virtual"
 
       if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
       then
         echo "updating pyenv virtual"
-        (cd $VIRTUAL && git pull)
+        (cd $VIRTUAL && git pull && export PREFIX="$TOOLS/local" && ./install.sh)
       else
         echo "cloning pyenv virtual into $VIRTUAL"
-        (git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL)
+        git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
+        (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
 
-      (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
+      echo "installing pipenv tools for UNIX"
 
-      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin\"" >>~/.zshrc.custom
+      PIPENV="$TOOLS/pipenv"
 
-      echo "installation completed"
+      if test -d $PIPENV && test -d "$PIPENV/.git"
+      then
+        echo "updating pipenv virtual"
+        (cd $PIPENV && git pull)
+      else
+        echo "cloning pipenv into $PIPENV"
+        git clone https://github.com/pyenv/pyenv.git $PIPENV
+      fi
+
+      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin:${PIPENV}/bin\""
+      echo "installation completed. you may need to update ~/.zshrc.custom."
     ;;
     "tools-zshrc")
       echo "adding shell code to .zshrc, you may need to edit the file."
@@ -709,7 +722,6 @@ case $1 in
     "all")
       test -f Pipfile.lock || touch Pipfile.lock
 
-      pyenv exec python -m pip install --upgrade pip
       pyenv exec python -m pip install --upgrade pipenv
 
       pipenv install --dev
@@ -824,9 +836,9 @@ case $1 in
 
       (cd docker &&\
          org-compile.sh docker-python.org &&\
-         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile &&\
-         git add Dockerfile)
+         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >Dockerfile)
 
+      git add docker/Dockerfile docker/docker-python.org
       git commit -m "update: generated Dockerfile @ $timestamp"
     ;;
     "docker-build")
