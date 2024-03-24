@@ -1355,7 +1355,6 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
-alpha      = <feat> <msg> = create an alpha tag with the feature branch name and message
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
