@@ -818,9 +818,14 @@ case $1 in
       mklauncher.sh $@
     ;;
     "docker-update")
+      timestamp=`date`
+
       (cd docker &&\
          org-compile.sh docker-python.org &&\
-         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile)
+         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile &&\
+         git add Dockerfile)
+
+      git commit -m "update: generated Dockerfile @ $timestamp"
     ;;
     "docker-build")
 
