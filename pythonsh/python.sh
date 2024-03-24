@@ -98,7 +98,7 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  export PYTHON_CONFIGURE_OPTS="--enable-optimizations --without-ensurepip"
+  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
