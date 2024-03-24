@@ -858,7 +858,7 @@ case $1 in
 
       git commit -m "Dockerfile ${DOCKER_VERSION} release"
 
-      git tag -a "docker-${DOCKER_VERSION}" "$MESSAGE"
+      git tag -a "docker-${DOCKER_VERSION}" -m "$MESSAGE"
     ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
