@@ -791,12 +791,17 @@ case $1 in
       echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
       exit 1
     ;;
+
+    #
+    # docker
+    #
+
     "docker-update")
       (cd docker &&\
          org-compile.sh docker-python.org &&\
          ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION >Dockerfile)
     ;;
-    "docker")
+    "docker-build")
 
       if [[ -z $DOCKER_USER ]]
       then
@@ -833,6 +838,27 @@ case $1 in
         echo "docker FAILED! exit code was $?"
         exit 1
       fi
+    ;;
+    "docker-release")
+      shift
+      MESSAGE=$1
+
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh docker-release - a messsage argument is missing."
+        exit 1
+      fi
+
+      release="releases/Dockerfile-${DOCKER_VERSION}"
+
+      test -d releases || mkdir releases
+
+      cp docker/Dockerfile $release
+      git add release
+
+      git commit -m "Dockerfile ${DOCKER_VERSION} release"
+
+      git tag -a "docker-${DOCKER_VERSION}" "$MESSAGE"
     ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
@@ -953,26 +979,6 @@ case $1 in
       fi
 
       git flow feature finish $name
-    ;;
-    "alpha")
-      shift
-      FEATURE=$1
-
-      if [[ -z $FEATURE ]]
-      then
-        echo >/dev/stderr "pythonsh: tag-alpha - a feature argument (1) is missing"
-        exit 1
-      fi
-
-      MESSAGE=$2
-
-      if [[ -z $MESSAGE ]]
-      then
-        echo >/dev/stderr "pythonsh tag-alpha - a messsage argument (2) is missing."
-        exit 1
-      fi
-
-      create_tag "alpha" "$FEATURE" "$MESSAGE"
     ;;
     "beta")
       shift
@@ -1334,8 +1340,9 @@ build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
 
-docker-update = regenerate the Dockerfile
-docker        = build the PythonSh docker
+docker-update  = regenerate the Dockerfile from the .org file
+docker-build   = build the PythonSh docker layer
+docker-release = record a docker release
 
 mkrunner   = execute mkrunner.sh to build a runner
 
