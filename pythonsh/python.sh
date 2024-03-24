@@ -94,8 +94,7 @@ function install_virtualenv_python {
   deactivate_if_needed || return 1
 
   # update the latest versions that build
-  pyenv update
-  cd $HOME/.pyenv/plugins/python-build && git pull
+  cd $HOME/.pyenv/ && git pull
 
   VERSION=$1
 
