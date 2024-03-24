@@ -97,7 +97,7 @@ function install_virtualenv_python {
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if pyenv install -v --skip-existing $VERSION
+  if pyenv install -v --skip-existing $VERSION $@
   then
     echo "Success!"
   else
@@ -113,9 +113,12 @@ function install_virtualenv_python {
 
 function install_virtualenv {
   LATEST=$1
-  NAME=$2
+  shift
 
-  if ! pyenv virtualenv "$LATEST" "$NAME"
+  NAME=$2
+  shift
+
+  if ! pyenv virtualenv "$LATEST" "$NAME" $@
   then
     echo "FAILED!"
     return 1
@@ -131,20 +134,20 @@ function install_project_virtualenv {
   ENV_ONE=$2
   ENV_TWO=$3
 
-  install_virtualenv_python $VERSION || return 1
+  install_virtualenv_python $VERSION $@ || return 1
 
   echo "creating project virtual environments"
 
   if [[ -n $ENV_ONE ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
-    install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
+    install_virtualenv $LATEST_PYTHON $ENV_ONE $@ || return 1
   fi
 
   if [[ -n $ENV_TWO ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
-    install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
+    install_virtualenv $LATEST_PYTHON $ENV_TWO $@ || return 1
   fi
 
   return 0
@@ -506,22 +509,17 @@ case $1 in
     "project-virtual")
         setup_pyenv
 
-        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
     "global-virtual")
         shift
-
         NAME="$1"
 
         VERSION="${2:-$PYTHON_VERSION}"
 
-        if [[ -z "$VERSION" ]]
-        then
-          echo "global-virtual: VERSION (first argument) is missing."
-          exit 1
-        fi
+        setup_pyenv
 
         if [[ -z "$NAME" ]]
         then
@@ -529,9 +527,13 @@ case $1 in
           exit 1
         fi
 
-        setup_pyenv
+        if [[ -z "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
 
-        install_project_virtualenv "$VERSION" "$NAME" || exit 1
+        install_project_virtualenv "$VERSION" "$NAME" $@ || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
@@ -549,7 +551,7 @@ case $1 in
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
-        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
+
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
@@ -717,7 +719,7 @@ case $1 in
       pipenv check
     ;;
     "update")
-        pipenv update --skip-lock
+        pipenv update
         pyenv rehash
         pipenv lock
 
