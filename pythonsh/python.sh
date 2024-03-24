@@ -93,6 +93,9 @@ function install_virtualenv_python {
 
   deactivate_if_needed || return 1
 
+  # update the latest versions that build
+  cd $HOME/.pyenv/plugins/python-build && git pull
+
   VERSION=$1
 
   export PYTHON_CONFIGURE_OPTS="--enable-optimizations --without-ensurepip"
@@ -446,7 +449,7 @@ function check_python_environment {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.12.0"
+    echo "pythonsh version is: 0.15.1"
   ;;
 
 #
