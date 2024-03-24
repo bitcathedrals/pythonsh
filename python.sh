@@ -6,7 +6,7 @@ SOURCE=.
 
 BUILD_NAME=pythonsh
 
-DOCKER_VERSION="1"
+DOCKER_VERSION="2"
 DOCKER_USER="codermattie"
 
 VIRTUAL_PREFIX='pythonsh'

@@ -11,7 +11,6 @@ LABEL docker-version = "@DOCKER_VERSION@"
 LABEL python-python = "@PYTHON_VERSION@"
 
 RUN apk update && apk add git python3 gcc autoconf automake libtool openssl openssl-dev bash build-base
-
 #+END_SRC
 
 Create the home tree and set it as home. Then export a working
@@ -34,5 +33,6 @@ as this could create a lot of churn putting the module installation at this leve
 COPY py.sh python.sh .
 RUN chmod u+x ./py.sh && ./py.sh tools-unix
 
-RUN pyenv init - >exec.sh && echo "./py.sh global-virtual python" >>exec.sh bash exec.sh
+RUN pyenv init - >build-python.sh && echo "./py.sh global-virtual python" >>build-python.sh && bash build-python.sh
+RUN pyenv init - >install-python.sh && echo "pyenv activate python && pyenv exec python -m pip upgrade pip && pyenv exec python -m pip install pipenv" >install-python.sh && bash install-python.sh
 #+END_SRC
