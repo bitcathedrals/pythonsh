@@ -6,7 +6,7 @@ LABEL timestamp = "Sun"
 
 RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
 sqlite-dev pkgconf linux-headers ca-certificates bzip2-dev zlib-dev ncurses-dev readline-dev \
-libffi-dev xz-dev shadow
+libffi-dev xz-dev shadow coreutils
 
 ENV SHELL=/bin/bash
 
