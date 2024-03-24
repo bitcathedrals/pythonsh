@@ -5,7 +5,8 @@ LABEL python-python = "3.12"
 LABEL timestamp = "Sun"
 
 RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
-sqlite-dev pkgconf linux-headers ca-certificates bzip2-dev zlib-dev ncurses-dev readline-dev libffi-dev
+sqlite-dev pkgconf linux-headers ca-certificates bzip2-dev zlib-dev ncurses-dev readline-dev \
+libffi-dev xz-dev
 
 RUN test -d /home/tmp || mkdir -p /home/tmp
 WORKDIR /home/
