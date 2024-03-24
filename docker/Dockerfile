@@ -15,7 +15,7 @@ ENV PYENV_ROOT="/home/.pyenv/"
 ENV TMPDIR=/home/tmp
 ENV SHELL=/bin/bash
 ENV HOME=/home/
-ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims/:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+ENV PATH="$PYENV_ROOT/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
 COPY py.sh python.sh install-module-tools.sh .
 RUN bash ./py.sh tools-unix
