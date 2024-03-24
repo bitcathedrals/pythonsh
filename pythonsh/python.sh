@@ -854,7 +854,7 @@ case $1 in
       test -d releases || mkdir releases
 
       cp docker/Dockerfile $release
-      git add release
+      git add $release
 
       git commit -m "Dockerfile ${DOCKER_VERSION} release"
 
