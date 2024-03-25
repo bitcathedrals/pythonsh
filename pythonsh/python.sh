@@ -500,14 +500,12 @@ case $1 in
       echo "installation completed. you may need to update ~/.zshrc.custom."
     ;;
     "tools-zshrc")
-      echo "adding shell code to .zshrc, you may need to edit the file."
-
-      cat <$PWD/pythonsh/zshrc.rc >>~/.zshrc
-      echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
+      cp pythonsh/zshrc.rc $HOME/.zshrc
+      echo >/dev/stderr "replacing .zshrc with upstream version"
     ;;
     "tools-custom")
       echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-      cp $PWD/pythonsh/zshrc.custom ~/.zshrc.custom
+      cp pythonsh/zshrc.custom $HOME/.zshrc.custom
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
