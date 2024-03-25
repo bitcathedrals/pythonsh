@@ -35,7 +35,7 @@ ENV PIPENV_BIN="$TOOLS/pipenv/bin"
 
 ENV PATH="$PYENV_SHIMS:$PYENV_BIN:$TOOLS_BIN:$PIPENV_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
-COPY py.sh python.sh .
+COPY py.sh python.sh Dockerfile .
 RUN bash ./py.sh tools-unix
 
 RUN bash ./py.sh global-virtual python
