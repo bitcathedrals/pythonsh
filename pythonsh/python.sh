@@ -40,8 +40,8 @@ function root_to_branch {
 }
 
 function setup_pyenv {
-  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/.pyenv"
-  command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
+  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/tools/pyenv"
+  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 
   eval "$(pyenv init -)"
 
@@ -94,7 +94,7 @@ function install_virtualenv_python {
   deactivate_if_needed || return 1
 
   # update the latest versions that build
-  cd $HOME/.pyenv/ && git pull
+  cd $PYENV_ROOT && git pull
 
   VERSION=$1
 
