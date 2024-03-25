@@ -102,7 +102,7 @@ function install_virtualenv_python {
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if pyenv install -v --skip-existing $VERSION $@
+  if pyenv install -v --skip-existing $VERSION
   then
     echo "Success!"
   else
@@ -118,18 +118,17 @@ function install_virtualenv_python {
 
 function install_virtualenv {
   LATEST=$1
-  shift
-
   NAME=$2
-  shift
 
-  if ! pyenv virtualenv "$LATEST" "$NAME" $@
+  pyenv virtualenv "$LATEST" "$NAME"
+
+  if [[ $? -ne 0 ]]
   then
-    echo "FAILED!"
+    echo "virtualenv $LATEST $NAME - FAILED!"
     return 1
   fi
 
-  echo "done."
+  echo "virtualenv $NAME done."
   return 0
 }
 
@@ -139,20 +138,19 @@ function install_project_virtualenv {
   ENV_ONE=$2
   ENV_TWO=$3
 
-  install_virtualenv_python $VERSION $@ || return 1
+  install_virtualenv_python $VERSION || return 1
 
   echo "creating project virtual environments"
 
   if [[ -n $ENV_ONE ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
-    install_virtualenv $LATEST_PYTHON $ENV_ONE $@ || return 1
+    install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
-
   if [[ -n $ENV_TWO ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
-    install_virtualenv $LATEST_PYTHON $ENV_TWO $@ || return 1
+    install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
   fi
 
   return 0
