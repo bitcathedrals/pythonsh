@@ -30,6 +30,28 @@ function set_homebrew {
   fi
 }
 
+function unique_path {
+  reversed_list=$(echo $PATH | tr -s ":" | tr -s ":" "\n" | tac)
+
+  final=""
+
+  for path in $(echo $reversed_list | sed '/^$/d')
+  do
+    removed=$(echo $removed | tail -n +1)
+
+    if echo "$removed" | grep $path - >/dev/null 2>&1
+    then
+      echo /dev/stderr "skipping: $path"
+    else
+      echo /dev/stderr "adding: $path"
+      final="$path:$final"
+    fi
+  done
+
+  PATH=$(echo "$final" | tr "\n" ":" | tr -s ":")
+  export PATH
+}
+
 set_macos_path_helper
 set_homebrew
 
@@ -47,7 +69,7 @@ PATH="$HOME/code/pythonsh/bin:$PATH"
 PATH="$HOME/code/docker/bin:$PATH"
 PATH="$HOME/code/grail/bin:$PATH"
 
-export PATH
+unique_path
 
 function set_editor {
   EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
