@@ -2,7 +2,7 @@ FROM alpine:3.19.1
 
 LABEL docker-version = "2"
 LABEL python-python = "3.11"
-LABEL timestamp = "Sun"
+LABEL timestamp = "Mon"
 
 RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
 sqlite-dev pkgconf linux-headers ca-certificates bzip2-dev zlib-dev ncurses-dev readline-dev \
@@ -39,4 +39,4 @@ RUN bash ./py.sh tools-unix
 
 RUN bash ./py.sh global-virtual python
 
-RUN rm *.sh rm -r $TMPDIR/*
+RUN rm *.sh && rm -r $TMPDIR/*

@@ -69,5 +69,5 @@ RUN bash ./py.sh global-virtual python
 Clean up after the build
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-RUN rm *.sh rm -r $TMPDIR/*
+RUN rm *.sh && rm -r $TMPDIR/*
 #+END_SRC
