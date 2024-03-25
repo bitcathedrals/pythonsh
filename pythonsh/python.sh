@@ -225,8 +225,6 @@ function deactivate_any {
 function prepare_buildset_environment {
   echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
 
-  
-
   deactivate_any
 
   build_env="${VIRTUAL_PREFIX}_build"
@@ -545,7 +543,7 @@ case $1 in
           exit 1
         fi
 
-        install_project_virtualenv "$VERSION" "$NAME" $@ || exit 1
+        install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
         echo "you need to run \"switch_global $NAME\" to activate the new environment."
     ;;
