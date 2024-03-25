@@ -30,35 +30,28 @@ function set_homebrew {
   fi
 
   command -v brew >/dev/null 2>&1 && eval `brew shellenv`
-
-  if [[ $? -ne 0 ]]
-  then
-    echo /dev/stderr "zshrc.custom: could not find homebrew!"
-    return 1
-  fi
-
   return 0
 }
 
 function unique_path {
-  reversed_list=$(echo $PATH | tr -s ":" | tr -s ":" "\n" | tac)
+  reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | /usr/bin/tac)
 
   final=""
 
   for path in $(echo $reversed_list | sed '/^$/d')
   do
-    removed=$(echo $removed | tail -n +1)
+    removed=$(echo $removed | /usr/bin/tail -n +1)
 
-    if echo "$removed" | grep $path - >/dev/null 2>&1
+    if echo "$removed" | /usr/bin/grep $path - >/dev/null 2>&1
     then
       echo /dev/stderr "unique_path - skipping: $path"
     else
-#      echo /dev/stderr "unique_path - adding: $path"
+      echo /dev/stderr "unique_path - adding: $path"
       final="$path:$final"
     fi
   done
 
-  PATH=$(echo "$final" | tr "\n" ":" | tr -s ":")
+  PATH=$(echo "$final" | /usr/bin/tr "\n" ":" | /usr/bin/tr -s ":")
   export PATH
 }
 
