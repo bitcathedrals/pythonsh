@@ -605,22 +605,7 @@ case $1 in
 
        test -e pytest.ini || ln -s pythonsh/pytest.ini
 
-       pyenv exec python -m pip install --upgrade pip
-       pyenv exec python -m pip install pipenv
-
        pipfile="pythonsh/Pipfile"
-
-       if [[ -f $pipfile ]]
-       then
-         echo "using distributed Pipfile for minimal bootstrap"
-       elif [[ -f Pipfile ]]
-       then
-          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
-          pipfile="Pipfile"
-       else
-         echo "No Pipfile could be found, exiting"
-         exit 1
-       fi
 
        export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
