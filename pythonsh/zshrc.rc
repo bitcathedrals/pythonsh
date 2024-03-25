@@ -7,9 +7,8 @@ function deactivate_if_needed {
 
   echo "$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
 
-  pyenv-sh-deactivate >/dev/null 2>&1
-
-  return 0
+  eval $(pyenv-sh-deactivate "${virt}")
+  return $?
 }
 
 function load_python_sh {
