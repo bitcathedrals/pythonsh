@@ -40,8 +40,15 @@ function root_to_branch {
 }
 
 function setup_pyenv {
-  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/.pyenv"
-  command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
+  export TOOLS=$HOME/tools
+  export PYENV_ROOT="$TOOLS/pyenv"
+
+  PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/libexec:$PATH"
+  PATH="$TOOLS/pyenv-virtual/bin:$PATH"
+
+  # just in case init needs some paths
+  export PATH
 
   eval "$(pyenv init -)"
 
@@ -54,6 +61,8 @@ function setup_pyenv {
   return 0
 }
 
+setup_pyenv
+
 function deactivate_if_needed {
   ver=$(pyenv version)
 
@@ -64,9 +73,11 @@ function deactivate_if_needed {
     return 0
   fi
 
-  if ! pyenv deactivate
+  eval $(pyenv-sh-deactivate "${virt}")
+
+  if [[ $? -ne 0 ]]
   then
-    echo "deactive of $ver failed!"
+    echo >/dev/stderr "pythonsh: deactivate of $ver failed!"
     return 1
   fi
 
@@ -89,11 +100,14 @@ function show_all_python_versions {
 }
 
 function install_virtualenv_python {
-  setup_pyenv
-
   deactivate_if_needed || return 1
 
+  # update the latest versions that build
+  cd $PYENV_ROOT && git pull
+
   VERSION=$1
+
+  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
@@ -115,13 +129,15 @@ function install_virtualenv {
   LATEST=$1
   NAME=$2
 
-  if ! pyenv virtualenv "$LATEST" "$NAME"
+  pyenv virtualenv "$LATEST" "$NAME"
+
+  if [[ $? -ne 0 ]]
   then
-    echo "FAILED!"
+    echo "virtualenv $LATEST $NAME - FAILED!"
     return 1
   fi
 
-  echo "done."
+  echo "virtualenv $NAME done."
   return 0
 }
 
@@ -140,7 +156,6 @@ function install_project_virtualenv {
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
-
   if [[ -n $ENV_TWO ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
@@ -205,7 +220,7 @@ function find_catpip {
 }
 
 function deactivate_any {
-  current=`pyenv virtualenvs | grep -E '^\*' | cut -d ' ' -f 2`
+  current=`pyenv version | grep -v -E '^system'`
 
   if [[ -n $current ]]
   then
@@ -218,8 +233,6 @@ function deactivate_any {
 
 function prepare_buildset_environment {
   echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
-
-  setup_pyenv
 
   deactivate_any
 
@@ -441,17 +454,17 @@ function check_python_environment {
 
 case $1 in
   "version")
-    echo "pythonsh version is: 0.12.0"
+    echo "pythonsh version is: 0.15.1"
   ;;
 
 #
 # tooling
 #
     "tools-unix")
-      echo "installing python environment tools for UNIX"
+      echo "installing pyenv for UNIX"
 
-      PYENV_ROOT="$HOME/.pyenv"
-      TOOLS="$HOME/tools"
+      TOOLS="$HOME/tools/"
+      PYENV_ROOT="$TOOLS/pyenv"
 
       test -d $TOOLS || mkdir $TOOLS
       test -d "$TOOLS/local" || mkdir "$TOOLS/local"
@@ -465,32 +478,43 @@ case $1 in
         git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
       fi
 
+      echo "installing virtualenv for UNIX"
+
       VIRTUAL="$TOOLS/pyenv-virtual"
 
       if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
       then
         echo "updating pyenv virtual"
-        (cd $VIRTUAL && git pull)
+        (cd $VIRTUAL && git pull && export PREFIX="$TOOLS/local" && ./install.sh)
       else
         echo "cloning pyenv virtual into $VIRTUAL"
-        (git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL)
+        git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
+        (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
 
-      (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
+      echo "installing pipenv tools for UNIX"
 
-      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin\"" >>~/.zshrc.custom
+      PIPENV="$TOOLS/pipenv"
 
-      echo "installation completed"
+      if test -d $PIPENV && test -d "$PIPENV/.git"
+      then
+        echo "updating pipenv virtual"
+        (cd $PIPENV && git pull)
+      else
+        echo "cloning pipenv into $PIPENV"
+        git clone https://github.com/pyenv/pyenv.git $PIPENV
+      fi
+
+      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin:${PIPENV}/bin\""
+      echo "installation completed. you may need to update ~/.zshrc.custom."
     ;;
     "tools-zshrc")
-      echo "adding shell code to .zshrc, you may need to edit the file."
-
-      cat <$PWD/pythonsh/zshrc.rc >>~/.zshrc
-      echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
+      cp pythonsh/zshrc.rc $HOME/.zshrc
+      echo >/dev/stderr "replacing .zshrc with upstream version"
     ;;
     "tools-custom")
       echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-      cp $PWD/pythonsh/zshrc.custom ~/.zshrc.custom
+      cp pythonsh/zshrc.custom $HOME/.zshrc.custom
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
@@ -504,24 +528,15 @@ case $1 in
       show_all_python_versions
     ;;
     "project-virtual")
-        setup_pyenv
-
-        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
     "global-virtual")
         shift
-
         NAME="$1"
 
         VERSION="${2:-$PYTHON_VERSION}"
-
-        if [[ -z "$VERSION" ]]
-        then
-          echo "global-virtual: VERSION (first argument) is missing."
-          exit 1
-        fi
 
         if [[ -z "$NAME" ]]
         then
@@ -529,7 +544,11 @@ case $1 in
           exit 1
         fi
 
-        setup_pyenv
+        if [[ -z "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
 
         install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
@@ -549,7 +568,7 @@ case $1 in
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
-        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
+
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
@@ -586,29 +605,17 @@ case $1 in
 
        test -e pytest.ini || ln -s pythonsh/pytest.ini
 
-       pyenv exec python -m pip install --upgrade pip
-       pyenv exec python -m pip install pipenv
-
        pipfile="pythonsh/Pipfile"
-
-       if [[ -f $pipfile ]]
-       then
-         echo "using distributed Pipfile for minimal bootstrap"
-       elif [[ -f Pipfile ]]
-       then
-          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
-          pipfile="Pipfile"
-       else
-         echo "No Pipfile could be found, exiting"
-         exit 1
-       fi
 
        export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
     ;;
     "bootstrap")
       check_python_environment
-      
+
       $0 minimal || exit 1
+
+      # remove the un-needed minimal Pipfile.lock
+      test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
 
       # generate the initial pipfile getting deps out of the source tree
       $0 pipfile >Pipfile || exit 1
@@ -705,9 +712,6 @@ case $1 in
     "all")
       test -f Pipfile.lock || touch Pipfile.lock
 
-      pyenv exec python -m pip install --upgrade pip
-      pyenv exec python -m pip install --upgrade pipenv
-
       pipenv install --dev
 
       pyenv rehash
@@ -717,7 +721,8 @@ case $1 in
       pipenv check
     ;;
     "update")
-        pipenv update --skip-lock
+        pipenv update
+
         pyenv rehash
         pipenv lock
 
@@ -739,9 +744,6 @@ case $1 in
       build_buildset
     ;;
     "mkrelease")
-
-      setup_pyenv
-
       deactivate_any
 
       release_env="${VIRTUAL_PREFIX}_release"
@@ -767,12 +769,12 @@ case $1 in
 
       pyenv exec python -m pip install $PKG $@
     ;;
-    "runner")
+    "mkrunner")
       shift
 
       shdir=`dirname $0`
 
-      dist="${shdir}/pythonsh/bin/mkrunner.sh"
+      dist="${shdir}/bin/mkrunner.sh"
 
       if [[ -f $dist ]]
       then
@@ -790,6 +792,99 @@ case $1 in
 
       echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
       exit 1
+    ;;
+
+    #
+    # docker
+    #
+
+    "mklauncher")
+      shift
+
+      command -v mklauncher.sh >/dev/null 2>&1
+
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "pythonsh: could not find mklauncher.sh"
+        exit 1
+      fi
+
+      if [[ -z $1 ]]
+      then
+        echo >/dev/stderr "pythonsh: no program given for mklauncher"
+        exit 1
+      fi
+
+      mklauncher.sh $@
+    ;;
+    "docker-update")
+      timestamp=`date`
+
+      (cd docker &&\
+         org-compile.sh docker-python.org &&\
+         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >Dockerfile)
+
+      git add docker/Dockerfile docker/docker-python.org
+      git commit -m "update: generated Dockerfile @ $timestamp"
+    ;;
+    "docker-build")
+
+      if [[ -z $DOCKER_USER ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $DOCKER_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $PYTHON_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      full_version=$(show_all_python_versions | grep $PYTHON_VERSION | sort -V | tail -n 1)
+
+      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]-python[${full_version}]"
+
+      cp py.sh python.sh docker
+
+      (cd docker &&\
+         dock-build.sh build "${DOCKER_VERSION}-${full_version}")
+
+      if [[ $? -eq 0 ]]
+      then
+        echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
+        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}-${full_version}" >Dockerfile.pythonsh
+      else
+        echo "docker FAILED! exit code was $?"
+        exit 1
+      fi
+    ;;
+    "docker-release")
+      shift
+      MESSAGE=$1
+
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh docker-release - a messsage argument is missing."
+        exit 1
+      fi
+
+      release="releases/Dockerfile-${DOCKER_VERSION}"
+
+      test -d releases || mkdir releases
+
+      cp docker/Dockerfile $release
+      git add $release
+
+      git commit -m "Dockerfile ${DOCKER_VERSION} release"
+
+      git tag -a "docker-${DOCKER_VERSION}" -m "$MESSAGE"
     ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
@@ -911,27 +1006,7 @@ case $1 in
 
       git flow feature finish $name
     ;;
-    "tag-alpha")
-      shift
-      FEATURE=$1
-
-      if [[ -z $FEATURE ]]
-      then
-        echo >/dev/stderr "pythonsh: tag-alpha - a feature argument (1) is missing"
-        exit 1
-      fi
-
-      MESSAGE=$2
-
-      if [[ -z $MESSAGE ]]
-      then
-        echo >/dev/stderr "pythonsh tag-alpha - a messsage argument (2) is missing."
-        exit 1
-      fi
-
-      create_tag "alpha" "$FEATURE" "$MESSAGE"
-    ;;
-    "tag-beta")
+    "beta")
       shift
 
       FEATURE=$1
@@ -995,6 +1070,15 @@ case $1 in
     ;;
     "info")
       git branch -vv
+
+      echo "[staged]"
+      git diff --staged | diffstat
+
+      echo "[changes]"
+      git diff | diffstat
+
+      echo "[untracked]"
+      git ls-files -o --exclude-standard
     ;;
     "verify")
       exec git log --show-signature $@
@@ -1281,7 +1365,15 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
-runner     = execute mkrunner.sh to build a runner
+mkrunner   = <program> <args....> make a runner that sets/restores environment for
+             host python commands
+
+mklauncher     = <program> <args....> make a simple launcher for python docker
+docker-update  = regenerate the Dockerfile from the .org file
+docker-build   = build the PythonSh docker layer
+docker-release = record a docker release
+
+mkrunner   = execute mkrunner.sh to build a runner
 
 [submodule]
 modinit             = initialize and pull all submodules
@@ -1292,8 +1384,7 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
-tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
-tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
+beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree

@@ -10,10 +10,9 @@ pytest = "*"
 pytest-ordering = "*"
 pytest-dependency = "*"
 
-pipenv = "*"
-pip = "*"
-
 version-parser = "*"
+
+setuptools = "*"
 
 [requires]
 python_version = "3.12"

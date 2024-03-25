@@ -28,19 +28,32 @@ function set_homebrew {
     eval $(/opt/homebrew/bin/brew shellenv)
     return
   fi
+
+  command -v brew >/dev/null 2>&1 && eval `brew shellenv`
+  return 0
 }
 
-set_macos_path_helper
-set_homebrew
+function unique_path {
+  reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | /usr/bin/tac)
 
-PATH="$HOME/tools/local/bin:$PATH"
-PATH="$HOME/code/utilities/bin:$PATH"
-PATH="$HOME/code/security/bin:$PATH"
-PATH="$HOME/code/pythonsh/bin:$PATH"
-PATH="$HOME/code/docker/bin:$PATH"
-PATH="$HOME/code/grail/bin:$PATH"
+  final=""
 
-export PATH
+  for path in $(echo $reversed_list | sed '/^$/d')
+  do
+    removed=$(echo $removed | /usr/bin/tail -n +1)
+
+    if echo "$removed" | /usr/bin/grep $path - >/dev/null 2>&1
+    then
+      echo /dev/stderr "unique_path - skipping: $path"
+    else
+#      echo /dev/stderr "unique_path - adding: $path"
+      final="$path:$final"
+    fi
+  done
+
+  PATH=$(echo "$final" | /usr/bin/tr "\n" ":" | /usr/bin/tr -s ":")
+  export PATH
+}
 
 function set_editor {
   EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
@@ -66,17 +79,6 @@ function set_editor {
   echo >/dev/stderr "WARNING: zshrc.custom no editor found!"
   return 1
 }
-
-set_editor
-
-# if there is a file for crypto keys then add it
-if [[ -f $HOME/.crypto.sh ]]
-then
-  source $HOME/.crypto.sh
-fi
-
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
 
 function launch_ssh_agent {
   if [[ `uname` == "Darwin" ]]
@@ -109,6 +111,41 @@ function launch_ssh_agent {
   fi
 }
 
+function set_pyenv {
+  export TOOLS=$HOME/tools
+  export PYENV_ROOT="$TOOLS/pyenv"
+
+  PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/libexec:$PATH"
+  PATH="$TOOLS/pyenv-virtual/bin:$PATH"
+
+  # just in case init needs some paths
+  export PATH
+
+  eval "$(pyenv init -)"
+}
+
+set_macos_path_helper
+set_homebrew
+set_pyenv
+
+PATH="$TOOLS/local/bin:$PATH"
+PATH="$HOME/code/utilities/bin:$PATH"
+PATH="$HOME/code/security/bin:$PATH"
+PATH="$HOME/code/pythonsh/bin:$PATH"
+PATH="$HOME/code/docker/bin:$PATH"
+PATH="$HOME/code/grail/bin:$PATH"
+
+unique_path
+
+set_editor
+
 launch_ssh_agent
+
+# if there is a file for crypto keys then add it
+if [[ -f $HOME/.crypto.sh ]]
+then
+  source $HOME/.crypto.sh
+fi
 
 export ZSHRC_CUSTOM_LOADED="yes"
