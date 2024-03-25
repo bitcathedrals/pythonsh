@@ -709,8 +709,6 @@ case $1 in
     "all")
       test -f Pipfile.lock || touch Pipfile.lock
 
-      pyenv exec python -m pip install --upgrade pipenv
-
       pipenv install --dev
 
       pyenv rehash
@@ -721,6 +719,7 @@ case $1 in
     ;;
     "update")
         pipenv update
+
         pyenv rehash
         pipenv lock
 
