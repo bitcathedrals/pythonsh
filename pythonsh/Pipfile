@@ -12,5 +12,7 @@ pytest-dependency = "*"
 
 version-parser = "*"
 
+setuptools = "*"
+
 [requires]
 python_version = "3.12"
