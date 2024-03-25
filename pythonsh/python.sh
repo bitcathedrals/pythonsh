@@ -458,8 +458,8 @@ case $1 in
     "tools-unix")
       echo "installing pyenv for UNIX"
 
-      PYENV_ROOT="$HOME/.pyenv"
       TOOLS="$HOME/tools/"
+      PYENV_ROOT="$TOOLS/pyenv"
 
       test -d $TOOLS || mkdir $TOOLS
       test -d "$TOOLS/local" || mkdir "$TOOLS/local"
