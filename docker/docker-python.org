@@ -56,7 +56,7 @@ ENV PATH="$PYENV_SHIMS:$PYENV_BIN:$TOOLS_BIN:$PIPENV_BIN:/usr/local/bin:/usr/loc
 Create the installation of pyenv, virtualenv, and pipenv
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-COPY py.sh python.sh .
+COPY py.sh python.sh Dockerfile .
 RUN bash ./py.sh tools-unix
 #+END_SRC
 
