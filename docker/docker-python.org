@@ -64,7 +64,6 @@ interpreter.
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 RUN bash ./py.sh global-virtual python
-RUN pyenv global python
 #+END_SRC
 
 Clean up after the build

@@ -38,6 +38,5 @@ COPY py.sh python.sh Dockerfile .
 RUN bash ./py.sh tools-unix
 
 RUN bash ./py.sh global-virtual python
-RUN pyenv global python
 
 RUN rm *.sh rm -r $TMPDIR/*
