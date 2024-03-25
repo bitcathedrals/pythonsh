@@ -46,7 +46,7 @@ function unique_path {
     then
       echo /dev/stderr "unique_path - skipping: $path"
     else
-      echo /dev/stderr "unique_path - adding: $path"
+#      echo /dev/stderr "unique_path - adding: $path"
       final="$path:$final"
     fi
   done
