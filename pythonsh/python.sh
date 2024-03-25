@@ -614,6 +614,9 @@ case $1 in
 
       $0 minimal || exit 1
 
+      # remove the un-needed minimal Pipfile.lock
+      test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
+
       # generate the initial pipfile getting deps out of the source tree
       $0 pipfile >Pipfile || exit 1
 
