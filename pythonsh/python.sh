@@ -40,8 +40,15 @@ function root_to_branch {
 }
 
 function setup_pyenv {
-  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/tools/pyenv"
-  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+  export TOOLS=$HOME/tools
+  export PYENV_ROOT="$TOOLS/pyenv"
+
+  PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/libexec:$PATH"
+  PATH="$TOOLS/pyenv-virtual/bin:$PATH"
+
+  # just in case init needs some paths
+  export PATH
 
   eval "$(pyenv init -)"
 
@@ -66,9 +73,11 @@ function deactivate_if_needed {
     return 0
   fi
 
-  if ! pyenv deactivate
+  eval $(pyenv-sh-deactivate "${virt}")
+
+  if [[ $? -ne 0 ]]
   then
-    echo "deactive of $ver failed!"
+    echo >/dev/stderr "pythonsh: deactivate of $ver failed!"
     return 1
   fi
 
@@ -211,7 +220,7 @@ function find_catpip {
 }
 
 function deactivate_any {
-  current=`pyenv virtualenvs | grep -E '^\*' | cut -d ' ' -f 2`
+  current=`pyenv version | grep -v -E '^system'`
 
   if [[ -n $current ]]
   then
