@@ -860,7 +860,7 @@ case $1 in
       cp py.sh python.sh docker
 
       (cd docker &&\
-         dock-build.sh build $DOCKER_USER "pythonsh" "${DOCKER_VERSION}-${full_version}")
+         dock-build.sh build "${DOCKER_VERSION}-${full_version}")
 
       if [[ $? -eq 0 ]]
       then
