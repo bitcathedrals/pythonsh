@@ -54,6 +54,8 @@ function setup_pyenv {
   return 0
 }
 
+setup_pyenv
+
 function deactivate_if_needed {
   ver=$(pyenv version)
 
@@ -89,8 +91,6 @@ function show_all_python_versions {
 }
 
 function install_virtualenv_python {
-  setup_pyenv
-
   deactivate_if_needed || return 1
 
   # update the latest versions that build
@@ -227,7 +227,7 @@ function deactivate_any {
 function prepare_buildset_environment {
   echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
 
-  setup_pyenv
+  
 
   deactivate_any
 
@@ -525,8 +525,6 @@ case $1 in
       show_all_python_versions
     ;;
     "project-virtual")
-        setup_pyenv
-
         install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
@@ -536,8 +534,6 @@ case $1 in
         NAME="$1"
 
         VERSION="${2:-$PYTHON_VERSION}"
-
-        setup_pyenv
 
         if [[ -z "$NAME" ]]
         then
@@ -758,9 +754,6 @@ case $1 in
       build_buildset
     ;;
     "mkrelease")
-
-      setup_pyenv
-
       deactivate_any
 
       release_env="${VIRTUAL_PREFIX}_release"

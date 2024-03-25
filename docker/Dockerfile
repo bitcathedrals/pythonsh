@@ -13,7 +13,7 @@ ENV SHELL=/bin/bash
 ENV USER=python
 ENV HOME=/home
 
-RUN adduser -D -h $HOME $USER && chown $USER $HOME && chmod 755 $HOME
+RUN adduser -D -h $HOME $USER && chmod 755 $HOME
 
 USER $USER
 WORKDIR /home
@@ -23,7 +23,6 @@ RUN test -d $TMPDIR || mkdir -p $TMPDIR
 
 ENV PYENV_ROOT="$HOME/.pyenv"
 ENV PYENV_BIN="$PYENV_ROOT/bin"
-ENV PYENV_SHIMS="$PYENV_ROOT/shims"
 
 ARG TOOLS=$HOME/tools
 
@@ -33,7 +32,7 @@ RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 
 ENV PIPENV_BIN="$TOOLS/pipenv/bin"
 
-ENV PATH="$PYENV_SHIMS:$PYENV_BIN:$TOOLS_BIN:$PIPENV_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+ENV PATH="$PYENV_BIN:$PIPENV_BIN:$TOOLS_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
 COPY py.sh python.sh Dockerfile .
 RUN bash ./py.sh tools-unix
