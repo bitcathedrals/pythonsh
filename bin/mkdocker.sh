@@ -1,7 +1,6 @@
 #! /usr/bin/env bash
 
-script=`dirname $0`
-template=${script}/Dockerfile.template
+template=docker/Dockerfile.template
 
 DOCKER_VERSION=$1
 PYTHON_VERSION=$2
