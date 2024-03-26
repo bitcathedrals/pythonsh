@@ -34,11 +34,7 @@ function set_homebrew {
 }
 
 function unique_path {
-  tac=/usr/local/bin/tac
-  if [[ ! -e $tac ]]
-  then
-    tac=/usr/bin/tac
-  fi
+  tac=`which tac`
 
   reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
 
