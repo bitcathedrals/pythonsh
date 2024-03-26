@@ -3,12 +3,28 @@
 script=`dirname $0`
 script="${script}/virtualenv-launcher.sh"
 
-if [[ -n $1 ]]
+if [[ $1 == "help" ]]
 then
-  ENTRYPOINT="$*"
-else
-  echo >/dev/stderr "mkrunner.sh pyenv command plus optional arguments must be the second arg. exiting."
+  cat <<HELP
+mklauncher.sh virtualenv program-args*
+
+create a script that launches a program in teh <virtualenv> given.
+
+- The first arg is the virtualenv.
+- The rest of the args are command and any args that are hardcoded into the launcher.
+
+The script is written to stdout.
+HELP
+  exit 0
+fi
+
+if [[ -z $1 ]]
+then
+  echo >/dev/stderr "mkrunner.sh virtualenv = arg(1) command plus arguments = arg(rest). exiting."
   exit 1
 fi
 
-sed <$script -e "s,@ENTRYPOINT@,$ENTRYPOINT,g"
+venv=$1
+shift
+
+sed <$script -e "s,@VENV@,$venv,g" | sed -e "s,@ENTRYPOINT@,$*,g"

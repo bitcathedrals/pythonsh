@@ -1,26 +1,12 @@
 #! /usr/bin/env bash
 
-DEFAULT=@DEFAULT@
-ARG=$1
+TOOLS=$HOME/tools
+export PATH="$TOOLS/local/bin:$TOOLS/pipenv/bin:$PATH"
 
-ENVIRONMENT=""
+VENV=@VENV@
 
-if [[ -n $DEFAULT ]]
-then
-  ENVIRONMENT=$DEFAULT
-else
-  if [[ -z $ARG ]]
-  then
-    echo >/dev/stderr "virtualenv-runner.sh: no environment arg given! exiting."
-    exit 1
-  fi
-
-  ENVIRONMENT=$ARG
-  shift
-fi
-
-DEFAULT_PYENV="$HOME/.pyenv/"
-export PATH="$DEFAULT_PYENV:$PATH"
+PYENV_ROOT="$HOME/.pyenv/"
+export PATH="$PYENV_ROOT/bin:$PATH"
 
 eval "$(pyenv init -)"
 
@@ -28,22 +14,22 @@ RESTORE=""
 
 if pyenv version | grep "system"
 then
-  pyenv activate $ENVIRONMENT >/dev/null 2>&1
+  output=$(pyenv activate $VENV 2>&1)
   if [[ $? -ne 0 ]]
   then
-    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
+    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT} - $output. exiting."
     exit 1
   fi
 else
-  if pyenv version | grep -v "$ENVIRONMENT"
+  if pyenv version | grep -v "$VENV"
   then
     RESTORE=`pyenv version | cut -d ' ' -f 1`
 
-    pyenv activate $ENVIRONMENT >/dev/null 2>&1
+    output=$(pyenv activate $VENV 2>&1)
 
     if [[ $? -ne 0 ]]
     then
-      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
+      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${VENV} - $output. exiting."
       exit 1
     fi
   fi
@@ -54,7 +40,13 @@ exit_code=$?
 
 if [[ -n $RESTORE ]]
 then
-  pyenv activate $RESTORE >/dev/null 2>&1
+  output=$(pyenv activate $RESTORE 2>&1)
+
+  if [[ $? -ne 0 ]]
+  then
+    echo >/dev/stderr "virtualenv-runner.sh: unable to restore ${RESTORE} - $output. exiting."
+    exit 1
+  fi
 fi
 
 exit $exit_code
