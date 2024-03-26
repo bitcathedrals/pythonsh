@@ -4,19 +4,22 @@ script=`dirname $0`
 script="${script}/virtualenv-runner.sh"
 
 ENV=$1
+shift
+
+if [[ $1 == "help" ]]
+then
+  cat <<HELP
+mkrunner.sh: <virtualenv> <program and args>*
+
+Make a runner script that sets the venv, runs the command, and then restores the previous environment.
+
+HELP
+fi
 
 if [[ -z $ENV ]]
 then
-  ENV='\$1'
+  echo >/dev/stderr "mkrunner.sh: pyenv environment must be the first arg. exiting."
+  exit 1
 fi
 
-shift
-
-if [[ -n $1 ]]
-then
-  HARDCODE="$*"
-else
-  HARDCODE=""
-fi
-
-sed <$script -e "s,@DEFAULT@,\"$ENV\",g" | sed -e "s,@HARDCODE@,$HARDCODE,g"
+sed <$script -e "s,@VENV@,\"$ENV\",g" | sed -e "s,@HARDCODE@,$*,g"

@@ -32,7 +32,7 @@ function root_to_branch {
         then
             root="main"
         else
-            root=$(git tag | tail -n 1)
+            root=$(git tag | grep release | sort -V | tail -n 1)
         fi
     else
         root='develop'
@@ -40,8 +40,13 @@ function root_to_branch {
 }
 
 function setup_pyenv {
-  test -z $PYENV_ROOT || export PYENV_ROOT="$HOME/.pyenv"
-  command -v pyenv >/dev/null || export PATH="$PATH:$PYENV_ROOT/bin"
+  TOOLS=$HOME/tools
+  PYENV_ROOT="$TOOLS/pyenv"
+  PATH="$TOOLS/local/bin:$PATH"
+  PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/libexec:$PATH"
+
+  export PYENV_ROOT PATH
 
   eval "$(pyenv init -)"
 
@@ -54,6 +59,8 @@ function setup_pyenv {
   return 0
 }
 
+setup_pyenv
+
 function deactivate_if_needed {
   ver=$(pyenv version)
 
@@ -64,9 +71,11 @@ function deactivate_if_needed {
     return 0
   fi
 
-  if ! pyenv deactivate
+  eval $(pyenv-sh-deactivate "${virt}")
+
+  if [[ $? -ne 0 ]]
   then
-    echo "deactive of $ver failed!"
+    echo >/dev/stderr "pythonsh: deactivate of $ver failed!"
     return 1
   fi
 
@@ -89,11 +98,14 @@ function show_all_python_versions {
 }
 
 function install_virtualenv_python {
-  setup_pyenv
-
   deactivate_if_needed || return 1
 
+  # update the latest versions that build
+  cd $PYENV_ROOT && git pull
+
   VERSION=$1
+
+  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
@@ -115,13 +127,15 @@ function install_virtualenv {
   LATEST=$1
   NAME=$2
 
-  if ! pyenv virtualenv "$LATEST" "$NAME"
+  pyenv virtualenv "$LATEST" "$NAME"
+
+  if [[ $? -ne 0 ]]
   then
-    echo "FAILED!"
+    echo "virtualenv $LATEST $NAME - FAILED!"
     return 1
   fi
 
-  echo "done."
+  echo "virtualenv $NAME done."
   return 0
 }
 
@@ -140,7 +154,6 @@ function install_project_virtualenv {
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
     install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
   fi
-
   if [[ -n $ENV_TWO ]]
   then
     echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
@@ -205,7 +218,7 @@ function find_catpip {
 }
 
 function deactivate_any {
-  current=`pyenv virtualenvs | grep -E '^\*' | cut -d ' ' -f 2`
+  current=`pyenv version | grep -v -E '^system'`
 
   if [[ -n $current ]]
   then
@@ -218,8 +231,6 @@ function deactivate_any {
 
 function prepare_buildset_environment {
   echo >/dev/stderr "pythonsh - buildset: creating virtualenv"
-
-  setup_pyenv
 
   deactivate_any
 
@@ -358,19 +369,100 @@ function create_tag {
   fi
 }
 
+function get_last_commit_type {
+  if [[ $1 == "release" ]]
+  then
+    last=`git tag | grep release | sort -V | tail -n 1`
+    git log --oneline "${last}..develop" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  else
+    root_to_branch
+    git log --oneline "${root}..${branch}" | cut -d ' ' -f 2- | grep -E "^\(${2}\)"
+  fi
+}
+
+function print_report {
+  if [[ -n $features ]]
+  then
+    cat <<MESSAGE
+
+* features
+
+$features
+MESSAGE
+ fi
+
+ if [[ -n $bugs ]]
+ then
+   cat <<MESSAGE
+
+* bugs
+
+$bugs
+MESSAGE
+  fi
+
+  if [[ -n $fixes ]]
+  then
+    cat <<MESSAGE
+
+* fixes
+
+$fixes
+MESSAGE
+  fi
+
+  if [[ -n $syncs ]]
+  then
+  cat <<MESSAGE
+
+* syncs
+
+$syncs
+MESSAGE
+  fi
+
+  if [[ -n $refactor ]]
+  then
+      cat <<MESSAGE
+
+* refactor
+
+$refactor
+MESSAGE
+  fi
+}
+
+function check_python_environment {
+  if $0 virtual-current
+  then
+    echo ">>>virtual environment found"
+  else
+    echo "ERROR: no virtual environment activated!"
+    exit 1
+  fi
+
+  if pyenv exec python --version >/dev/null 2>&1
+  then
+    echo ">>> pyenv python found."
+  else
+    echo ">>> pyenv python NOT FOUND! exiting now!"
+    exit 1
+  fi
+}
+
 case $1 in
   "version")
-    echo "pythonsh version is: 0.12.0"
+    echo "pythonsh version is: 0.15.1"
   ;;
 
 #
 # tooling
 #
     "tools-unix")
-      echo "installing python environment tools for UNIX"
+      echo "installing pyenv for UNIX"
 
-      PYENV_ROOT="$HOME/.pyenv"
-      TOOLS="$HOME/tools"
+      TOOLS="$HOME/tools/"
+      PYENV_ROOT="$TOOLS/pyenv"
 
       test -d $TOOLS || mkdir $TOOLS
       test -d "$TOOLS/local" || mkdir "$TOOLS/local"
@@ -384,32 +476,27 @@ case $1 in
         git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
       fi
 
+      echo "installing virtualenv for UNIX"
+
       VIRTUAL="$TOOLS/pyenv-virtual"
 
       if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
       then
         echo "updating pyenv virtual"
-        (cd $VIRTUAL && git pull)
+        (cd $VIRTUAL && git pull && export PREFIX="$TOOLS/local" && ./install.sh)
       else
         echo "cloning pyenv virtual into $VIRTUAL"
-        (git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL)
+        git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
+        (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
-
-      (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
-
-      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin\"" >>~/.zshrc.custom
-
-      echo "installation completed"
     ;;
     "tools-zshrc")
-      echo "adding shell code to .zshrc, you may need to edit the file."
-
-      cat <$PWD/pythonsh/zshrc.rc >>~/.zshrc
-      echo >/dev/stderr "WARNING! zshrc code was APPENDED, if you meant to replace it delete it and re-run"
+      cp pythonsh/zshrc.rc $HOME/.zshrc
+      echo >/dev/stderr "replacing .zshrc with upstream version"
     ;;
     "tools-custom")
       echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-      cp $PWD/pythonsh/zshrc.custom ~/.zshrc.custom
+      cp pythonsh/zshrc.custom $HOME/.zshrc.custom
     ;;
     "tools-prompt")
         echo >/dev/stderr "installing standard prompt with pyenv and github support"
@@ -423,24 +510,15 @@ case $1 in
       show_all_python_versions
     ;;
     "project-virtual")
-        setup_pyenv
-
-        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
+        install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
 
         echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
     "global-virtual")
         shift
-
         NAME="$1"
 
         VERSION="${2:-$PYTHON_VERSION}"
-
-        if [[ -z "$VERSION" ]]
-        then
-          echo "global-virtual: VERSION (first argument) is missing."
-          exit 1
-        fi
 
         if [[ -z "$NAME" ]]
         then
@@ -448,7 +526,11 @@ case $1 in
           exit 1
         fi
 
-        setup_pyenv
+        if [[ -z "$VERSION" ]]
+        then
+          echo "global-virtual: VERSION (first argument) is missing."
+          exit 1
+        fi
 
         install_project_virtualenv "$VERSION" "$NAME" || exit 1
 
@@ -468,7 +550,7 @@ case $1 in
     "project-destroy")
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_dev"
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_test"
-        pyenv virtualenv-delete "${VIRTUAL_PREFIX}_build"
+
         pyenv virtualenv-delete "${VIRTUAL_PREFIX}_release"
     ;;
     "global-destroy")
@@ -501,31 +583,22 @@ case $1 in
 # initialization commands
 #
     "minimal")
+      check_python_environment
+
        test -f Pipfile.lock || touch Pipfile.lock
 
        test -e pytest.ini || ln -s pythonsh/pytest.ini
 
-       pyenv exec python -m pip install --upgrade pip
-       pyenv exec python -m pip install pipenv
-
        pipfile="pythonsh/Pipfile"
 
-       if [[ -f $pipfile ]]
-       then
-         echo "using distributed Pipfile for minimal bootstrap"
-       elif [[ -f Pipfile ]]
-       then
-          echo "using base Pipfile for minimal... this is for pythonsh internal use only"
-          pipfile="Pipfile"
-       else
-         echo "No Pipfile could be found, exiting"
-         exit 1
-       fi
-
-       export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
+       export PIPENV_PIPFILE="$pipfile"; pyenv exec python -m pip install pipenv
+       pipenv install --dev
     ;;
     "bootstrap")
       $0 minimal || exit 1
+
+      # remove the un-needed minimal Pipfile.lock
+      test -f pythonsh/Pipfile.lock && rm pythonsh/Pipfile.lock
 
       # generate the initial pipfile getting deps out of the source tree
       $0 pipfile >Pipfile || exit 1
@@ -622,9 +695,6 @@ case $1 in
     "all")
       test -f Pipfile.lock || touch Pipfile.lock
 
-      pyenv exec python -m pip install --upgrade pip
-      pyenv exec python -m pip install --upgrade pipenv
-
       pipenv install --dev
 
       pyenv rehash
@@ -634,7 +704,8 @@ case $1 in
       pipenv check
     ;;
     "update")
-        pipenv update --skip-lock
+        pipenv update
+
         pyenv rehash
         pipenv lock
 
@@ -656,9 +727,6 @@ case $1 in
       build_buildset
     ;;
     "mkrelease")
-
-      setup_pyenv
-
       deactivate_any
 
       release_env="${VIRTUAL_PREFIX}_release"
@@ -684,12 +752,12 @@ case $1 in
 
       pyenv exec python -m pip install $PKG $@
     ;;
-    "runner")
+    "mkrunner")
       shift
 
       shdir=`dirname $0`
 
-      dist="${shdir}/pythonsh/bin/mkrunner.sh"
+      dist="${shdir}/bin/mkrunner.sh"
 
       if [[ -f $dist ]]
       then
@@ -708,6 +776,97 @@ case $1 in
       echo >/dev/stderr "pythonsh: could not find mkrunner.sh"
       exit 1
     ;;
+
+    #
+    # docker
+    #
+
+    "mklauncher")
+      shift
+
+      command -v mklauncher.sh >/dev/null 2>&1
+
+      if [[ $? -ne 0 ]]
+      then
+        echo >/dev/stderr "pythonsh: could not find mklauncher.sh"
+        exit 1
+      fi
+
+      if [[ -z $1 ]]
+      then
+        echo >/dev/stderr "pythonsh: no program given for mklauncher"
+        exit 1
+      fi
+
+      mklauncher.sh $@
+    ;;
+    "docker-update")
+      timestamp=`date`
+
+      (cd docker && org-compile.sh docker.org)
+      mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >docker/Dockerfile
+
+      git add docker/Dockerfile docker/docker.org
+      git commit -m "update: generated Dockerfile @ $timestamp"
+    ;;
+    "docker-build")
+      if [[ -z $DOCKER_USER ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $DOCKER_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      if [[ -z $PYTHON_VERSION ]]
+      then
+        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+        exit 1
+      fi
+
+      full_version=$(show_all_python_versions | grep $PYTHON_VERSION | sort -V | tail -n 1)
+
+      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]-python[${full_version}]"
+
+      cp py.sh python.sh docker
+
+      (cd docker &&\
+         dock-build.sh build "${DOCKER_VERSION}-${full_version}")
+
+      if [[ $? -eq 0 ]]
+      then
+        echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
+        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}-${full_version}" >Dockerfile.pythonsh
+      else
+        echo "docker FAILED! exit code was $?"
+        exit 1
+      fi
+    ;;
+    "docker-release")
+      shift
+      MESSAGE=$1
+
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh docker-release - a messsage argument is missing."
+        exit 1
+      fi
+
+      release="releases/Dockerfile-${DOCKER_VERSION}"
+
+      test -d releases || mkdir releases
+
+      cp docker/Dockerfile $release
+      git add $release
+
+      git commit -m "Dockerfile ${DOCKER_VERSION} release"
+
+      git tag -a "docker-${DOCKER_VERSION}" -m "$MESSAGE"
+    ;;
     "clean")
       find . -name '*.egg-info' -type d -print | xargs rm -r
       find . -name '__pycache__' -type d -print | xargs rm -r
@@ -722,6 +881,7 @@ case $1 in
 #
     "modinit")
       git submodule init
+      git submodule update --init
     ;;
     "modadd")
       shift
@@ -827,26 +987,79 @@ case $1 in
 
       git flow feature finish $name
     ;;
-    "tag-alpha")
+    "beta")
       shift
+
       FEATURE=$1
+
+      if [[ -z $FEATURE ]]
+      then
+        echo >/dev/stderr "pythonsh: tag-beta - a feature argument (1) is missing"
+        exit 1
+      fi
+
       MESSAGE=$2
 
-      create_tag "alpha" "$FEATURE" "$MESSAGE"
-    ;;
-    "tag-beta")
-      shift
-      FEATURE=$1
-      MESSAGE=$2
+      if [[ -z $MESSAGE ]]
+      then
+        echo >/dev/stderr "pythonsh tag-beta - a messsage argument (2) is missing."
+        exit 1
+      fi
 
       create_tag "beta" "$FEATURE" "$MESSAGE"
     ;;
     "track")
       shift
-      git branch -u $1/$2
+
+      REMOTE=$1
+
+      if [[ -z $REMOTE ]]
+      then
+        echo >/dev/stderr "pythonsh: track - a remote (1) is missing"
+        exit 1
+      fi
+
+      BRANCH=$2
+
+      if [[ -z $BRANCH ]]
+      then
+        echo >/dev/stderr "pythonsh track - a branch (2) is missing."
+        exit 1
+      fi
+
+      git branch -u $REMOTE/$BRANCH
+    ;;
+    "release-report")
+      features=`get_last_commit_type release feat`
+      bugs=`get_last_commit_type release bug`
+      issues=`get_last_commit_type release issue`
+      syncs=`get_last_commit_type release sync`
+      fixes=`get_last_commit_type release fix`
+      refactor=`get_last_commit_type release refactor`
+
+      print_report
+    ;;
+    "status-report")
+      features=`get_last_commit_type status feat`
+      bugs=`get_last_commit_type status bug`
+      issues=`get_last_commit_type status issue`
+      syncs=`get_last_commit_type status sync`
+      fixes=`get_last_commit_type status fix`
+      refactor=`get_last_commit_type status refactor`
+
+      print_report
     ;;
     "info")
       git branch -vv
+
+      echo "[staged]"
+      git diff --staged | diffstat
+
+      echo "[changes]"
+      git diff | diffstat
+
+      echo "[untracked]"
+      git ls-files -o --exclude-standard
     ;;
     "verify")
       exec git log --show-signature $@
@@ -863,12 +1076,6 @@ case $1 in
     ;;
     "pull")
         git pull --no-ff
-    ;;
-    "sub")
-        git submodule update --remote
-    ;;
-    "init")
-        git submodule update --init --recursive
     ;;
     "staged")
         git diff --cached
@@ -888,15 +1095,24 @@ case $1 in
     "merges")
         git log --merges --oneline
     ;;
+    "releases")
+        git tag | grep release | sort -V
+    ;;
     "history")
         echo ">>>showing history"
         git log --oneline
     ;;
-    "log")
+    "ahead")
         root_to_branch
 
-        echo ">>>showing log between $root and $branch"
+        echo ">>>showing commits in $branch not $root (parent)"
         git log "${root}..${branch}" --oneline
+    ;;
+    "behind")
+        root_to_branch
+
+        echo ">>>showing commits in $root (parent) not $branch"
+        git log "${branch}..${root}" --oneline
     ;;
     "graph")
         root_to_branch
@@ -928,12 +1144,10 @@ case $1 in
         echo "===> remember to pull deps with update if warranted <==="
 
         echo "===> fetching new commits from remote <==="
-        git fetch origin main
         git fetch origin develop
 
         echo "===> showing unmerged differences <===="
 
-        git log main..origin/main --oneline
         git log develop..origin/develop --oneline
 
         echo "===> checking if working tree is dirty <==="
@@ -954,23 +1168,10 @@ case $1 in
       # if python project check for python
       if [[ -f Pipfile ]]
       then
-        if $0 virtual-current
-        then
-          echo ">>>virtual environment found"
-        else
-          echo "ERROR: no virtual environment activated!"
-          exit 1
-        fi
-
-        if pyenv exec python --version >/dev/null 2>&1
-        then
-          echo ">>> pyenv python found."
-        else
-          echo ">>> pyenv python NOT FOUND! exiting now!"
-          exit 1
-        fi
+        check_python_environment
 
         find_catpip
+
         if eval "pyenv exec python $catpip test"
         then
           echo ">>> catpip found."
@@ -981,6 +1182,8 @@ case $1 in
       fi
 
       $0 check
+
+      echo "EDITOR is: $EDITOR ... correct?"
 
       read -p "Proceed? [y/n]: " proceed
 
@@ -993,115 +1196,77 @@ case $1 in
       fi
 
       VERSION="$1"
-      resume=""
 
-      if [[ $VERSION == "resume" ]]
+      echo -n "initiating git flow release start with version: $VERSION"
+
+      git flow release start $VERSION
+
+      if [[ $? -ne 0 ]]
       then
-        resume=$2
-        echo "attempting to resume at point: $resume"
-
-        if [[ $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
-        then
-          source "python.sh"
-        else
-          echo "resume must be either: \"merge\" or \"pipfile\" or \"commit\" ... doing the version bumps is the beginning and start takes a VERSION as an argument to start"
-          exit 1
-        fi
-      else
-        if git diff --quiet
-        then
-          echo ">>>working tree clean - proceeding with release: $VERSION"
-        else
-          echo "working tree dirty - terminating release:"
-
-          git status
-          exit 1
-        fi
+        echo "git flow release start $VERSION FAILED!"
+        exit 1
       fi
 
-      if [[ -z $resume ]]
+      echo -n ">>>please edit python.sh with an updated version in 3 seconds."
+      sleep 1
+      echo -n "."
+      sleep 1
+      echo -n "."
+      sleep 1
+
+      $EDITOR python.sh || exit 1
+      git add python.sh
+
+      echo ">>>re-loading python.sh"
+      source python.sh
+
+      echo ">>>recording release."
+
+      test -d releases || mkdir releases
+
+      if [[ -f Pipfile ]]
       then
-        echo -n "initiating git flow release start with version: $VERSION in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
-        sleep 1
+        echo ">>>regenerating Pipfile and pyproject.toml."
 
-        git flow release start $VERSION
+        $0 pipfile >Pipfile
+        $0 project >pyproject.toml
 
-        if [[ $? -ne 0 ]]
-        then
-          echo "git flow release start $VERSION FAILED!"
-          exit 1
-        fi
+        git add Pipfile
+        git add pyproject.toml
 
-        echo -n ">>>please edit python.sh with an updated version in 3 seconds."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo -n "."
-        sleep 1
+        pipenv lock
+        git add Pipfile.lock
 
-        $EDITOR python.sh || exit 1
-        git add python.sh
+        echo ">>>recording Pipfile and pyproject.toml."
 
-        echo ">>>re-loading python.sh"
-        source python.sh
+        VER_PIP="releases/Pipfile-$VERSION"
+        VER_LOCK="releases/Pipfile.lock-$VERSION"
 
-        if [[ -f Pipfile ]]
-        then
-          echo -n ">>>regenerating pyproject.toml."
+        test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
+        test -f Pipfile && cp Pipfile $VER_PIP
 
-          $0 project >pyproject.toml
-          git add pyproject.toml
-        fi
+        test -f $VER_PIP && git add $VER_PIP
+        test -f $VER_LOCK && git add $VER_LOCK
       fi
 
-      if [[ -z $resume || $resume == "merge" ]]
-      then
-        echo -n ">>>merging work from develop in 3 seconds: "
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo -n "."
-        sleep 1
-        echo "."
+      VER_PYTHONSH="releases/python.sh-${VERSION}"
 
-        if git merge --no-ff develop
-        then
-          echo "merge ok!"
-        else
-          echo "error result from merge, probably a conflict, please clean up manually and restart with ./py.sh start resume pipfile"
-        fi
+      echo ">>>recording python.sh"
+
+      cp python.sh $VER_PYTHONSH
+
+      if [[ $? -ne 0 ]]
+      then
+        echo ">>>FAILED! could not record python.sh into ${VER_PYTHONSH}"
+        exit 1
       fi
 
-      if [[ -z $resume ||  $resume == "merge" || $resume == "pipfile" ]]
-      then
-        if [[ -f Pipfile ]]
-        then
-          test -d releases || mkdir releases
-          test -f Pipfile && pipenv lock
+      git add $VER_PYTHONSH
 
-          git add Pipfile.lock
+      echo ">>>commiting bump to to $VERSION"
 
-          VER_PIP="releases/Pipfile-$VERSION"
-          VER_LOCK="releases/Pipfile.lock-$VERSION"
-
-          test -f Pipfile.lock && cp Pipfile.lock $VER_LOCK
-          test -f Pipfile && cp Pipfile $VER_PIP
-
-          test -f $VER_PIP && git add $VER_PIP
-          test -f $VER_LOCK && git add $VER_LOCK
-        fi
-      fi
-
-      if [[ -z $resume || $resume == "merge" || $resume == "pipfile" || $resume == "commit" ]]
-      then
-        echo ">>>commiting bump to to $VERSION"
-
-        git commit -m "(release) release version: $VERSION"
-      fi
+      # don't do a automatic commit so a release summary can be inserted
+      git commit
 
       echo "ready for release finish: please finish with ./py.sh release once you are ready"
     ;;
@@ -1181,7 +1346,15 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
-runner     = execute mkrunner.sh to build a runner
+mkrunner   = <program> <args....> make a runner that sets/restores environment for
+             host python commands
+
+mklauncher     = <program> <args....> make a simple launcher for python docker
+docker-update  = regenerate the Dockerfile from the .org file
+docker-build   = build the PythonSh docker layer
+docker-release = record a docker release
+
+mkrunner   = execute mkrunner.sh to build a runner
 
 [submodule]
 modinit             = initialize and pull all submodules
@@ -1192,21 +1365,24 @@ modall              = update all submodules
 
 [version control]
 track <1> <2>  = set upstream tracking 1=remote 2=branch
-tag-alpha  <feat> <msg> = create an alpha tag with the feature branch name and message
-tag-beta   <feat> <msg> = create a beta tag with the devel branch feature and message
+beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
-sub        = update submodules
-init       = init any bare submodules
 staged     = show staged changes
 merges     = show merges only
+releases   = show releases (tags)
 history    = show commit history
 summary    = show diffstat of summary between feature and develop or last release and develop
 delta      = show diff between feature and develop or last release and develop
-log        = show log between feature and develop or last release and develop
+ahead      = show log of commits in branch but not in parent
+behind     = show log of commit in parent but not branch
+
+release-report  = generate a report of changes since last release
+status-report = generate a report of changes ahead of the trunk
+
 graph      = show history between feature and develop or last release and develop
 upstream   = show upstream changes that havent been merged yet
 sync       = merge from the root branch commits not in this branch no ff
@@ -1217,10 +1393,8 @@ check      = fetch main, develop from origin and show log of any pending changes
 start      = initiate an EDITOR session to update VERSION in python.sh, reload config,
              snapshot Pipfile if present, and start a git flow release with VERSION
 
-             for the first time pass version as an argument: "./py.sh start 1.0.0"
+             for the first time pass version as an argument e.g: "./py.sh start 1.0.0"
 
-             if you encounter a problem you can fix it and resume with ./py.sh start resume [merge|pipfile|commit]
-             to resume at that point in the flow.
 release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
 
