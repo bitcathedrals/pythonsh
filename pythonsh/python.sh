@@ -820,9 +820,8 @@ case $1 in
     "docker-update")
       timestamp=`date`
 
-      (cd docker &&\
-         org-compile.sh docker.org &&\
-         mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >Dockerfile)
+      (cd docker && org-compile.sh docker.org)
+      mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >docker/Dockerfile
 
       git add docker/Dockerfile docker/docker.org
       git commit -m "update: generated Dockerfile @ $timestamp"
