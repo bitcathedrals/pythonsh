@@ -821,14 +821,13 @@ case $1 in
       timestamp=`date`
 
       (cd docker &&\
-         org-compile.sh docker-python.org &&\
-         ./mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >Dockerfile)
+         org-compile.sh docker.org &&\
+         mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >Dockerfile)
 
-      git add docker/Dockerfile docker/docker-python.org
+      git add docker/Dockerfile docker/docker.org
       git commit -m "update: generated Dockerfile @ $timestamp"
     ;;
     "docker-build")
-
       if [[ -z $DOCKER_USER ]]
       then
         echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
