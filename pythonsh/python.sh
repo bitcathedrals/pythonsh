@@ -45,7 +45,6 @@ function setup_pyenv {
 
   PATH="$PYENV_ROOT/bin:$PATH"
   PATH="$PYENV_ROOT/libexec:$PATH"
-  PATH="$TOOLS/pyenv-virtual/bin:$PATH"
 
   # just in case init needs some paths
   export PATH
