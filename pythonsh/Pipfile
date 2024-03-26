@@ -14,5 +14,7 @@ version-parser = "*"
 
 setuptools = "*"
 
+pipenv = "*"
+pip = "*"
 [requires]
 python_version = "3.12"

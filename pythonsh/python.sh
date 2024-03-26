@@ -490,22 +490,6 @@ case $1 in
         git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
         (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
-
-      echo "installing pipenv tools for UNIX"
-
-      PIPENV="$TOOLS/pipenv"
-
-      if test -d $PIPENV && test -d "$PIPENV/.git"
-      then
-        echo "updating pipenv virtual"
-        (cd $PIPENV && git pull)
-      else
-        echo "cloning pipenv into $PIPENV"
-        git clone https://github.com/pyenv/pyenv.git $PIPENV
-      fi
-
-      echo "export PATH=\"\$PATH:${PYENV_ROOT}/bin:${TOOLS}/local/bin:${PIPENV}/bin\""
-      echo "installation completed. you may need to update ~/.zshrc.custom."
     ;;
     "tools-zshrc")
       cp pythonsh/zshrc.rc $HOME/.zshrc
@@ -600,17 +584,18 @@ case $1 in
 # initialization commands
 #
     "minimal")
+      check_python_environment
+
        test -f Pipfile.lock || touch Pipfile.lock
 
        test -e pytest.ini || ln -s pythonsh/pytest.ini
 
        pipfile="pythonsh/Pipfile"
 
-       export PIPENV_PIPFILE="$pipfile"; pipenv install --dev
+       export PIPENV_PIPFILE="$pipfile"; pyenv exec python -m pip install pipenv
+       pipenv install --dev
     ;;
     "bootstrap")
-      check_python_environment
-
       $0 minimal || exit 1
 
       # remove the un-needed minimal Pipfile.lock
