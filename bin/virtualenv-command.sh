@@ -1,12 +1,10 @@
 #! /usr/bin/env bash
 
-TOOLS=$HOME/tools
-export PATH="$TOOLS/local/bin:$TOOLS/pipenv/bin:$PATH"
-
 ENV="@VENV@"
 
-PYENV_ROOT="$HOME/.pyenv/"
-
+TOOLS=$HOME/tools
+PYENV_ROOT="$TOOLS/pyenv"
+PATH="$TOOLS/local/bin:$PATH"
 PATH="$PYENV_ROOT/bin:$PATH"
 PATH="$PYENV_ROOT/libexec:$PATH"
 

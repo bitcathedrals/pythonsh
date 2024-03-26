@@ -40,15 +40,13 @@ function root_to_branch {
 }
 
 function setup_pyenv {
-  export TOOLS=$HOME/tools
-  export PYENV_ROOT="$TOOLS/pyenv"
-
+  TOOLS=$HOME/tools
+  PYENV_ROOT="$TOOLS/pyenv"
+  PATH="$TOOLS/local/bin:$PATH"
   PATH="$PYENV_ROOT/bin:$PATH"
   PATH="$PYENV_ROOT/libexec:$PATH"
-  PATH="$TOOLS/local/bin/:$PATH"
 
-  # just in case init needs some paths
-  export PATH
+  export PYENV_ROOT PATH
 
   eval "$(pyenv init -)"
 

@@ -1,12 +1,14 @@
 #! /usr/bin/env bash
 
-TOOLS=$HOME/tools
-export PATH="$TOOLS/local/bin:$TOOLS/pipenv/bin:$PATH"
-
 VENV=@VENV@
 
-PYENV_ROOT="$HOME/.pyenv/"
-export PATH="$PYENV_ROOT/bin:$PATH"
+TOOLS=$HOME/tools
+PYENV_ROOT="$TOOLS/pyenv"
+PATH="$TOOLS/local/bin:$PATH"
+PATH="$PYENV_ROOT/bin:$PATH"
+PATH="$PYENV_ROOT/libexec:$PATH"
+
+export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 

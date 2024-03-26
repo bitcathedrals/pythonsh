@@ -1,11 +1,11 @@
 #! /bin/bash
 
 TOOLS=$HOME/tools
-export PATH="$TOOLS/local/bin:$TOOLS/pipenv/bin:$PATH"
 
 VENV=@VENV@
 
-
+PYENV_ROOT="$TOOLS/pyenv"
+PATH="$TOOLS/local/bin:$PATH"
 PATH="$PYENV_ROOT/bin:$PATH"
 PATH="$PYENV_ROOT/libexec:$PATH"
 
