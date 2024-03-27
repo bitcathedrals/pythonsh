@@ -69,5 +69,9 @@ RUN bash ./py.sh global-virtual python
 Clean up after the build
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-RUN rm *.sh && rm -r $TMPDIR/*
+RUN rm *.sh && rm -rf $TMPDIR/*
+
+RUN apk del git gcc autoconf automake libtool openssl-dev build-base \
+sqlite-dev pkgconf bzip2-dev zlib-dev ncurses-dev readline-dev \
+libffi-dev xz-dev
 #+END_SRC
