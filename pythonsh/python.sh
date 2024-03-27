@@ -845,7 +845,7 @@ case $1 in
 
       if [[ -z $MESSAGE ]]
       then
-        echo >/dev/stderr "pythonsh docker-release - a messsage argument is missing."
+        echo >/dev/stderr "pythonsh docker-release - a message argument is missing."
         exit 1
       fi
 
