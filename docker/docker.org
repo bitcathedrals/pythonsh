@@ -8,7 +8,6 @@ python.
 FROM alpine:3.19.1
 
 LABEL docker-version = "@DOCKER_VERSION@"
-LABEL python-python = "@PYTHON_VERSION@"
 LABEL timestamp = "@TIMESTAMP@"
 
 RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
