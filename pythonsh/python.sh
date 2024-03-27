@@ -801,10 +801,8 @@ case $1 in
       mklauncher.sh $@
     ;;
     "docker-update")
-      timestamp=`date`
-
       (cd docker && org-compile.sh docker.org)
-      mkdocker.sh "$timestamp" >docker/Dockerfile
+      mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
 
       git add docker/docker.org
       git commit -m "update: generated Dockerfile @ \"$timestamp\""
