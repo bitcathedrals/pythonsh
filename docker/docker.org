@@ -26,7 +26,7 @@ set user for Dockerfile
 ENV USER=python
 ENV HOME=/home
 
-RUN adduser -D -h $HOME $USER && chmod 755 $HOME
+RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
 
 USER $USER
 WORKDIR /home
