@@ -824,29 +824,20 @@ case $1 in
         exit 1
       fi
 
-      if [[ -z $PYTHON_VERSION ]]
+      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
+
+      cp py.sh python.sh docker/
+
+      (cd docker && dock-build.sh build)
+
+      if [[ $? -ne 0 ]]
       then
-        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
-        exit 1
-      fi
-
-      full_version=$(show_all_python_versions | grep $PYTHON_VERSION | sort -V | tail -n 1)
-
-      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]-python[${full_version}]"
-
-      cp py.sh python.sh docker
-
-      (cd docker &&\
-         dock-build.sh build "${DOCKER_VERSION}-${full_version}")
-
-      if [[ $? -eq 0 ]]
-      then
-        echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
-        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}-${full_version}" >Dockerfile.pythonsh
-      else
         echo "docker FAILED! exit code was $?"
         exit 1
       fi
+
+      echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
+      echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
     ;;
     "docker-release")
       shift
@@ -858,14 +849,14 @@ case $1 in
         exit 1
       fi
 
-      release="releases/Dockerfile-${DOCKER_VERSION}"
+      release="releases/docker-${DOCKER_VERSION}.tar"
 
       test -d releases || mkdir releases
 
-      cp docker/Dockerfile $release
+      tar cf $release docker/
       git add $release
 
-      git commit -m "Dockerfile ${DOCKER_VERSION} release"
+      git commit -m "Docker ${DOCKER_VERSION} release"
 
       git tag -a "docker-${DOCKER_VERSION}" -m "$MESSAGE"
     ;;
