@@ -469,23 +469,22 @@ case $1 in
 
       if test -d $PYENV_ROOT && test -d $PYENV_ROOT/.git
       then
-        echo "updating $PYENV_ROOT"
+        echo >/dev/stderr "pythonsh: updating PYENV_ROOT=${PYENV_ROOT}"
         (cd $PYENV_ROOT && git pull)
       else
-        echo "cloning pyenv into $PYENV_ROOT"
+        echo /dev/stderr "pythonsh: cloning pyenv into PYENV_ROOT=${PYENV_ROOT}"
         git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
       fi
 
-      echo "installing virtualenv for UNIX"
-
       VIRTUAL="$TOOLS/pyenv-virtual"
+      echo >/dev/stderr "pythonsh: installing pyenv-virtual for UNIX in ${VIRTUAL}"
 
       if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
       then
-        echo "updating pyenv virtual"
+        echo >/dev/stderr "pythonsh: updating pyenv-virtual"
         (cd $VIRTUAL && git pull && export PREFIX="$TOOLS/local" && ./install.sh)
       else
-        echo "cloning pyenv virtual into $VIRTUAL"
+        echo >/dev/stderr "pythonsh: cloning pyenv-virtual into ${VIRTUAL}"
         git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
         (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
