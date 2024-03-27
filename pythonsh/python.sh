@@ -810,6 +810,8 @@ case $1 in
       git commit -m "update: generated Dockerfile @ $timestamp"
     ;;
     "docker-build")
+      $0 check
+
       if [[ -z $DOCKER_USER ]]
       then
         echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
@@ -1141,26 +1143,28 @@ case $1 in
 # release environment
 #
     "check")
-        echo "===> remember to pull deps with update if warranted <==="
+      check_python_environment
 
-        echo "===> fetching new commits from remote <==="
-        git fetch origin develop
+      echo "===> remember to pull deps with update if warranted <==="
 
-        echo "===> showing unmerged differences <===="
+      echo "===> fetching new commits from remote <==="
+      git fetch origin develop
 
-        git log develop..origin/develop --oneline
+      echo "===> showing unmerged differences <===="
 
-        echo "===> checking if working tree is dirty <==="
+      git log develop..origin/develop --oneline
 
-        if git diff --quiet
-        then
-            echo "working tree clean - proceed!"
-        else
-            echo "working tree dirty - DO NOT RELEASE"
+      echo "===> checking if working tree is dirty <==="
 
-            git status
-            exit 1
-        fi
+      if git diff --quiet
+      then
+        echo "working tree clean - proceed!"
+      else
+        echo "working tree dirty - DO NOT RELEASE"
+
+        git status
+        exit 1
+      fi
     ;;
     "start")
       shift
