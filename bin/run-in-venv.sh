@@ -3,8 +3,14 @@
 VENV="$1"
 shift
 
-PYENV_ROOT="$HOME/.pyenv/"
-export PATH="$PYENV_ROOT/bin:$PATH"
+TOOLS=$HOME/tools
+PYENV_ROOT="$TOOLS/pyenv"
+
+PATH="$TOOLS/local/bin:$PATH"
+PATH="$PYENV_ROOT/bin:$PATH"
+PATH="$PYENV_ROOT/libexec:$PATH"
+
+export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 
