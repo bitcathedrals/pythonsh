@@ -13,11 +13,11 @@ export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 
-output=$(pyenv activate $VENV 2>&1)
+pyenv activate $VENV
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "virtualenv-launcher.sh: unable to activate ${VENV} - ${output}. exiting."
+  echo >/dev/stderr "virtualenv-launcher.sh: unable to activate ${VENV}. exiting."
   exit 1
 fi
 
