@@ -17,7 +17,6 @@ libffi-dev xz-dev shadow coreutils
 ENV SHELL=/bin/bash
 #+END_SRC
 
-
 Create a un-privelaged user, setup permissions, home directory, then
 set user for Dockerfile
 
