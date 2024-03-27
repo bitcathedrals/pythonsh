@@ -1346,7 +1346,7 @@ mkrunner   = <program> <args....> make a runner that sets/restores environment f
 mklauncher     = <program> <args....> make a simple launcher for python docker
 docker-update  = regenerate the Dockerfile from the .org file
 docker-build   = build the PythonSh docker layer
-docker-release = record a docker release
+docker-release = record a docker release with <MESSAGE>
 
 mkrunner   = execute mkrunner.sh to build a runner
 
