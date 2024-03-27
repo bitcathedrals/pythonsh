@@ -824,6 +824,8 @@ case $1 in
       echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
 
       cp py.sh python.sh docker/
+      cp bin/run-in-venv.sh docker/install-pipenv.sh
+      echo "pyenv exec python -m pip pipenv" >>docker/install-pipenv.sh
 
       (cd docker && dock-build.sh build)
 
