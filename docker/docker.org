@@ -45,7 +45,7 @@ ENV TOOLS_BIN=$TOOLS_LOCAL/bin
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 RUN bash ./py.sh tools-unix
 
-PYENV_ROOT=$HOME/tools/pyenv
+ENV PYENV_ROOT=$HOME/tools/pyenv
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/libexec:$TOOLS_BIN:$PATH"
 
 #+END_SRC
