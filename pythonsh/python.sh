@@ -929,7 +929,7 @@ case $1 in
     "modrm")
       shift
 
-      if git rm $1 && git rm --cached $1
+      if git rm $1 && git rm -f $1
       then
         if [[ -d $1 ]]
         then
