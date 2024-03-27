@@ -2,6 +2,7 @@
 pyproject.toml
 dist/
 buildset/
+docker/Dockerfile
 docker/Dockerfile.*
 docker/py.sh
 docker/python.sh
