@@ -28,6 +28,8 @@ RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
 
 USER $USER
 WORKDIR /home
+
+ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 #+END_SRC
 
 Setup the tool installation directories.
@@ -36,23 +38,22 @@ Setup the tool installation directories.
 ENV TMPDIR=$HOME/tmp
 RUN test -d $TMPDIR || mkdir -p $TMPDIR
 
-ENV PYENV_ROOT="$HOME/.pyenv"
-ENV PYENV_BIN="$PYENV_ROOT/bin"
-
 ARG TOOLS=$HOME/tools
-
 ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
-RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 
-ENV PATH="$PYENV_BIN:$TOOLS_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
+RUN bash ./py.sh tools-unix
+
+PYENV_ROOT=$HOME/tools/pyenv
+ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/libexec:$TOOLS_BIN:$PATH"
+
 #+END_SRC
 
 Create the installation of pyenv, virtualenv
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 COPY py.sh python.sh Dockerfile .
-RUN bash ./py.sh tools-unix
 #+END_SRC
 
 Install the python virtual environment which involves compiling a
