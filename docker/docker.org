@@ -46,12 +46,10 @@ ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 
-ENV PIPENV_BIN="$TOOLS/pipenv/bin"
-
-ENV PATH="$PYENV_BIN:$PIPENV_BIN:$TOOLS_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+ENV PATH="$PYENV_BIN:$TOOLS_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 #+END_SRC
 
-Create the installation of pyenv, virtualenv, and pipenv
+Create the installation of pyenv, virtualenv
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 COPY py.sh python.sh Dockerfile .
@@ -63,6 +61,7 @@ interpreter.
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 RUN bash ./py.sh global-virtual python
+RUN pyenv activate python && pyenv exec python -m pip install pyenv
 #+END_SRC
 
 Clean up after the build
