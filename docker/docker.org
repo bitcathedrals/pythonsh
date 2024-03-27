@@ -42,19 +42,16 @@ ARG TOOLS=$HOME/tools
 ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
 
+COPY py.sh python.sh Dockerfile .
+
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 RUN bash ./py.sh tools-unix
 
 ENV PYENV_ROOT=$HOME/tools/pyenv
 ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/libexec:$TOOLS_BIN:$PATH"
-
 #+END_SRC
 
 Create the installation of pyenv, virtualenv
-
-#+BEGIN_SRC docker-build :tangle Dockerfile.template
-COPY py.sh python.sh Dockerfile .
-#+END_SRC
 
 Install the python virtual environment which involves compiling a
 interpreter.
