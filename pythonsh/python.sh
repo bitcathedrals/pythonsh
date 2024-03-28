@@ -804,7 +804,9 @@ case $1 in
       mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
 
       git add docker/docker.org
-      git commit -m "update: generated Dockerfile @ \"$timestamp\""
+
+      timestamp=`date`
+      git commit -m "(update): generated Dockerfile @ \"$timestamp\""
     ;;
     "docker-build")
       $0 check
