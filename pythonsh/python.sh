@@ -469,23 +469,22 @@ case $1 in
 
       if test -d $PYENV_ROOT && test -d $PYENV_ROOT/.git
       then
-        echo "updating $PYENV_ROOT"
+        echo >/dev/stderr "pythonsh: updating PYENV_ROOT=${PYENV_ROOT}"
         (cd $PYENV_ROOT && git pull)
       else
-        echo "cloning pyenv into $PYENV_ROOT"
+        echo /dev/stderr "pythonsh: cloning pyenv into PYENV_ROOT=${PYENV_ROOT}"
         git clone https://github.com/pyenv/pyenv.git $PYENV_ROOT
       fi
 
-      echo "installing virtualenv for UNIX"
-
       VIRTUAL="$TOOLS/pyenv-virtual"
+      echo >/dev/stderr "pythonsh: installing pyenv-virtual for UNIX in ${VIRTUAL}"
 
       if test -d $VIRTUAL && test -d "$VIRTUAL/.git"
       then
-        echo "updating pyenv virtual"
+        echo >/dev/stderr "pythonsh: updating pyenv-virtual"
         (cd $VIRTUAL && git pull && export PREFIX="$TOOLS/local" && ./install.sh)
       else
-        echo "cloning pyenv virtual into $VIRTUAL"
+        echo >/dev/stderr "pythonsh: cloning pyenv-virtual into ${VIRTUAL}"
         git clone https://github.com/pyenv/pyenv-virtualenv.git $VIRTUAL
         (cd $VIRTUAL && export PREFIX="$TOOLS/local" && ./install.sh)
       fi
@@ -801,15 +800,17 @@ case $1 in
       mklauncher.sh $@
     ;;
     "docker-update")
-      timestamp=`date`
-
       (cd docker && org-compile.sh docker.org)
-      mkdocker.sh $DOCKER_VERSION $PYTHON_VERSION $timestamp >docker/Dockerfile
+      mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
 
-      git add docker/Dockerfile docker/docker.org
-      git commit -m "update: generated Dockerfile @ $timestamp"
+      git add docker/docker.org
+
+      timestamp=`date`
+      git commit -m "(update): generated Dockerfile @ \"$timestamp\""
     ;;
     "docker-build")
+      $0 check
+
       if [[ -z $DOCKER_USER ]]
       then
         echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
@@ -822,29 +823,22 @@ case $1 in
         exit 1
       fi
 
-      if [[ -z $PYTHON_VERSION ]]
+      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
+
+      cp py.sh python.sh docker/
+      cp bin/run-in-venv.sh docker/install-pipenv.sh
+      echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
+
+      (cd docker && dock-build.sh build)
+
+      if [[ $? -ne 0 ]]
       then
-        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
-        exit 1
-      fi
-
-      full_version=$(show_all_python_versions | grep $PYTHON_VERSION | sort -V | tail -n 1)
-
-      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]-python[${full_version}]"
-
-      cp py.sh python.sh docker
-
-      (cd docker &&\
-         dock-build.sh build "${DOCKER_VERSION}-${full_version}")
-
-      if [[ $? -eq 0 ]]
-      then
-        echo "docker build success!: emitting Dockerfile.pythonsh for this layer"
-        echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}-${full_version}" >Dockerfile.pythonsh
-      else
         echo "docker FAILED! exit code was $?"
         exit 1
       fi
+
+      echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
+      echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
     ;;
     "docker-release")
       shift
@@ -852,18 +846,18 @@ case $1 in
 
       if [[ -z $MESSAGE ]]
       then
-        echo >/dev/stderr "pythonsh docker-release - a messsage argument is missing."
+        echo >/dev/stderr "pythonsh docker-release - a message argument is missing."
         exit 1
       fi
 
-      release="releases/Dockerfile-${DOCKER_VERSION}"
+      release="releases/docker-${DOCKER_VERSION}.tar"
 
       test -d releases || mkdir releases
 
-      cp docker/Dockerfile $release
+      tar cf $release docker/
       git add $release
 
-      git commit -m "Dockerfile ${DOCKER_VERSION} release"
+      git commit -m "Docker ${DOCKER_VERSION} release"
 
       git tag -a "docker-${DOCKER_VERSION}" -m "$MESSAGE"
     ;;
@@ -936,7 +930,7 @@ case $1 in
     "modrm")
       shift
 
-      if git rm $1 && git rm --cached $1
+      if git rm $1 && git rm -f $1
       then
         if [[ -d $1 ]]
         then
@@ -1141,26 +1135,28 @@ case $1 in
 # release environment
 #
     "check")
-        echo "===> remember to pull deps with update if warranted <==="
+      check_python_environment
 
-        echo "===> fetching new commits from remote <==="
-        git fetch origin develop
+      echo "===> remember to pull deps with update if warranted <==="
 
-        echo "===> showing unmerged differences <===="
+      echo "===> fetching new commits from remote <==="
+      git fetch origin develop
 
-        git log develop..origin/develop --oneline
+      echo "===> showing unmerged differences <===="
 
-        echo "===> checking if working tree is dirty <==="
+      git log develop..origin/develop --oneline
 
-        if git diff --quiet
-        then
-            echo "working tree clean - proceed!"
-        else
-            echo "working tree dirty - DO NOT RELEASE"
+      echo "===> checking if working tree is dirty <==="
 
-            git status
-            exit 1
-        fi
+      if git diff --quiet
+      then
+        echo "working tree clean - proceed!"
+      else
+        echo "working tree dirty - DO NOT RELEASE"
+
+        git status
+        exit 1
+      fi
     ;;
     "start")
       shift
@@ -1352,7 +1348,7 @@ mkrunner   = <program> <args....> make a runner that sets/restores environment f
 mklauncher     = <program> <args....> make a simple launcher for python docker
 docker-update  = regenerate the Dockerfile from the .org file
 docker-build   = build the PythonSh docker layer
-docker-release = record a docker release
+docker-release = record a docker release with <MESSAGE>
 
 mkrunner   = execute mkrunner.sh to build a runner
 

@@ -8,7 +8,6 @@ python.
 FROM alpine:3.19.1
 
 LABEL docker-version = "@DOCKER_VERSION@"
-LABEL python-python = "@PYTHON_VERSION@"
 LABEL timestamp = "@TIMESTAMP@"
 
 RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
@@ -18,7 +17,6 @@ libffi-dev xz-dev shadow coreutils
 ENV SHELL=/bin/bash
 #+END_SRC
 
-
 Create a un-privelaged user, setup permissions, home directory, then
 set user for Dockerfile
 
@@ -26,10 +24,12 @@ set user for Dockerfile
 ENV USER=python
 ENV HOME=/home
 
-RUN adduser -D -h $HOME $USER && chmod 755 $HOME
+RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
 
 USER $USER
 WORKDIR /home
+
+ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 #+END_SRC
 
 Setup the tool installation directories.
@@ -38,36 +38,37 @@ Setup the tool installation directories.
 ENV TMPDIR=$HOME/tmp
 RUN test -d $TMPDIR || mkdir -p $TMPDIR
 
-ENV PYENV_ROOT="$HOME/.pyenv"
-ENV PYENV_BIN="$PYENV_ROOT/bin"
-
 ARG TOOLS=$HOME/tools
-
 ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
+
+COPY py.sh python.sh Dockerfile install-pipenv.sh .
+
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
-
-ENV PIPENV_BIN="$TOOLS/pipenv/bin"
-
-ENV PATH="$PYENV_BIN:$PIPENV_BIN:$TOOLS_BIN:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
-#+END_SRC
-
-Create the installation of pyenv, virtualenv, and pipenv
-
-#+BEGIN_SRC docker-build :tangle Dockerfile.template
-COPY py.sh python.sh Dockerfile .
 RUN bash ./py.sh tools-unix
+
+ENV PYENV_ROOT=$HOME/tools/pyenv
+ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/libexec:$TOOLS_BIN:$PATH"
 #+END_SRC
+
+Create the installation of pyenv, virtualenv
 
 Install the python virtual environment which involves compiling a
 interpreter.
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-RUN bash ./py.sh global-virtual python
+RUN bash py.sh global-virtual python
+RUN bash install-pipenv.sh python
 #+END_SRC
 
 Clean up after the build
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-RUN rm *.sh && rm -r $TMPDIR/*
+RUN rm *.sh && rm -rf $TMPDIR/*
+
+USER root
+
+RUN apk del git gcc autoconf automake libtool openssl-dev build-base \
+sqlite-dev pkgconf bzip2-dev zlib-dev ncurses-dev readline-dev \
+libffi-dev xz-dev
 #+END_SRC

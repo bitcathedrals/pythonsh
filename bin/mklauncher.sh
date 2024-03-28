@@ -20,11 +20,23 @@ fi
 
 if [[ -z $1 ]]
 then
-  echo >/dev/stderr "mkrunner.sh virtualenv = arg(1) command plus arguments = arg(rest). exiting."
+  echo >/dev/stderr "mkrunner.sh user = (1) virtualenv = arg(2) plus rest = arguments. exiting."
   exit 1
 fi
 
 venv=$1
 shift
 
-sed <$script -e "s,@VENV@,$venv,g" | sed -e "s,@ENTRYPOINT@,$*,g"
+if [[ -z $1 ]]
+then
+  echo >/dev/stderr "mkrunner.sh user = (1) virtualenv = arg(2) plus rest = arguments. exiting."
+  exit 1
+fi
+
+user=$1
+shift
+
+entry=$*
+
+sed <$script -e "s,@VENV@,$venv,g" | sed -e "s,@ENTRYPOINT@,$entry,g" | sed -e "s,@USER@,$user,g"
+

@@ -16,10 +16,10 @@ RESTORE=""
 
 if pyenv version | grep "system"
 then
-  output=$(pyenv activate $VENV 2>&1)
+  pyenv activate $VENV
   if [[ $? -ne 0 ]]
   then
-    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT} - $output. exiting."
+    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
     exit 1
   fi
 else
@@ -27,11 +27,11 @@ else
   then
     RESTORE=`pyenv version | cut -d ' ' -f 1`
 
-    output=$(pyenv activate $VENV 2>&1)
+    pyenv activate $VENV 2>&1
 
     if [[ $? -ne 0 ]]
     then
-      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${VENV} - $output. exiting."
+      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${VENV}. exiting."
       exit 1
     fi
   fi
@@ -42,11 +42,11 @@ exit_code=$?
 
 if [[ -n $RESTORE ]]
 then
-  output=$(pyenv activate $RESTORE 2>&1)
+  pyenv activate $RESTORE
 
   if [[ $? -ne 0 ]]
   then
-    echo >/dev/stderr "virtualenv-runner.sh: unable to restore ${RESTORE} - $output. exiting."
+    echo >/dev/stderr "virtualenv-runner.sh: unable to restore ${RESTORE}. exiting."
     exit 1
   fi
 fi

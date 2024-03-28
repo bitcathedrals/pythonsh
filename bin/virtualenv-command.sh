@@ -12,11 +12,11 @@ export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 
-output=$(pyenv activate $ENV)
+pyenv activate $ENV
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "virtual-command.sh: pyenv activate $ENV failed! - $output exiting."
+  echo >/dev/stderr "virtual-command.sh: pyenv activate $ENV failed! exiting."
   exit 1
 fi
 

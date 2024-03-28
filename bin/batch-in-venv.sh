@@ -3,6 +3,12 @@
 VENV="$1"
 shift
 
+if [[ -z $VENV ]]
+then
+  echo >/dev/stderr "run-in-venv.sh: VENV arg(1) not specified. exiting."
+  exit 1
+fi
+
 TOOLS=$HOME/tools
 PYENV_ROOT="$TOOLS/pyenv"
 
@@ -12,17 +18,14 @@ PATH="$PYENV_ROOT/libexec:$PATH"
 
 export PYENV_ROOT PATH
 
-echo /dev/stderr "run-in-venv.sh: PATH = \"$PATH\""
-echo /dev/stderr "run-in-venv.sh: PYENV_ROOT = \"$PYENV_ROOT\""
-
 eval "$(pyenv init -)"
 
 pyenv activate $VENV
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "run-in-venv.sh: pyenv activate $VENV failed. exiting."
+  echo >/dev/stderr "run-in-venv.sh: pyenv activate $VENV failed - $output exiting."
   exit 1
 fi
 
-exec $@
+### CODE HERE ###
