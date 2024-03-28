@@ -37,5 +37,5 @@ then
   exit 1
 fi
 
-exec pyenv exec @ENTRYPOINT@ $@
+exec pyenv exec @ENTRYPOINT@
 
