@@ -34,6 +34,9 @@ then
 fi
 
 user=$1
+shift
 
-sed <$script -e "s,@VENV@,$venv,g" | sed -e "s,@ENTRYPOINT@,$*,g" | sed -e "s,@USER@,$user,g"
+entry=$*
+
+sed <$script -e "s,@VENV@,$venv,g" | sed -e "s,@ENTRYPOINT@,$entry,g" | sed -e "s,@USER@,$user,g"
 
