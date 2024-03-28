@@ -12,6 +12,7 @@ export PYENV_ROOT PATH
 VENV=@VENV@
 USER=@USER@
 
+cd $HOME
 su $USER
 
 if [[ $? -ne 0 ]]
