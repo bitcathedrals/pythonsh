@@ -13,7 +13,13 @@ VENV=@VENV@
 USER=@USER@
 
 cd $HOME
-su $USER
+
+current=`whoami`
+
+if [[ $current == 'root' ]]
+then
+  su $USER
+fi
 
 if [[ $? -ne 0 ]]
 then
