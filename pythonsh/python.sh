@@ -459,6 +459,35 @@ case $1 in
 # tooling
 #
     "tools-unix")
+      # attempt to install git flow
+
+      if [[ `uname` == "Darwin" ]]
+      then
+        if command -v brew >/dev/null 2>&1
+        then
+          brew install git-flow
+        else
+          if command -v ports >/dev/null 2>&1
+          then
+            ports install git-flow
+          else
+            echo "pythonsh: tools-unix - cannot find a way to install git-flow: brew,ports"
+          fi
+        fi
+      else
+        if command -v apt >/dev/null 2>&1
+        then
+          if command -v doas >/dev/null 2>&1
+          then
+            doas apt install git-flow
+          else
+            sudo apt install git-flow
+          fi
+        else
+          echo "pythonsh: tools-unix - cannot find a way to install git-flow: all I know is apt"
+        fi
+      fi
+
       echo "installing pyenv for UNIX"
 
       TOOLS="$HOME/tools/"
