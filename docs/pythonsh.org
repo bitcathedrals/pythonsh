@@ -6,44 +6,26 @@
 
 * Introduction
 
-What school teaches is how to write code. What experience as a paid
-professional developer teaches you is how to build business assets.
+Business assets go beyond code to include API's, integrations, teams,
+and releases. The process to get from code in a editor to a release is
+paved by tools.
 
-Business assets go beyond code to include API's, integrations,
-teams, and releases.
+Using those tools effectively can move a project efficiently from code
+to production. Not having effective devops can hobble and kill
+projects with broken deliveries.
 
-Just because you can write a binary search doesn't mean you know about
-merging, building, releasing, devops, maintenance, and operations -
-how to deliver large and small.
-
-In fact many students come out of school only knowing how to write
-homework, not how to integrate into a team building business assets
-on a deadline.
-
-New programmers think unit tests are their safety net until they hit a
-wall on merging, integration, release, devops, and operations.
-
-The truth is that devops was invented because the tools of the trade
-have become so complex that they warrant a position of their own.
-
-At Gauge Security we have experienced these issues and grown up in
-Disney, Comcast, Oracle, and Amazon. We have seen the failures in
-other companies.
-
-In all these organizations developers huddled around their limited
-knowledge of tools, like a swimmer clinging to a life vest. Instead of
-solving issues with tools, the tools were the issue, day in and day
-out.
+In many cases developers huddled around their limited knowledge of
+tools, like a swimmer clinging to a life vest. Instead of enabling
+progress with tools, the tools were the issue, day in and day out.
 
 Starting in 2020 I tried to sort out this mess with automation. It
-started as a Makefile, then a bash script called manage.sh, and finally
-PythonSh. The idea was to build correct tool use into a single command,
-with intelligence to tailor it to a context and scenario.
+started as a Makefile, and then a bash script called manage.sh, and
+finally PythonSh. The idea was to build correct tool use into a single
+command, with intelligence to tailor it to a context and scenario.
 
-You are going to see the result of 20+ years of experience, and 4 years
-of baking into a mature, effective, and innovative tool.
-
-Let's get started!
+You are going to see the result of 20+ years of experience, and 4
+years of development baked into a mature, effective, and innovative
+tool.
 
 #+LATEX: \pagebreak
 
@@ -54,22 +36,24 @@ Python. From that experience clearly one of the most poorly thought
 out and vexing aspects of coding is just getting the code to
 run.
 
-Getting it to run on one developer's machine is just the beginning,
-making it portable to other developers is another hurdle. And finally
-building a good release to the end users is yet another hurdle.
+Getting it to run on one developer's machine is just the beginning.
+Making it portable to other developers is another hurdle. Finally
+building a good release and delivering to the end users is yet another
+hurdle.
 
-Throughout the process version control: especially with git is often
-a massive time-sink in trying to fix broken repos and branches. Programmers
-are made timid by their lack of understanding and their frustrations and
-use it and never move beyond the most basic commands.
+Throughout the process version control: especially with git there is
+often a massive time-sink in trying to fix broken repos and
+branches. Programmers are made timid by their lack of understanding
+and in their frustration they never move beyond the most basic
+commands.
 
-Not knowing how to handle packages effectively leads to monolithic repos,
-where the inexperience with git, and a fear of merging leads to clumsy
-collisions, and losses in time, code, and lengthy git debugging sessions.
+Not knowing how to integrate packages effectively leads to monolithic
+repos, where the inexperience with git, and a fear of merging leads to
+clumsy collisions, and losses in time, code, and lengthy git debugging
+sessions.
 
 Pythonsh is a path forward for python development: combining effective
-use of git, python, packages, and multiple repositories. Pythonsh is
-the way out of the development wilderness.
+use of git, python, packages, and multiple repositories.
 
 * Development Problems
 
@@ -77,24 +61,27 @@ the way out of the development wilderness.
 
 A developer typically uses language tools, IDE tools, version control
 tools, artifact repositories, and dependency managers. All these tools
-are used without any integration into a cohesive tool-chain.
+are used without any integration into a cohesive toolchain.
 
 - Running code is fragmented process due to the use of either plain
   system interpreters, tox for multiple python versions, or pyenv for
-  isolated virtual environment environments. Developers are often
-  unaware of the different strengths and weaknesses of the tools and
-  just copy the first thing they find on the internet.
+  isolated virtual environment environments. 
+
+  Developers are often unaware of the different strengths and
+  weaknesses of the tools and just copy the first thing they find on
+  the internet.
 
 - Python has many different versions, and each milestone introduces
   new features that code can become dependent on. Installation can be
   by a OS package, Open Source package managers like homebrew, or
-  virtual environment interpreters like pyenv. This fragmentation
-  leads to chaos with developers often not having a firm grasp on
-  what python their code is actually running on.
+  virtual environment interpreters like pyenv. 
 
-- Many times - without good version control practices, or artifact
-  repositories - the sharing of code can be as bad as cut and paste or
-  sending files over slack.
+  This fragmentation leads to chaos with developers often not having a
+  firm grasp on what python their code is actually running on.
+
+- Without good version control practices, or artifact repositories -
+  the sharing of code can be as bad as cut and paste or sending files
+  over slack.
 
 - Backwards compatibility is an assumption with no explicit guarantee.
   Practices for maintaining release metadata that allow a release to
@@ -130,8 +117,10 @@ What then is the answer to these dilemna ? The answer is automation.
 Automation has three key benefits:
 
 - speed: the pace of development is greatly accelerated by automation.
+
 - utilization: with automation ten commands becomes one. This means that
   the full capabilities of the tools are realized.
+
 - correctness: the right way, the way to avoid mistakes, is baked into
   the automation. Development becomes reliable and routine in the tool
   aspect.
@@ -154,25 +143,27 @@ Fast,reliable, and powerful are the three prongs of automation.
 ** Multiple repositories
 
 Often times developers get crowded into a single monolothic repository
-because the construction of a new repo and it's devops tool-chain is
+because the construction of a new repo and it's devops toolchain is
 magical, and laborious.
 
 They collide frequently leading developers to "section off" their
 files and avoid merging. When the inevitable implict merge occurs at
-build there is a frantic late-night integration sessions and working
-Saturdays to get the build done by Monday.
+release build time there is a frantic late-night integration sessions
+and working Saturdays to get the build done by Monday.
 
-A better approach is to break the project down into components,
-components into repositories, an integrate back together with
-packages. Each repository or package is released on it's own
-cadence and the result is stability and smooth integration.
+A better approach is to break the project down into components.
+Components into repositories, and integrate back together with
+packages. 
 
-Due to the magical nature of devops however, teams still
-crowd into whatever repository has a working tool-chain.
+Each repository or package is released on it's own cadence and the
+result is stability and smooth integration.
 
-PythonSh can spin up a repository and tool-chain in under five
-minutes allowing code to be replicated, distributed, and built
-built in a modular fashion.
+Due to the magical nature of devops however, teams still crowd into
+whatever repository has a working tool-chain.
+
+PythonSh can spin up a repository and tool-chain in under five minutes
+allowing code to be replicated, distributed, and built built in a
+modular fashion.
 
 ** Mistakes
 
@@ -180,24 +171,14 @@ The big mistake is to think that these tool and repository hygenic
 tasks are chrome on a semi-truck, a litte flashy but not essential to
 get down the road.
 
-Its only when the project goes to build and things go sideways on a
-Friday night, and everyone is calling their family to tell them not to
-wait up, that the importance of the tool-chain and the development
-practices starts to cut deep.
+Its only when the project goes to build and things go sideways that
+the importance of the toolchain and the development practices starts
+to cut deep.
 
-Pythonsh deals with the Tool Tax upfront, and delivers speed,
+PythonSh deals with the Tool Tax upfront, and delivers speed,
 efficiency, and reliable progress from start to finish.
 
-Let's get into some details!
-
 * Workflows
-
-Worflows are the process the team uses to deliver. In the end
-it is always about delivery.
-
-The right process delivers on-time, and as promised. The wrong
-work-flow blames everything except the developer for delays, bugs, and
-failures.
 
 Workflow comes in two parts
 
@@ -208,8 +189,7 @@ Workflow comes in two parts
 
 Strategically it is vital to move developers into their own
 repositories for these workflows to be effective. Each component
-should develop and release as fast as they can bake, not every
-developer tripping over everyone else in a shared repository.
+should develop and release as fast as they can solidify.
 
 To do this right you need a Version Control Workflow, and a Build
 Workflow.
@@ -254,10 +234,10 @@ In git flow all of the shared development is on "develop" and
 developers work in isolated branches.
 
 The developers all merge their work into development, and can
-constantly and incrementally pull from develop, merging on-the-go so
-that a huge mess to untangle isn't created.
+constantly and incrementally pull from develop, merging on-the-go, so
+a huge mess to untangle isn't created.
 
-That is develop, and feature branches. Releases are on main/master
+That is develop, and feature branches. Releases are on main/master,
 merging the work from develop once develop has stabalized. When
 There are releases they are tagged and every release can be
 easily re-constructed.
@@ -281,10 +261,10 @@ dependency isolation, building, testing, and releasing.
 * Introducting PythonSh
 
 
-pythonsh has a script pysh-install.sh that
-when called with:
+pythonsh has a script pysh-install.sh that when called with:
 
 - private = my personal ssh checkout for development
+
 - public  = https checkout for client consumption
 
 This script will install a git submodule pythonsh and create a symlink
@@ -296,16 +276,14 @@ from there all commands are in the form:
 ./py.sh tools-unix
 #+END_SRC
 
-Most commands are a single command, few take arguments. They
-ccomplish a task with as much intelligence as possible so
-arguments don't have to be a stumbling block, and it
-speeds things up.
+Most commands are a single command, a few take arguments. They
+accomplish a task with as much intelligence as possible so arguments
+don't have to be a stumbling block, and it speeds things up.
 
 ** Project Creation
 
-Pythonsh needs to install virtualenv for the user. To
-solve the chicken-and-egg problem PythonSh is cloned
-first:
+Pythonsh needs to install virtualenv for the user. To solve the
+chicken-and-egg problem PythonSh is cloned first:
 
 
 #+BEGIN_SRC bash
@@ -321,10 +299,10 @@ cd pythonsh
 #+END_SRC
 
 Here we install git, and git-flow. Then we clone the pythonsh
-repository. 
+repository.
 
 Inside pythonsh we run "tools-unix" which installs pyenv from git
-source into $HOME/.pyenv
+source into $HOME/tools/pyenv
 
 
 #+BEGIN_SRC bash
@@ -393,7 +371,7 @@ PYTHON_VERSION='3.12'
 #+END_SRC
 
 We will circle back later on this file, but the important thing to
-know is that this is the "Source of Truth" for the tool-chain and as
+know is that this is the "Source of Truth" for the toolchain and as
 much as possible all other files needed for python are generated from
 this configuation.
 
@@ -428,10 +406,9 @@ At this point the developer would type:
 switch_dev
 #+END_SRC
 
-which would activate the virtual environment for python, a
-dependency isolated environment for development, without
-any extraneous packages the developer might have on his
-system.
+which would activate the virtual environment for python. A dependency
+isolated environment for development, without any extraneous packages
+the developer might have on his system.
 
 The next step is to bootstrap.
 
@@ -460,7 +437,7 @@ version comparison and generates a root Pipfile.
 Some would say this is imperfect: that only PythonSh packages can be
 merged - which is true. But by synchronizing versions at teir-1 and
 tier-2 the problems with package version issues are massively reduced,
-and more manageable. Often pendantic hand wringing is a obstacle to
+and far more tractable. Often pendantic hand wringing is a obstacle to
 making practical solutions.
 
 ** Integrating Source into the virtualenv
