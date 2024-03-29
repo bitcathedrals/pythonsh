@@ -6,7 +6,8 @@ case $1 in
 
     test -e py.sh || ln -s pythonsh/pythonsh/python.sh py.sh
 
-    git submodule update --init $@
+    git submodule init
+    git submodule update --init
    ;;
    "private")
      shift
