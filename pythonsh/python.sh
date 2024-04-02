@@ -1300,23 +1300,23 @@ case $1 in
 
     git push --tags
     ;;
-    "docker-build")
-      $0 check
+  "docker-build")
+    $0 check
 
-      if [[ -z $DOCKER_USER ]]
-      then
-        echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
-        exit 1
-      fi
+    if [[ -z $DOCKER_USER ]]
+    then
+      echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
+      exit 1
+    fi
 
-      if [[ -z $DOCKER_VERSION ]]
-      then
-        echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
-        exit 1
-      fi
+    if [[ -z $DOCKER_VERSION ]]
+    then
+      echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+      exit 1
+    fi
 
-      cp `which batch-in-venv.sh` docker/in-venv.sh
-      cat >>docker/in-venv.sh <<INSTALLER
+    cp bin/batch-in-venv.sh docker/in-venv.sh
+    cat >>docker/in-venv.sh <<INSTALLER
 echo "HOME is \$HOME"
 echo "USER is \$USER"
 echo "PWD is \$PWD"
@@ -1326,22 +1326,24 @@ whoami
 source \$1
 INSTALLER
 
-      echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
+    echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
 
-      cp py.sh python.sh docker/
-      cp bin/run-in-venv.sh docker/install-pipenv.sh
-      echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
+    cp py.sh python.sh docker/
+    cp bin/run-in-venv.sh docker/install-pipenv.sh
 
-      (cd docker && dock-build.sh build)
+    echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
 
-      if [[ $? -ne 0 ]]
-      then
-        echo "docker FAILED! exit code was $?"
-        exit 1
-      fi
+    (cd docker && dock-build.sh build)
 
-      echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
-      echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
+    if [[ $? -ne 0 ]]
+    then
+      echo "docker FAILED! exit code was $?"
+      exit 1
+    fi
+
+    echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
+    echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
+    ;;
   "purge")
     for cache in $(find . -name '__pycache__' -type d -print)
     do
