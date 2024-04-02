@@ -42,7 +42,8 @@ ARG TOOLS=$HOME/tools
 ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
 
-COPY py.sh python.sh Dockerfile install-pipenv.sh .
+COPY py.sh python.sh Dockerfile in-venv.sh install-pipenv.sh .
+RUN cd $HOME && chmod u+x *.sh
 
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 RUN bash ./py.sh tools-unix

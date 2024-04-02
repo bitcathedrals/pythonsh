@@ -823,6 +823,17 @@ case $1 in
         exit 1
       fi
 
+      cp `which batch-in-venv.sh` docker/in-venv.sh
+      cat >>docker/in-venv.sh <<INSTALLER
+echo "HOME is \$HOME"
+echo "USER is \$USER"
+echo "PWD is \$PWD"
+echo -n "whoami is: "
+whoami
+
+source \$1
+INSTALLER
+
       echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
 
       cp py.sh python.sh docker/
