@@ -129,11 +129,13 @@ set_macos_path_helper
 set_homebrew
 set_pyenv
 
-PATH="$HOME/code/utilities/bin:$PATH"
-PATH="$HOME/code/security/bin:$PATH"
-PATH="$HOME/code/pythonsh/bin:$PATH"
-PATH="$HOME/code/docker/bin:$PATH"
-PATH="$HOME/code/grail/bin:$PATH"
+CODE=$HOME/code
+
+PATH="$CODE/utilities/bin:$PATH"
+PATH="$CODE/security/bin:$PATH"
+PATH="$CODE/pythonsh/bin:$PATH"
+PATH="$CODE/docker/bin:$PATH"
+PATH="$CODE/grail/bin:$PATH"
 
 unique_path
 
