@@ -23,13 +23,16 @@ set user for Dockerfile
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
 ENV USER=python
 ENV HOME=/home
+ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
 RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
 
-USER $USER
 WORKDIR /home
 
-ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+COPY py.sh python.sh Dockerfile in-venv.sh install-pipenv.sh .
+RUN cd $HOME && chmod u+x *.sh && chown $USER *
+
+USER $USER
 #+END_SRC
 
 Setup the tool installation directories.
@@ -41,9 +44,6 @@ RUN test -d $TMPDIR || mkdir -p $TMPDIR
 ARG TOOLS=$HOME/tools
 ENV TOOLS_LOCAL=$TOOLS/local
 ENV TOOLS_BIN=$TOOLS_LOCAL/bin
-
-COPY py.sh python.sh Dockerfile in-venv.sh install-pipenv.sh .
-RUN chmod u+x *.sh
 
 RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
 RUN bash ./py.sh tools-unix
