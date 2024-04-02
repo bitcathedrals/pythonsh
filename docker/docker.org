@@ -29,7 +29,7 @@ RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
 
 WORKDIR /home
 
-COPY py.sh python.sh Dockerfile in-venv.sh install-pipenv.sh .
+COPY Dockerfile py.sh python.sh in-venv.sh install-pipenv.sh install.sh .
 RUN cd $HOME && chmod u+x *.sh && chown $USER *
 
 USER $USER
@@ -65,7 +65,7 @@ RUN bash install-pipenv.sh python
 Clean up after the build
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-RUN rm *.sh && rm -rf $TMPDIR/*
+RUN rm install-pipenv.sh python.sh py.sh && rm -rf $TMPDIR/*
 
 USER root
 
