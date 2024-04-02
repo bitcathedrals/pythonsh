@@ -848,8 +848,19 @@ case $1 in
       exit 1
     fi
 
+    cp bin/batch-in-venv.sh docker/install.sh
+    cat >>docker/install.sh <<INSTALLER
+echo "HOME is \$HOME"
+echo "USER is \$USER"
+echo "PWD is \$PWD"
+echo -n "whoami is: "
+whoami
+
+pyenv exec pipenv install --skip-lock
+INSTALLER
+
     cp bin/batch-in-venv.sh docker/in-venv.sh
-    cat >>docker/in-venv.sh <<INSTALLER
+    cat >>docker/in-venv.sh <<VENV
 echo "HOME is \$HOME"
 echo "USER is \$USER"
 echo "PWD is \$PWD"
@@ -857,13 +868,13 @@ echo -n "whoami is: "
 whoami
 
 source \$1
-INSTALLER
+VENV
 
     echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
 
     cp py.sh python.sh docker/
-    cp bin/run-in-venv.sh docker/install-pipenv.sh
 
+    cp bin/run-in-venv.sh docker/install-pipenv.sh
     echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
 
     (cd docker && dock-build.sh build)
