@@ -2,50 +2,28 @@
 #+TITLE: Gauge Security Development Automation
 #+AUTHOR: Michael Mattie
 
-#+LATEX: \pagebreak
-
 * Introduction
 
-What school teaches is how to write code. What experience as a paid
-professional developer teaches you is how to build business assets.
+Business assets go beyond code to include API's, integrations, teams,
+and releases. The process to get from code in a editor to a release is
+paved by tools.
 
-Business assets go beyond code to include API's, integrations,
-teams, and releases.
+Using those tools effectively can move a project efficiently from code
+to production. Not having effective devops can hobble and kill
+projects with broken deliveries.
 
-Just because you can write a binary search doesn't mean you know about
-merging, building, releasing, devops, maintenance, and operations -
-how to deliver large and small.
-
-In fact many students come out of school only knowing how to write
-homework, not how to integrate into a team building business assets
-on a deadline.
-
-New programmers think unit tests are their safety net until they hit a
-wall on merging, integration, release, devops, and operations.
-
-The truth is that devops was invented because the tools of the trade
-have become so complex that they warrant a position of their own.
-
-At Gauge Security we have experienced these issues and grown up in
-Disney, Comcast, Oracle, and Amazon. We have seen the failures in
-other companies.
-
-In all these organizations developers huddled around their limited
-knowledge of tools, like a swimmer clinging to a life vest. Instead of
-solving issues with tools, the tools were the issue, day in and day
-out.
+In many cases developers huddled around their limited knowledge of
+tools, like a swimmer clinging to a life vest. Instead of enabling
+progress with tools, the tools were the issue, day in and day out.
 
 Starting in 2020 I tried to sort out this mess with automation. It
-started as a Makefile, then a bash script called manage.sh, and finally
-PythonSh. The idea was to build correct tool use into a single command,
-with intelligence to tailor it to a context and scenario.
+started as a Makefile, and then a bash script called manage.sh, and
+finally PythonSh. The idea was to build correct tool use into a single
+command, with intelligence to tailor it to a context and scenario.
 
-You are going to see the result of 20+ years of experience, and 4 years
-of baking into a mature, effective, and innovative tool.
-
-Let's get started!
-
-#+LATEX: \pagebreak
+You are going to see the result of 20+ years of experience, and 4
+years of development baked into a mature, effective, and innovative
+tool.
 
 * Gauge Security (PythonSh) - Automation is Innovation.
 
@@ -54,22 +32,24 @@ Python. From that experience clearly one of the most poorly thought
 out and vexing aspects of coding is just getting the code to
 run.
 
-Getting it to run on one developer's machine is just the beginning,
-making it portable to other developers is another hurdle. And finally
-building a good release to the end users is yet another hurdle.
+Getting it to run on one developer's machine is just the beginning.
+Making it portable to other developers is another hurdle. Finally
+building a good release and delivering to the end users is yet another
+hurdle.
 
-Throughout the process version control: especially with git is often
-a massive time-sink in trying to fix broken repos and branches. Programmers
-are made timid by their lack of understanding and their frustrations and
-use it and never move beyond the most basic commands.
+Throughout the process version control: especially with git there is
+often a massive time-sink in trying to fix broken repos and
+branches. Programmers are made timid by their lack of understanding
+and in their frustration they never move beyond the most basic
+commands.
 
-Not knowing how to handle packages effectively leads to monolithic repos,
-where the inexperience with git, and a fear of merging leads to clumsy
-collisions, and losses in time, code, and lengthy git debugging sessions.
+Not knowing how to integrate packages effectively leads to monolithic
+repos, where the inexperience with git, and a fear of merging leads to
+clumsy collisions, and losses in time, code, and lengthy git debugging
+sessions.
 
 Pythonsh is a path forward for python development: combining effective
-use of git, python, packages, and multiple repositories. Pythonsh is
-the way out of the development wilderness.
+use of git, python, packages, and multiple repositories.
 
 * Development Problems
 
@@ -77,24 +57,27 @@ the way out of the development wilderness.
 
 A developer typically uses language tools, IDE tools, version control
 tools, artifact repositories, and dependency managers. All these tools
-are used without any integration into a cohesive tool-chain.
+are used without any integration into a cohesive toolchain.
 
 - Running code is fragmented process due to the use of either plain
   system interpreters, tox for multiple python versions, or pyenv for
-  isolated virtual environment environments. Developers are often
-  unaware of the different strengths and weaknesses of the tools and
-  just copy the first thing they find on the internet.
+  isolated virtual environment environments. 
+
+  Developers are often unaware of the different strengths and
+  weaknesses of the tools and just copy the first thing they find on
+  the internet.
 
 - Python has many different versions, and each milestone introduces
   new features that code can become dependent on. Installation can be
   by a OS package, Open Source package managers like homebrew, or
-  virtual environment interpreters like pyenv. This fragmentation
-  leads to chaos with developers often not having a firm grasp on
-  what python their code is actually running on.
+  virtual environment interpreters like pyenv. 
 
-- Many times - without good version control practices, or artifact
-  repositories - the sharing of code can be as bad as cut and paste or
-  sending files over slack.
+  This fragmentation leads to chaos with developers often not having a
+  firm grasp on what python their code is actually running on.
+
+- Without good version control practices, or artifact repositories -
+  the sharing of code can be as bad as cut and paste or sending files
+  over slack.
 
 - Backwards compatibility is an assumption with no explicit guarantee.
   Practices for maintaining release metadata that allow a release to
@@ -130,8 +113,10 @@ What then is the answer to these dilemna ? The answer is automation.
 Automation has three key benefits:
 
 - speed: the pace of development is greatly accelerated by automation.
+
 - utilization: with automation ten commands becomes one. This means that
   the full capabilities of the tools are realized.
+
 - correctness: the right way, the way to avoid mistakes, is baked into
   the automation. Development becomes reliable and routine in the tool
   aspect.
@@ -154,50 +139,42 @@ Fast,reliable, and powerful are the three prongs of automation.
 ** Multiple repositories
 
 Often times developers get crowded into a single monolothic repository
-because the construction of a new repo and it's devops tool-chain is
+because the construction of a new repo and it's devops toolchain is
 magical, and laborious.
 
 They collide frequently leading developers to "section off" their
 files and avoid merging. When the inevitable implict merge occurs at
-build there is a frantic late-night integration sessions and working
-Saturdays to get the build done by Monday.
+release build time there is a frantic late-night integration sessions
+and working Saturdays to get the build done by Monday.
 
-A better approach is to break the project down into components,
-components into repositories, an integrate back together with
-packages. Each repository or package is released on it's own
-cadence and the result is stability and smooth integration.
+A better approach is to break the project down into components.
+Components into repositories, and integrate back together with
+packages. 
 
-Due to the magical nature of devops however, teams still
-crowd into whatever repository has a working tool-chain.
+Each repository or package is released on it's own cadence and the
+result is stability and smooth integration.
 
-PythonSh can spin up a repository and tool-chain in under five
-minutes allowing code to be replicated, distributed, and built
-built in a modular fashion.
+Due to the magical nature of devops however, teams still crowd into
+whatever repository has a working tool-chain.
+
+PythonSh can spin up a repository and tool-chain in under five minutes
+allowing code to be replicated, distributed, and built built in a
+modular fashion.
 
 ** Mistakes
 
-The big mistake is to think that these tool and repository hygenic
+The big mistake is to think that these tool and repository hygene
 tasks are chrome on a semi-truck, a litte flashy but not essential to
 get down the road.
 
-Its only when the project goes to build and things go sideways on a
-Friday night, and everyone is calling their family to tell them not to
-wait up, that the importance of the tool-chain and the development
-practices starts to cut deep.
+Its only when the project goes to build and things go sideways that
+the importance of the toolchain and the development practices starts
+to cut deep.
 
-Pythonsh deals with the Tool Tax upfront, and delivers speed,
+PythonSh deals with the Tool Tax upfront, and delivers speed,
 efficiency, and reliable progress from start to finish.
 
-Let's get into some details!
-
 * Workflows
-
-Worflows are the process the team uses to deliver. In the end
-it is always about delivery.
-
-The right process delivers on-time, and as promised. The wrong
-work-flow blames everything except the developer for delays, bugs, and
-failures.
 
 Workflow comes in two parts
 
@@ -206,10 +183,9 @@ Workflow comes in two parts
 
 ** Multiple Repositories
 
-Strategically it is vital to move developers into their own
+Strategically it is vital to move developers and teams into their own
 repositories for these workflows to be effective. Each component
-should develop and release as fast as they can bake, not every
-developer tripping over everyone else in a shared repository.
+should develop and release as fast as they can solidify.
 
 To do this right you need a Version Control Workflow, and a Build
 Workflow.
@@ -254,10 +230,10 @@ In git flow all of the shared development is on "develop" and
 developers work in isolated branches.
 
 The developers all merge their work into development, and can
-constantly and incrementally pull from develop, merging on-the-go so
-that a huge mess to untangle isn't created.
+constantly and incrementally pull from develop, merging on-the-go, so
+a huge mess to untangle isn't created.
 
-That is develop, and feature branches. Releases are on main/master
+That is develop, and feature branches. Releases are on main/master,
 merging the work from develop once develop has stabalized. When
 There are releases they are tagged and every release can be
 easily re-constructed.
@@ -281,10 +257,10 @@ dependency isolation, building, testing, and releasing.
 * Introducting PythonSh
 
 
-pythonsh has a script pysh-install.sh that
-when called with:
+pythonsh has a script pysh-install.sh that when called with:
 
 - private = my personal ssh checkout for development
+
 - public  = https checkout for client consumption
 
 This script will install a git submodule pythonsh and create a symlink
@@ -296,36 +272,45 @@ from there all commands are in the form:
 ./py.sh tools-unix
 #+END_SRC
 
-Most commands are a single command, few take arguments. They
-ccomplish a task with as much intelligence as possible so
-arguments don't have to be a stumbling block, and it
-speeds things up.
+Most commands are a single command, a few take arguments. They
+accomplish a task with as much intelligence as possible so arguments
+don't have to be a stumbling block, and it speeds things up.
 
 ** Project Creation
 
-Pythonsh needs to install virtualenv for the user. To
-solve the chicken-and-egg problem PythonSh is cloned
-first:
+Pythonsh needs to install virtualenv for the user. To solve the
+chicken-and-egg problem PythonSh is cloned first:
 
+Tools installation installs the tools and the zsh configuration.
 
 #+BEGIN_SRC bash
-apt install git git-flow
+apt install git
 
-cd code
+cd <code>
+
 curl <pythonsh> pysh-install.sh
 
-./pysh-install.sh public
-cd pythonsh
-
 ./py.sh tools-unix
+./py.sh tools-zshrc
+./py.sh tools-custom # optional, but it should be a guide for manual setup
+./py.sh tools-prompt # optional prompt setup
 #+END_SRC
 
-Here we install git, and git-flow. Then we clone the pythonsh
-repository. 
+New repository configuration:
+
+#+BEGIN_SRC bash
+git init
+git flow init
+
+<CODE>/pythonsh/pythonsh/pysh-install.sh public
+git commit -m "first commit of a new repository"
+#+END_SRC
+
+Here we install git, Then we clone the pythonsh repository. The tools
+command install git-flow, pyenv, and pyenv-virtual
 
 Inside pythonsh we run "tools-unix" which installs pyenv from git
-source into $HOME/.pyenv
-
+source into $HOME/tools/pyenv
 
 #+BEGIN_SRC bash
 ./py.sh tools-zshrc
@@ -333,16 +318,23 @@ source into $HOME/.pyenv
 ./py.sh tools-prompt
 #+END_SRC
 
-These tools commands setup the developer's shell for pythonsh.  Its a
-toolbox with numerous functions. the "tools-zshrc" command is
-required, along with use of the zsh shell.
+These tools commands setup the developer's shell for git and python.
+It is a toolbox with numerous functions, including virtualenv
+switching.
+
+The "tools-zshrc" command is required, along with use of the zsh shell.
+It is maybe possible to use bash, but you would have to rename the
+files like: .zshrc -> .basrc etc...
 
 "tools-custom" sets up an environment autodetecting many key things
-such as paths, ssh-agent, and the EDITOR.
+such as pyenv, paths, ssh-agent, and the EDITOR. 
 
-At this point pyhtonsh has completed global setup. Here is what
-creating a repository looks like
+On systems like MacOS where you can't hook the login, it will work
+fine in shells. On linux systems you can copy it into .xsessionrc and
+have the setup be global.
 
+At this point pythonsh has completed global setup. Here is what
+creating a repository looks like:
 
 #+BEGIN_SRC bash
 mkdir project
@@ -351,14 +343,21 @@ cd project
 git init
 git flow init
 
-./pysh-install.sh public
-
-,# this checks out any other sub-modules
-git submodule init
-git submodule update --init
+pysh-install.sh public
 #+END_SRC
 
-This is all that is needed to setup a project. pythonsh is ready to
+For cloning existing project it looks like this:
+
+#+BEGIN_SRC bash
+git clone <project> <project dir>
+cd <project>
+
+git flow init
+
+pysh-install.sh finish
+#+END_SRC
+
+This is all that is needed to setup a project. PythonSh is ready to
 use for best practices. This is what a prompt looks like:
 
 #+BEGIN_SRC bash
@@ -393,7 +392,7 @@ PYTHON_VERSION='3.12'
 #+END_SRC
 
 We will circle back later on this file, but the important thing to
-know is that this is the "Source of Truth" for the tool-chain and as
+know is that this is the "Source of Truth" for the toolchain and as
 much as possible all other files needed for python are generated from
 this configuation.
 
@@ -428,10 +427,9 @@ At this point the developer would type:
 switch_dev
 #+END_SRC
 
-which would activate the virtual environment for python, a
-dependency isolated environment for development, without
-any extraneous packages the developer might have on his
-system.
+which would activate the virtual environment for python. A dependency
+isolated environment for development, without any extraneous packages
+the developer might have on his system.
 
 The next step is to bootstrap.
 
@@ -460,8 +458,8 @@ version comparison and generates a root Pipfile.
 Some would say this is imperfect: that only PythonSh packages can be
 merged - which is true. But by synchronizing versions at teir-1 and
 tier-2 the problems with package version issues are massively reduced,
-and more manageable. Often pendantic hand wringing is a obstacle to
-making practical solutions.
+and far more tractable to solve. Often pendantic hand wringing is a
+obstacle to making practical solutions.
 
 ** Integrating Source into the virtualenv
 
@@ -515,21 +513,18 @@ git flow init
 ,# install pythonsh
 test -d pythonsh || $HOME/code/pysh-install.sh public
 
-,# this checks out any other sub-modules
-git submodule init
-git submodule update --init
+,# edit python.sh
+$EDITOR python.sh
 
 ,# create the virtual environments
  ./py.sh project-virtual
 
 ,# install source shims
+$EDITOR python.paths
 ./py.sh add-paths
 
 ,# boostrap virtualenv
 ./py.sh bootstrap
-
-,# start from develop
-git checkout develop
 
 ,# start the feature branch
 git flow feature start $BRANCH
@@ -637,7 +632,7 @@ devil> [system] grail:develop(*) -> ./py.sh status-report
 (refactor) refactor out mattie references and fix scheme repl auto start
 (refactor) minor whitespace changes
 (refactor) clean up lex-cache and check dwim-complete
-<devil> [system] grail:develop(*) -> 
+<devil> [system] grail:develop(*) ->
 #+END_SRC
 
 Here are my prefixes which extend the conventional commit standard:
@@ -711,31 +706,29 @@ either PythonSh commands or git flow commands.
 
 ** PythonSh Version Control Feature Summary
 
-#+BEGIN_SRC bash
-track = set upstream tracking
-tag-alpha = create alpha tag
-tag-beta = create beta tag
-info = show branches, tracking, and status
-verify = verify commit cryptographic signatures
-status = show status of repository and all sub-modules
-fetch = fetch main, develop, and current branch
-pull = pull current branch no ff
-staged = show staged changes
-merges = show merges only
-releases = show releases (tags)
-history = show commit history
-summary = show diffstat between feature and develop or last release and develop
-delta = show diff between feature and develop or last release and develop
-ahead = show log of commits in branch but not in parent
-behind = show log of commit in parent but not branch
+- track = set upstream tracking
+- tag-alpha = create alpha tag
+- tag-beta = create beta tag
+- info = show branches, tracking, and status
+- verify = verify commit cryptographic signatures
+- status = show status of repository and all sub-modules
+- fetch = fetch main, develop, and current branch
+- pull = pull current branch no ff
+- staged = show staged changes
+- merges = show merges only
+- releases = show releases (tags)
+- history = show commit history
+- summary = show diffstat between feature and develop or last release and develop
+- delta = show diff between feature and develop or last release and develop
+- ahead = show log of commits in branch but not in parent
+- behind = show log of commit in parent but not branch
 
-release-report = generate a report of changes since last release
-status-report = generate a report of changes ahead of the trunk
+- release-report = generate a report of changes since last release
+- status-report = generate a report of changes ahead of the trunk
 
-graph = show history between feature and develop or last release and develop
-upstream = fetch upstream and show changes not yet merged
-sync = merge from the root branch commits not in this branch no ff
-#+END_SRC
+- graph = show history between feature and develop or last release and develop
+- upstream = fetch upstream and show changes not yet merged
+- sync = merge from the root branch commits not in this branch no ff
 
 ** PythonSh Version Control in-depth
 
@@ -769,53 +762,52 @@ no changes added to commit (use "git add" and/or "git commit -a")
 *** info
 
 #+BEGIN_SRC bash
-<devil> [pastepipe_dev] pastepipe:develop(*) -> ./py.sh info
-,*  develop 41eb5d6 [origin/develop] (fix) update the pythonsh infrastructure
-  main    384168c [origin/main] (pull) pull latest pythonsh
-<devil> [pastepipe_dev] pastepipe:develop(*) ->
+<mobile> [system] pythonsh:develop(*) -> ./py.sh info
+,* develop 879b2a4 [origin/develop] (feat): put code directory [zshrc.custom]
+  main    7f47e7c [origin/main: behind 134] Merge branch 'release/0.15.1'
+[staged]
+ 0 files changed
+[changes]
+ pythonsh.org |  130 ++++++++++++++++++++++++++++++++++-------------------------
+ 1 file changed, 75 insertions(+), 55 deletions(-)
+[untracked]
+<mobile> [system] pythonsh:develop(*) ->
 #+END_SRC
 
-py.sh info shows the stauts of the branches. this is a very handy
-command.
+py.sh info shows the stauts of the branches and the repo. this is a
+very handy command.
 
 *** track
 
-#+BEGIN_SRC bash
-track <1> <2>  = set upstream tracking 1=remote 2=branch
-#+END_SRC
+- track <1> <2>  = set upstream tracking 1=remote 2=branch
 
-sometimes you need to set the upstream for a branch. track makes this easy.
+sometimes you need to set the upstream for a branch. track makes this
+easy.
 
 *** fetch & pull
 
-#+BEGIN_SRC bash
-fetch      = fetch main, develop, and current branch
-pull       = pull to current branch no ff
-#+END_SRC
+- fetch = fetch main, develop, and current branch
+- pull  = pull to current branch no ff
 
-fetch  retrieves the commits from upstream but does not merge
+fetch retrieves the commits from upstream but does not merge
 them. pull is basically fetch + merge.
 
 *** staged
 
-#+BEGIN_SRC bash
-staged     = show staged changes
-#+END_SRC
+- staged     = show staged changes
 
 show staged changes. Note that git diff
 showing the unstaged changes is a shell alias.
 
 *** Advanced View
 
-#+BEGIN_SRC bash
-merges = show merges only
-history = show commit history
-summary = show diffstat of branch to trunk or trunk to release.
-delta = show diff of branch to trunk or trunk to release
-log = show log of branch to trunk or trunk to release
-graph = show history graph of branch to trunk or trunk to release
-upstream = show upstream changes that havent been merged yet
-#+END_SRC
+- merges = show merges only
+- history = show commit history
+- summary = show diffstat of branch to trunk or trunk to release.
+- delta = show diff of branch to trunk or trunk to release
+- log = show log of branch to trunk or trunk to release
+- graph = show history graph of branch to trunk or trunk to release
+- upstream = show upstream changes that havent been merged yet
 
 The most powerful feature is "agains the parent". What this means is
 that pythonsh detects if it's on a feature branch, the develop trunk,
@@ -828,9 +820,7 @@ or the main trunk.
 This intelligence means a single command can be used in three
 different contexts with no additional arguments.
 
-#+BEGIN_SRC bash
-sync       = merge from the root branch commits not in this branch no ff
-#+END_SRC
+- sync = merge from the root branch commits not in this branch no ff
 
 sync is a tool to pull changes from the parent into the current branch. This
 is used for when development work on the develop trunk needs to be merged
@@ -838,10 +828,7 @@ into the feature branch.
 
 *** tagging
 
-#+BEGIN_SRC bash
-tag-alpha  <feat> <msg> = create an alpha tag on the feature branch
-tag-beta   <feat> <msg> = create a beta tag on the trunk
-#+END_SRC
+- tag-beta = <feat> <msg> : create a beta tag on the trunk
 
 tagging is important for making a file set for alpha or beta
 releases. by drawing a line across the repository the entire state of
@@ -889,8 +876,13 @@ A project has four virtual environments
 - build: for building a release
 - release: for testing release packages
 
+The dev environment is for the development work. The test environment
+is for testing for release ready.
+
 The build environment is created and destroyed automatically. The
-release environment is created as needed.
+release environment is created as needed. The release environment is
+for dev:prod parity and testing the built package or packages without
+the development packages present.
 
 the "dev" and "test" environments are the commonly used ones. With the
 shell setup by py.sh typing
@@ -982,22 +974,6 @@ time for the full source release process to start.
 
 ** Source Release Procedure
 
-- start: start the release
-- verify: not a command, but drop down to a shell to inspect the
-  release and fix any missing or incorrect files.
-- release: tag, and merge back into main and develop
-
-#+BEGIN_SRC bash
-check  = fetch main, develop from origin and show log of any pending changes
-start  = initiate an EDITOR session to update VERSION in python.sh, reload config,
-         sanapshot Pipfile if present, and start a git flow release with VERSION
-
-         for the first time pass version as an argument: "./py.sh start 0.1.0"
-
-release = execute git flow release finish with VERSION
-upload  = push main and develop branches and tags to remote
-#+END_SRC
-
 - checks are ran to make sure the repository and virtual environment
   are ready for a release
 - the release is created with git flow
@@ -1007,32 +983,30 @@ upload  = push main and develop branches and tags to remote
 - all files added or generated are added to git
 - an automatic git commit is performed
 
+*** Source Release commands
+
+- check = check virtualenv, fetch upstream, show repo state
+
+- start = <VERSION>  = update VERSION in python.sh, reload config,
+          snapshot Pipfile if present, and start a git flow 
+          release with VERSION
+
+- release = finalize the release with a git-flow finish command.
+- upload  = push main and develop branches, and push and tags
+
 Then the release drops down to a shell so the developer can inspect
 the release. On this release branch the developer can fix up any
 missing or incorrect bits.
 
-- Finally the developer issues:
+Git flow finish does:
 
-#+BEGIN_SRC bash
-./py.sh release
-#+END_SRC
-
-Git flow automatically finalizes the release:
-
-- The release is merged back into main - the release trunk
-- The release is merged back into develop - the development trunk
-- a tag is created starting with "release"
+- The release is merged back into main
+- The release is merged back into develop
+- a tag is created starting with "release-<VERSION>"
 
 The developer would insert the release-report into the release trunk
 merge producing a easy to understand set of release notes describing
 all the ingredients baked into the release.
-
-#+BEGIN_SRC bash
-./py.sh upload
-#+END_SRC
-
-- upload: the upload command pushes the main and development trunks
-  upstream.
 
 #+LATEX: \appendix
 
@@ -1158,37 +1132,21 @@ a context.
 
 ** Python commands
 
-#+BEGIN_SRC bash
-test    = run pytests
-python  = execute python in pyenv
-repl    = execute ptpython in pyenv
-run     = run a command in pyenv
-#+END_SRC
+- test   = run pytests
+- python = execute python in pyenv
+- repl   = execute ptpython in pyenv
+- run    = run a command in pyenv
 
 The python commands include all of the basic functionality for python
 development.
 
-- test = run unit tests
-- python = run a python file
-- repl = run a ptpython interactive repl
-- run = run a command in the virtual environment
-
 ** Package commands
 
-#+BEGIN_SRC bash
-versions   = display the versions of python and installed packages
-locked     = update from lockfile
-all        = update pip and pipenv install dependencies and dev, lock and check
-update     = update installed packages, lock and check
-remove     = uninstall the listed packages
-list       = list installed packages
-#+END_SRC
-
-- versions = display the versions of installed packages
-- locked = update the lockfile, which is a file of pinned packages
-- all = update pip, pipenv, and install packages including dev packages
-- update = update packages to the latest possible versions
-- remove = remove a package
-- list = show all installed packages in a dependency graph
+- versions = display the versions of python and installed packages
+- locked   = update from lockfile
+- all      = update pip and pipenv install dependencies and dev, lock and check
+- update   = update installed packages, lock and check
+- remove   = uninstall the listed packages
+- list     = list installed packages
 
 #+print_bibliography:
