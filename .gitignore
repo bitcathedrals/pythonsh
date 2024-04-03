@@ -4,11 +4,9 @@ dist/
 buildset/
 docker/Dockerfile
 docker/Dockerfile.*
-docker/py.sh
-docker/python.sh
-docker/install-pipenv.sh
-**/*.tex
-**/*.log
-**/*.pdf
+docker/*.sh
+docs/*.tex
+docs/*.log
+docs/*.pdf
 
 
