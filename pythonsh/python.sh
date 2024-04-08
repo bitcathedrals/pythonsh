@@ -166,13 +166,17 @@ function install_project_virtualenv {
 function find_deps {
   pipdirs="pythonsh"
 
-  for dep_dir in $(find ${SOURCE} -type d -depth 1 -print 2>/dev/null)
+  for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
+    dep_dir="${SOURCE}/$dep_dir"
+
+    echo >/dev/stderr "pythonsh find_deps: searching - ${dep_dir}"
+
     repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
 
     if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
     then
-      echo >/dev/stderr "pythonsh: found pipdir - ${dep_dir}"
+      echo >/dev/stderr "pythonsh find_deps: found pipdir - ${dep_dir}"
       pipdirs="${pipdirs} ${dep_dir}"
     fi
   done
@@ -181,8 +185,10 @@ function find_deps {
 
   echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
 
-  for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+  for dep_dir in $(ls "${site_dir}" 2>/dev/null)
   do
+    dep_dir=${site_dir}/$dep_dir
+
     if [[ ! `basename $dep_dir` == 'examples' ]]
     then
       repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
@@ -194,7 +200,7 @@ function find_deps {
     fi
   done
 
-  echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
+  echo >/dev/stderr "pythonsh find_deps: procesing dirs: $pipdirs"
 }
 
 function find_catpip {
