@@ -1326,8 +1326,14 @@ VENV
   "purge")
     for cache in $(find . -name '__pycache__' -type d -print)
     do
-      echo "purging: $cache"
+      echo "purging cache: $cache"
       rm -r $cache
+    done
+
+    for egg in $(find . -name '*.egg-info' -type d -print)
+    do
+      echo "purging build metadata: $egg"
+      rm -r $egg
     done
     ;;
   "help"|""|*)
