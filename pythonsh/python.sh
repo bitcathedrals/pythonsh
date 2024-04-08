@@ -172,6 +172,7 @@ function find_deps {
 
     if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
     then
+      echo >/dev/stderr "pythonsh: found pipdir - ${dep_dir}"
       pipdirs="${pipdirs} ${dep_dir}"
     fi
   done
