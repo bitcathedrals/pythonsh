@@ -475,9 +475,9 @@ case $1 in
       then
         if command -v doas >/dev/null 2>&1
         then
-          doas apt install git-flow
+          doas apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev
         else
-          sudo apt install git-flow
+          sudo apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev
         fi
       else
         echo "pythonsh: tools-unix - cannot find a way to install git-flow: all I know is apt"
@@ -615,8 +615,7 @@ case $1 in
 
     pipfile="pythonsh/Pipfile"
 
-    export PIPENV_PIPFILE="$pipfile"; pyenv exec python -m pip install pipenv
-    pipenv install --dev
+    pyenv exec python -m pip install pipenv ; PIPENV_PIPFILE="$pipfile" pyenv exec pipenv install --dev
     ;;
   "bootstrap")
     $0 minimal || exit 1
