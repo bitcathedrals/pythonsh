@@ -5,7 +5,7 @@ shift
 
 if [[ -z $VENV ]]
 then
-  echo >/dev/stderr "run-in-venv.sh: VENV arg(1) not specified. exiting."
+  echo "run-in-venv.sh: VENV arg(1) not specified. exiting."
   exit 1
 fi
 
@@ -24,7 +24,7 @@ pyenv activate $VENV
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "run-in-venv.sh: pyenv activate $VENV failed - $output exiting."
+  echo "run-in-venv.sh: pyenv activate $VENV failed - $output exiting."
   exit 1
 fi
 
