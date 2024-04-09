@@ -72,4 +72,7 @@ USER root
 RUN apk del git gcc autoconf automake libtool openssl-dev build-base \
 sqlite-dev pkgconf bzip2-dev zlib-dev ncurses-dev readline-dev \
 libffi-dev xz-dev
+
+USER python
+
 #+END_SRC
