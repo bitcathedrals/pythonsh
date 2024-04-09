@@ -25,7 +25,7 @@ ENV USER=python
 ENV HOME=/home
 ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
-RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
+RUN adduser -D -h $HOME $USER && chmod 0775 $HOME && chmod ugo-s $HOME
 
 WORKDIR /home
 
