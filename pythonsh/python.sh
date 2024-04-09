@@ -862,7 +862,7 @@ echo "PWD is \$PWD"
 echo -n "whoami is: "
 whoami
 
-pyenv exec pipenv install --skip-lock
+pyenv exec pipenv install
 INSTALLER
 
     cp bin/batch-in-venv.sh docker/in-venv.sh
@@ -894,7 +894,6 @@ VENV
     echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
     echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
     ;;
-
   "docker-release")
     shift
     MESSAGE=$1
