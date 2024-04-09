@@ -649,6 +649,12 @@ case $1 in
 
     eval "pyenv exec python $catpip pipfile $pipdirs"
     ;;
+  "distfile")
+    find_deps
+    find_catpip
+
+    eval "pyenv exec python $catpip distfile $pipdirs"
+    ;;
   "project")
     find_deps
     find_catpip

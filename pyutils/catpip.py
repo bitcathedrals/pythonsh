@@ -257,7 +257,7 @@ name = "pypi"
 
     return repo
 
-def print_pipfile():
+def print_pipfile(dist=False):
     print(default_pypi())
 
     if repos:
@@ -271,7 +271,7 @@ def print_pipfile():
             version = get_pipfile_version(release[pkg].version)
             print(f'{pkg} = {open_brace}version = "{version}", index = "{release[pkg].index}"{close_brace}')
 
-    if build:
+    if build and not dist:
         print('[dev-packages]')
 
         for pkg in build:
@@ -279,10 +279,10 @@ def print_pipfile():
             print(f'{pkg} = {open_brace}version = "{version}", index = "{build[pkg].index}"{close_brace}')
 
 
-    if 'python-version' in requires:
+    if 'python-version' in requires and not dist:
         del requires['python-version']
 
-    if requires:
+    if requires and not dist:
         print('[requires]')
 
         for entry in requires:
@@ -370,6 +370,13 @@ def pipfile(pipdirs):
     
     print_pipfile()
 
+def distfile(pipdirs):
+    check_for_test()
+
+    compile(*pipdirs)
+    
+    print_pipfile(dist=True)
+
 def project(pipdirs):
     check_for_test()
 
@@ -385,6 +392,10 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'pipfile':
         pipfile(pipdirs)
+        exit(0)
+
+    if sys.argv[1] == 'distfile':
+        distfile(pipdirs)
         exit(0)
 
     if sys.argv[1] == 'project':
