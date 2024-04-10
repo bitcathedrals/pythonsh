@@ -17,3 +17,5 @@ setuptools = "*"
 pipenv = "*"
 pip = "*"
 
+twine = "*"
+
