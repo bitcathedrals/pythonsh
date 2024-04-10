@@ -400,7 +400,7 @@ if __name__ == '__main__':
         exit(0)
 
     if sys.argv[1] == 'dockerfile':
-        distfile(pipdirs)
+        dockerfile(pipdirs)
         exit(0)
 
     if sys.argv[1] == 'project':
