@@ -860,6 +860,7 @@ case $1 in
       exit 1
     fi
 
+    cp bin/run-in-venv.sh docker/
     cp bin/batch-in-venv.sh docker/install.sh
     cat >>docker/install.sh <<INSTALLER
 echo "HOME is \$HOME"
