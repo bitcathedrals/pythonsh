@@ -209,7 +209,7 @@ def load_pypi(repo_file):
 
     return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])   
 
-def compile(*dirs):
+def compile(*dirs, dockerfile=False):
     load_pythonsh()
 
     for module in dirs:
@@ -217,7 +217,10 @@ def compile(*dirs):
             print(f'adding pypi server: {repo_file}', file=sys.stderr)
             repos.append(load_pypi(repo_file))
 
-        pipfile = f'{module}/Pipfile'
+        if dockerfile:
+            pipfile = f'{module}/Pipfile.docker'
+        else:
+            pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):
             print (f'processing Pipfile: {pipfile}', file=sys.stderr)
@@ -370,11 +373,13 @@ def pipfile(pipdirs):
     
     print_pipfile()
 
-def distfile(pipdirs):
+def dockerfile(pipdirs):
     check_for_test()
 
     compile(*pipdirs)
     
+    compile("docker/",dockerfile=True)
+
     print_pipfile(dist=True)
 
 def project(pipdirs):
@@ -394,7 +399,7 @@ if __name__ == '__main__':
         pipfile(pipdirs)
         exit(0)
 
-    if sys.argv[1] == 'distfile':
+    if sys.argv[1] == 'dockerfile':
         distfile(pipdirs)
         exit(0)
 

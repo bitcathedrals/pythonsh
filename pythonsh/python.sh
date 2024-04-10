@@ -649,11 +649,11 @@ case $1 in
 
     eval "pyenv exec python $catpip pipfile $pipdirs"
     ;;
-  "distfile")
+  "dockerfile")
     find_deps
     find_catpip
 
-    eval "pyenv exec python $catpip distfile $pipdirs"
+    eval "pyenv exec python $catpip dockerfile $pipdirs"
     ;;
   "project")
     find_deps
@@ -1357,9 +1357,9 @@ python.sh
 
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
-tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
-tools-custom        = install zshrc.cujstom
-tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
+tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-custom  = install zshrc.cujstom
+tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
@@ -1377,8 +1377,8 @@ virtual-current  = show the current virtual environment if any
 
 [initialization]
 
-minimal          = pythonsh only bootstrap for projects with only built-in deps
-bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+minimal          = pythonsh only bootstrap for projects with only pythonsh deps
+bootstrap        = two stage bootstrap generate pipfile, install source deps, install pkg deps
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
 
@@ -1402,24 +1402,29 @@ all        = update pip and pipenv install dependencies and dev, lock and check
 update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
+simple     = <pkg> do a simple pyenv pip install without pipenv
 
 [build]
 
-simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
 mkrunner   = <program> <args....> make a runner that sets/restores environment for
              host python commands
 
+[docker]
+
 mklauncher     = <program> <args....> make a simple launcher for python docker
+
 docker-update  = regenerate the Dockerfile from the .org file
 docker-build   = build the PythonSh docker layer
 docker-release = record a docker release with <MESSAGE>
 
+dockerfile = generate a pipfile with additional docker packages.
 mkrunner   = execute mkrunner.sh to build a runner
 
 [submodule]
+
 modinit             = initialize and pull all submodules
 modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
 modupdate <module>  = pull the latest version of the module
@@ -1427,6 +1432,7 @@ modrm  <submodule>  = delete a submodule
 modall              = update all submodules
 
 [version control]
+
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
@@ -1462,6 +1468,7 @@ release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
 
 [misc]
+
 purge      = remove all the __pycache__ dirs
 HELP
     ;;
