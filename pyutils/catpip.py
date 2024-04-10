@@ -303,7 +303,7 @@ def pyproject_deps(table):
             else:
                 deps.append(f'"{pkg} ~= {ver}"')
         else:
-            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output')
+            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output', file=sys.stderr)
             return None
         
     return "[" + ",".join(deps) + "]"
