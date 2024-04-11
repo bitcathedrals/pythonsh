@@ -137,6 +137,7 @@ PATH="$CODE/pythonsh/bin:$PATH"
 PATH="$CODE/docker/bin:$PATH"
 PATH="$CODE/grail/bin:$PATH"
 PATH="$CODE/pypi/bin:$PATH"
+PATH="$CODE/canary/bin:$PATH"
 
 unique_path
 
