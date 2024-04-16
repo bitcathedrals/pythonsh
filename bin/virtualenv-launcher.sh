@@ -23,7 +23,7 @@ fi
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "virtualenv-launcher.sh: unable to change user to ${USER}. exiting."
+  echo "virtualenv-launcher.sh: unable to change user to ${USER}. exiting."
   exit 1
 fi
 
@@ -33,7 +33,7 @@ pyenv activate $VENV
 
 if [[ $? -ne 0 ]]
 then
-  echo >/dev/stderr "virtualenv-launcher.sh: unable to activate ${VENV}. exiting."
+  echo "virtualenv-launcher.sh: unable to activate ${VENV}. exiting."
   exit 1
 fi
 

@@ -25,11 +25,11 @@ ENV USER=python
 ENV HOME=/home
 ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
 
-RUN adduser -D -h $HOME $USER && chmod 0755 $HOME
+RUN adduser -D -h $HOME $USER && chmod 0775 $HOME && chmod ugo-s $HOME
 
 WORKDIR /home
 
-COPY Dockerfile py.sh python.sh in-venv.sh install-pipenv.sh install.sh .
+COPY Dockerfile py.sh python.sh in-venv.sh run-in-venv.sh install-pipenv.sh install.sh .
 RUN cd $HOME && chmod u+x *.sh && chown $USER *
 
 USER $USER
@@ -72,4 +72,7 @@ USER root
 RUN apk del git gcc autoconf automake libtool openssl-dev build-base \
 sqlite-dev pkgconf bzip2-dev zlib-dev ncurses-dev readline-dev \
 libffi-dev xz-dev
+
+USER python
+
 #+END_SRC

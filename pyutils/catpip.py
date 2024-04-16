@@ -209,7 +209,7 @@ def load_pypi(repo_file):
 
     return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])   
 
-def compile(*dirs):
+def compile(*dirs, dockerfile=False):
     load_pythonsh()
 
     for module in dirs:
@@ -217,7 +217,10 @@ def compile(*dirs):
             print(f'adding pypi server: {repo_file}', file=sys.stderr)
             repos.append(load_pypi(repo_file))
 
-        pipfile = f'{module}/Pipfile'
+        if dockerfile:
+            pipfile = f'{module}/Pipfile.docker'
+        else:
+            pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):
             print (f'processing Pipfile: {pipfile}', file=sys.stderr)
@@ -257,7 +260,7 @@ name = "pypi"
 
     return repo
 
-def print_pipfile():
+def print_pipfile(dist=False):
     print(default_pypi())
 
     if repos:
@@ -271,7 +274,7 @@ def print_pipfile():
             version = get_pipfile_version(release[pkg].version)
             print(f'{pkg} = {open_brace}version = "{version}", index = "{release[pkg].index}"{close_brace}')
 
-    if build:
+    if build and not dist:
         print('[dev-packages]')
 
         for pkg in build:
@@ -279,10 +282,10 @@ def print_pipfile():
             print(f'{pkg} = {open_brace}version = "{version}", index = "{build[pkg].index}"{close_brace}')
 
 
-    if 'python-version' in requires:
+    if 'python-version' in requires and not dist:
         del requires['python-version']
 
-    if requires:
+    if requires and not dist:
         print('[requires]')
 
         for entry in requires:
@@ -300,7 +303,7 @@ def pyproject_deps(table):
             else:
                 deps.append(f'"{pkg} ~= {ver}"')
         else:
-            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output')
+            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output', file=sys.stderr)
             return None
         
     return "[" + ",".join(deps) + "]"
@@ -370,6 +373,15 @@ def pipfile(pipdirs):
     
     print_pipfile()
 
+def dockerfile(pipdirs):
+    check_for_test()
+
+    compile(*pipdirs)
+    
+    compile("docker/",dockerfile=True)
+
+    print_pipfile(dist=True)
+
 def project(pipdirs):
     check_for_test()
 
@@ -385,6 +397,10 @@ if __name__ == '__main__':
 
     if sys.argv[1] == 'pipfile':
         pipfile(pipdirs)
+        exit(0)
+
+    if sys.argv[1] == 'dockerfile':
+        dockerfile(pipdirs)
         exit(0)
 
     if sys.argv[1] == 'project':
