@@ -95,3 +95,18 @@ alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
 alias merge='git merge --no-ff'
+
+alias sr='screen -d -r'
+alias sl='screen -list'
+alias sn='screen -S'
+
+function sr {
+  shift
+
+  name=$1
+  shift
+
+  screen -S $name -s $@
+}
+
+
