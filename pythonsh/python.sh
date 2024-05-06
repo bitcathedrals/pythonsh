@@ -755,6 +755,8 @@ case $1 in
     pipenv graph
     ;;
   "build")
+    pipenv check
+
     $0 project >pyproject.toml
 
     pyenv exec python -m build
