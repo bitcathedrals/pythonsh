@@ -1119,6 +1119,14 @@ VENV
   "verify")
     exec git log --show-signature $@
     ;;
+  "since")
+    shift
+
+    from=$1
+    shift
+
+    exec git log --since "$from" $@
+    ;;
   "status")
     git status
     git submodule foreach 'git status'
@@ -1438,6 +1446,7 @@ beta       = <feat> <msg> = create a beta tag with the devel branch feature and 
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
+since      = <DATE> pull logs since date, extra <ARGS...> are passed
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
 staged     = show staged changes
