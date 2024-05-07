@@ -102,7 +102,7 @@ alias merge='git merge --no-ff'
 
 alias t-reload='tmux source-file ~/.tmux.conf'
 
-alias tr='tmux attach-session'
+alias ta='tmux attach-session'
 alias tl='tmux list-sessions'
 alias tn='tmux new-session -s'
 
