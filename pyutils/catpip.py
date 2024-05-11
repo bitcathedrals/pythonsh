@@ -404,8 +404,14 @@ if __name__ == '__main__':
         exit(0)
 
     if sys.argv[1] == 'project':
-        project(pipdirs)
-        exit(0)
+        project_master = Path(project_file)
+        if project_master.exists():
+            project(pipdirs)
+            exit(0)
+        else:
+            print(f'project file: %s does not exist, skipping project command.' % project_file,
+                  file=sys.stderr)
+            exit(1)
 
     print('unknown command {sys.argv[1]}')
     exit(1)
