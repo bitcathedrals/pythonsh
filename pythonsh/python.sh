@@ -1293,13 +1293,18 @@ VENV
 
     if [[ -f Pipfile ]]
     then
-      echo ">>>regenerating Pipfile and pyproject.toml."
+      echo ">>>regenerating Pipfile."
 
       $0 pipfile >Pipfile
-      $0 project >pyproject.toml
-
       git add Pipfile
-      git add pyproject.toml
+
+      if [[ -f pyproject.toml ]]
+      then
+          echo ">>>regenerating pyproject.toml."
+
+        $0 project >pyproject.toml
+        git add pyproject.toml
+      fi
 
       pipenv lock
       git add Pipfile.lock
