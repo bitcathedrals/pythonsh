@@ -35,8 +35,12 @@ function set_homebrew {
 
 function unique_path {
   tac=`which tac`
-
-  reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
+  if [[ $? -eq 0 ]]
+  then
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
+  else
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | sort -r)
+  fi
 
   final=""
 
