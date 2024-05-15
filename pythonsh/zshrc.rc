@@ -1,21 +1,4 @@
-if [[ -f $HOME/homebrew/bin/brew ]]
-then
-    eval `$HOME/homebrew/bin/brew shellenv`
-else
-   command -v brew >/dev/null 2>&1 && eval `brew shellenv`
-fi
-
-test -z "$ZSHRC_CUSTOM_LOADED" -a -f $HOME/.zshrc.custom && source $HOME/.zshrc.custom
-
-DEFAULT_PYPENV="$HOME/.pyenv/"
-
-if ! command -v pyenv >/dev/null 2>&1
-then
-  test -z "${PYENV_ROOT}" || export PYENV_ROOT="$DEFAULT_PYENV"
-  export PATH="$PATH:$PYENV_ROOT/bin"
-fi
-
-eval "$(pyenv init -)"
+test -z "$ZSHRC_CUSTOM_LOADED" && source $HOME/.zshrc.custom
 
 test -f $HOME/.zshrc.prompt && source $HOME/.zshrc.prompt
 
@@ -24,9 +7,8 @@ function deactivate_if_needed {
 
   echo "$ver" | cut -d ' ' -f 1 | grep -v 'system' || return 0
 
-  pyenv deactivate >/dev/null 2>&1
-
-  return 0
+  eval $(pyenv-sh-deactivate "${virt}")
+  return $?
 }
 
 function load_python_sh {
@@ -34,7 +16,7 @@ function load_python_sh {
   then
     source python.sh
   else
-    echo "can\'t find python.sh - are you in the project root?"
+    echo >/dev/stderr "pythonsh zshrc: can\'t find python.sh - are you in the project root?"
     return 1
   fi
 
@@ -57,13 +39,13 @@ function switch_to_virtual {
 
   deactivate_if_needed || return 1
 
-  echo -n ">>>switching to: ${virt}..."
+  echo >/dev/stderr -n ">>>switching to: ${virt}..."
 
-  if pyenv activate "${virt}"
+  if eval $(pyenv-sh-activate "${virt}")
   then
     echo "completed."
   else
-    echo "FAILED!"
+    echo >/dev/stderr "pythonsh zshrc: switch to ${virt} FAILED!"
     return 1
   fi
 
@@ -102,6 +84,8 @@ function switch_global {
   return 0
 }
 
+# git
+
 alias status='git status'
 alias diff='git diff'
 alias stat='git diffstat'
@@ -112,3 +96,15 @@ alias push='git push'
 alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
+alias merge='git merge --no-ff'
+
+# tmux
+
+alias t-reload='tmux source-file ~/.tmux.conf'
+
+alias ta='tmux attach-session'
+alias tl='tmux list-sessions'
+alias tn='tmux new-session -s'
+
+
+
