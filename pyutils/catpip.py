@@ -383,6 +383,12 @@ def dockerfile(pipdirs):
     print_pipfile(dist=True)
 
 def project(pipdirs):
+    project = Path(project_file)
+
+    if not project.exists():
+        print(f'catpip.py: project file [%s] does not exist. skipping project generation.' % project_file)
+        return
+
     check_for_test()
 
     compile(*pipdirs)
