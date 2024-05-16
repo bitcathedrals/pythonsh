@@ -762,7 +762,7 @@ case $1 in
     pyenv exec python -m build
     ;;
   "publish")
-    pyenv exec twine upload --repository-url cracker.local:8080 dist/*
+    pyenv exec twine upload --repository-url http://cracker.local:8080 dist/*
     ;;
   "buildset")
     build_buildset
