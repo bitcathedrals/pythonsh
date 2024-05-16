@@ -48,7 +48,7 @@ def load_pythonsh():
 
 def load_project():
     data = toml.load(project_file)
-    
+
     if 'project' in data:
         project = data['project']
     else:
@@ -84,7 +84,7 @@ def get_pythonsh_version():
 def get_python_feature(spec):
     if not spec:
         return None
-    
+
     v = spec.split('.')[0:2]
 
     return '.'.join(v)
@@ -92,16 +92,16 @@ def get_python_feature(spec):
 def strip_pipfile_version_operators(spec):
      if spec == "*":
          return "*"
-     
+
      return re.findall(r'\d+\.\d+\.\d+|\d+\.\d+', spec)[0]
 
 def get_interpreter_version(spec):
-    return expand_version(get_python_feature(spec)) 
+    return expand_version(get_python_feature(spec))
 
 def get_pipfile_version(spec):
     if spec == "*":
         return "*"
-    
+
     feature=get_python_feature(strip_pipfile_version_operators(spec))
 
     return "~=" + feature + ".0"
@@ -110,17 +110,17 @@ def build_variables(filename, parse, section, table):
     for var_name in parse[section]:
         version = parse[section][var_name]
 
-        if var_name in table:   
+        if var_name in table:
             if table[var_name] != version:
                 if Version(expand_version(table[var_name])) > Version(expand_version(version)):
-                    print(f'current {var_name} version {table[var_name]} is newer than {filename}:{var_name} - taking the latest version', 
+                    print(f'current {var_name} version {table[var_name]} is newer than {filename}:{var_name} - taking the latest version',
                             file=sys.stderr)
-                    
+
                     version = table[var_name]
 
         table[var_name] = version
 def build_packages(filename, parse, section, table):
-    
+
     for pkg_name in parse[section]:
         pkg_spec = parse[section][pkg_name]
 
@@ -141,10 +141,10 @@ def build_packages(filename, parse, section, table):
             else:
                 if table[pkg_name].version != pkg_ver:
                     if Version(expand_version(table[pkg_name].version)) > Version(expand_version(pkg_ver)):
-                        print(f'current {pkg_name} version {table[pkg_name].version} is newer than {filename}:{pkg_ver} - taking the latest version', 
+                        print(f'current {pkg_name} version {table[pkg_name].version} is newer than {filename}:{pkg_ver} - taking the latest version',
                               file=sys.stderr)
                         pkg_ver = table[pkg_name].version
-        
+
         table[pkg_name] = package_spec(name=pkg_name, version=pkg_ver, index=pkg_server)
 
 def update_build(filename, parse):
@@ -162,10 +162,10 @@ def build_requires(filename, parse, table):
 
         if pythonsh_version != requires_version:
                 if Version(pythonsh_version) > Version(requires_version):
-                    print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile [{filename}] {requires_version}', 
+                    print(f'taking current PYTHON_VERSION: {pythonsh_version} over Pipfile [{filename}] {requires_version}',
                             file=sys.stderr)
                     table['python-version'] = get_python_feature(pythonsh_version)
-                else:   
+                else:
                     table['python-version'] = get_python_feature(requires_version)
         else:
             table['python-version'] = get_python_feature(pythonsh_version)
@@ -175,15 +175,15 @@ def build_requires(filename, parse, table):
         if ver:
             table['python-version'] = ver
         else:
-            print('no python version found in requires section or python.sh: attempting to find latest.', 
+            print('no python version found in requires section or python.sh: attempting to find latest.',
                   file=sys.stderr)
-            
+
             pyenv_list_command = "pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\\.[0-9]+\\.[0-9]+$' | sort -u -V -r"
 
             process = Popen([pyenv_list_command],shell=True,
                             text=True,
                             stdout=PIPE)
-            
+
             output = process.communicate()[0]
 
             for line in output.split('\n'):
@@ -207,9 +207,9 @@ def load_pypi(repo_file):
 
     stripped_name = Path(os.path.basename(repo_file)).stem
 
-    return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])   
+    return extra_pypi(parse['pypi']['address'], parse['pypi']['port'], stripped_name,  parse['pypi']['verify'])
 
-def compile(*dirs):
+def compile(*dirs, dockerfile=False):
     load_pythonsh()
 
     for module in dirs:
@@ -217,7 +217,10 @@ def compile(*dirs):
             print(f'adding pypi server: {repo_file}', file=sys.stderr)
             repos.append(load_pypi(repo_file))
 
-        pipfile = f'{module}/Pipfile'
+        if dockerfile:
+            pipfile = f'{module}/Pipfile.docker'
+        else:
+            pipfile = f'{module}/Pipfile'
 
         if os.path.isfile(pipfile):
             print (f'processing Pipfile: {pipfile}', file=sys.stderr)
@@ -228,7 +231,7 @@ def compile(*dirs):
             update_build(pipfile, parse)
             update_requires(pipfile, parse)
         else:
-            print(f'module spec: {module} does not have Pipfile - skipping', 
+            print(f'module spec: {module} does not have Pipfile - skipping',
                   file=sys.stderr)
 
 def extra_pypi(address, port, name, verify):
@@ -257,7 +260,7 @@ name = "pypi"
 
     return repo
 
-def print_pipfile():
+def print_pipfile(dist=False):
     print(default_pypi())
 
     if repos:
@@ -271,7 +274,7 @@ def print_pipfile():
             version = get_pipfile_version(release[pkg].version)
             print(f'{pkg} = {open_brace}version = "{version}", index = "{release[pkg].index}"{close_brace}')
 
-    if build:
+    if build and not dist:
         print('[dev-packages]')
 
         for pkg in build:
@@ -279,10 +282,10 @@ def print_pipfile():
             print(f'{pkg} = {open_brace}version = "{version}", index = "{build[pkg].index}"{close_brace}')
 
 
-    if 'python-version' in requires:
+    if 'python-version' in requires and not dist:
         del requires['python-version']
 
-    if requires:
+    if requires and not dist:
         print('[requires]')
 
         for entry in requires:
@@ -290,7 +293,7 @@ def print_pipfile():
 
 def pyproject_deps(table):
     deps = []
-    
+
     for pkg, spec in table.items():
         ver = spec.version
 
@@ -300,9 +303,9 @@ def pyproject_deps(table):
             else:
                 deps.append(f'"{pkg} ~= {ver}"')
         else:
-            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output')
+            print(f'skipping package: {pkg} from private repo {spec.index} disabling project dependency output', file=sys.stderr)
             return None
-        
+
     return "[" + ",".join(deps) + "]"
 
 def print_pyproject():
@@ -320,12 +323,12 @@ def print_pyproject():
 
     print('[tool.setuptools.package-data]')
     print(f'"*" = ["Pipfile", "*.pypi"]')
-    
+
     print('[project]')
-    
+
     if 'BUILD_NAME' in pythonsh:
         print(f'name = "{pythonsh["BUILD_NAME"]}"')
-    
+
     if 'VERSION' in pythonsh:
         print(f'version = "{pythonsh["VERSION"]}"')
 
@@ -341,18 +344,18 @@ def print_pyproject():
 
     if 'description' in project:
         print(f'description = \"{project["description"]}\"')
-    
+
     if 'authors' in project:
         print(f'authors = "{project["authors"]}"')
 
     if 'homepage' in project or 'repository' in project:
         print('[project.urls]')
-    
+
         if 'homepage' in project:
             print(f'homepage = "{project["homepage"]}"')
         if 'repository' in project:
             print(f'repository = "{project["repository"]}"')
-    
+
     if 'scripts' in project:
         print('[project.scripts]')
         for name, path in project['scripts'].items():
@@ -367,10 +370,25 @@ def pipfile(pipdirs):
     check_for_test()
 
     compile(*pipdirs)
-    
+
     print_pipfile()
 
+def dockerfile(pipdirs):
+    check_for_test()
+
+    compile(*pipdirs)
+
+    compile("docker/",dockerfile=True)
+
+    print_pipfile(dist=True)
+
 def project(pipdirs):
+    project = Path(project_file)
+
+    if not project.exists():
+        print(f'catpip.py: project file [%s] does not exist. skipping project generation.' % project_file)
+        return
+
     check_for_test()
 
     compile(*pipdirs)
@@ -387,10 +405,13 @@ if __name__ == '__main__':
         pipfile(pipdirs)
         exit(0)
 
+    if sys.argv[1] == 'dockerfile':
+        dockerfile(pipdirs)
+        exit(0)
+
     if sys.argv[1] == 'project':
         project(pipdirs)
         exit(0)
 
     print('unknown command {sys.argv[1]}')
     exit(1)
-    

@@ -11,32 +11,36 @@ function set_macos_path_helper {
 function set_homebrew {
   # brew can be in three different locations
 
-  if [[ -d $HOME/homebrew ]]
+  for brew_binary in "$HOME/homebrew/bin/brew" "/usr/local/bin/brew" "/opt/homebrew/bin/brew"
+  do
+    if [[ -e $brew_binary ]]
+    then
+      eval $($brew_binary shellenv)
+      return 0
+    fi
+  done
+
+  # try a path search
+
+  if command -v brew >/dev/null 2>&1
   then
-    eval $($HOME/homebrew/bin/brew shellenv)
-    return
+    brew_binary=`which brew`
+    eval $($brew_binary shellenv)
+
+    return 0
   fi
 
-  if [[ -x /usr/local/bin/brew ]]
-  then
-    eval $(/usr/local/bin/brew shellenv)
-    return
-  fi
-
-  if [[ -d /opt/homebrew/ ]]
-  then
-    eval $(/opt/homebrew/bin/brew shellenv)
-    return
-  fi
-
-  command -v brew >/dev/null 2>&1 && eval `brew shellenv`
-  return 0
+  return 1
 }
 
 function unique_path {
   tac=`which tac`
-
-  reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
+  if [[ $? -eq 0 ]]
+  then
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
+  else
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | sort -r)
+  fi
 
   final=""
 
@@ -125,6 +129,9 @@ function set_pyenv {
   eval "$(pyenv init -)"
 }
 
+# quiet pipenv about installing into existing virtualenvs.
+export PIPENV_VERBOSITY=-1
+
 set_macos_path_helper
 set_homebrew
 set_pyenv
@@ -136,6 +143,9 @@ PATH="$CODE/security/bin:$PATH"
 PATH="$CODE/pythonsh/bin:$PATH"
 PATH="$CODE/docker/bin:$PATH"
 PATH="$CODE/grail/bin:$PATH"
+PATH="$CODE/pypi/bin:$PATH"
+PATH="$CODE/canary/bin:$PATH"
+PATH="$CODE/pastepipe/bin:$PATH"
 
 unique_path
 

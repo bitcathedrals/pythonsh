@@ -166,12 +166,17 @@ function install_project_virtualenv {
 function find_deps {
   pipdirs="pythonsh"
 
-  for dep_dir in $(find ${SOURCE} -type d -depth 1 -print 2>/dev/null)
+  for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
+    dep_dir="${SOURCE}/$dep_dir"
+
+    echo >/dev/stderr "pythonsh find_deps: searching - ${dep_dir}"
+
     repos=`ls 2>/dev/null ${dep_dir}/*.pypi  | sed -e s,\s*,,g`
 
     if [[ -f "${dep_dir}/Pipfile" || -n $repos ]]
     then
+      echo >/dev/stderr "pythonsh find_deps: found pipdir - ${dep_dir}"
       pipdirs="${pipdirs} ${dep_dir}"
     fi
   done
@@ -180,8 +185,10 @@ function find_deps {
 
   echo >/dev/stderr "pipfile: using site dir: \"${site_dir}\""
 
-  for dep_dir in $(find "${site_dir}" -type d -depth 1 -print 2>/dev/null)
+  for dep_dir in $(ls "${site_dir}" 2>/dev/null)
   do
+    dep_dir=${site_dir}/$dep_dir
+
     if [[ ! `basename $dep_dir` == 'examples' ]]
     then
       repos=`ls 2>/dev/null ${dep_dir}/*.pypi | sed -e s,\s*,,g`
@@ -193,7 +200,7 @@ function find_deps {
     fi
   done
 
-  echo >/dev/stderr "pipfile: procesing dirs: $pipdirs"
+  echo >/dev/stderr "pythonsh find_deps: procesing dirs: $pipdirs"
 }
 
 function find_catpip {
@@ -475,9 +482,9 @@ case $1 in
       then
         if command -v doas >/dev/null 2>&1
         then
-          doas apt install git-flow
+          doas apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev gcc autoconf automake libtool autotools-dev make zlib1g zlib1g-dev
         else
-          sudo apt install git-flow
+          sudo apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev gcc autoconf automake libtool autotools-dev make zlib1g zlib1g-dev
         fi
       else
         echo "pythonsh: tools-unix - cannot find a way to install git-flow: all I know is apt"
@@ -615,8 +622,7 @@ case $1 in
 
     pipfile="pythonsh/Pipfile"
 
-    export PIPENV_PIPFILE="$pipfile"; pyenv exec python -m pip install pipenv
-    pipenv install --dev
+    pyenv exec python -m pip install pipenv ; PIPENV_PIPFILE="$pipfile" pyenv exec pipenv install --dev
     ;;
   "bootstrap")
     $0 minimal || exit 1
@@ -642,6 +648,12 @@ case $1 in
     find_catpip
 
     eval "pyenv exec python $catpip pipfile $pipdirs"
+    ;;
+  "dockerfile")
+    find_deps
+    find_catpip
+
+    eval "pyenv exec python $catpip dockerfile $pipdirs"
     ;;
   "project")
     find_deps
@@ -743,6 +755,8 @@ case $1 in
     pipenv graph
     ;;
   "build")
+    pipenv check
+
     $0 project >pyproject.toml
 
     pyenv exec python -m build
@@ -848,6 +862,7 @@ case $1 in
       exit 1
     fi
 
+    cp bin/run-in-venv.sh docker/
     cp bin/batch-in-venv.sh docker/install.sh
     cat >>docker/install.sh <<INSTALLER
 echo "HOME is \$HOME"
@@ -856,7 +871,7 @@ echo "PWD is \$PWD"
 echo -n "whoami is: "
 whoami
 
-pyenv exec pipenv install --skip-lock
+pyenv exec pipenv install
 INSTALLER
 
     cp bin/batch-in-venv.sh docker/in-venv.sh
@@ -888,7 +903,6 @@ VENV
     echo "docker build success!: emitting Dockerfile.pythonsh-${DOCKER_VERSION} for this layer"
     echo "FROM ${DOCKER_USER}/pythonsh:${DOCKER_VERSION}" >Dockerfile.pythonsh-${DOCKER_VERSION}
     ;;
-
   "docker-release")
     shift
     MESSAGE=$1
@@ -1107,6 +1121,14 @@ VENV
   "verify")
     exec git log --show-signature $@
     ;;
+  "since")
+    shift
+
+    from=$1
+    shift
+
+    exec git log --since "$from" $@
+    ;;
   "status")
     git status
     git submodule foreach 'git status'
@@ -1271,13 +1293,18 @@ VENV
 
     if [[ -f Pipfile ]]
     then
-      echo ">>>regenerating Pipfile and pyproject.toml."
+      echo ">>>regenerating Pipfile."
 
       $0 pipfile >Pipfile
-      $0 project >pyproject.toml
-
       git add Pipfile
-      git add pyproject.toml
+
+      if [[ -f pyproject.toml ]]
+      then
+          echo ">>>regenerating pyproject.toml."
+
+        $0 project >pyproject.toml
+        git add pyproject.toml
+      fi
 
       pipenv lock
       git add Pipfile.lock
@@ -1327,8 +1354,14 @@ VENV
   "purge")
     for cache in $(find . -name '__pycache__' -type d -print)
     do
-      echo "purging: $cache"
+      echo "purging cache: $cache"
       rm -r $cache
+    done
+
+    for egg in $(find . -name '*.egg-info' -type d -print)
+    do
+      echo "purging build metadata: $egg"
+      rm -r $egg
     done
     ;;
   "help"|""|*)
@@ -1339,9 +1372,9 @@ python.sh
 
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
-tools-zshrc         = install hombrew, pyenv, and pyenv switching commands into .zshrc
-tools-custom        = install zshrc.cujstom
-tools-prompt        = install prompt support with pyeenv, git, and project in the prompt
+tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
+tools-custom  = install zshrc.cujstom
+tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
 
 [virtual commands]
 
@@ -1359,8 +1392,8 @@ virtual-current  = show the current virtual environment if any
 
 [initialization]
 
-minimal          = pythonsh only bootstrap for projects with only built-in deps
-bootstrap        = two stage bootstrap of minimal, pipfile generate, install source deps, pipfile, install pkg deps
+minimal          = pythonsh only bootstrap for projects with only pythonsh deps
+bootstrap        = two stage bootstrap generate pipfile, install source deps, install pkg deps
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
 
@@ -1384,24 +1417,29 @@ all        = update pip and pipenv install dependencies and dev, lock and check
 update     = update installed packages, lock and check
 remove     = uninstall the listed packages
 list       = list installed packages
+simple     = <pkg> do a simple pyenv pip install without pipenv
 
 [build]
 
-simple     = <pkg> do a simple pyenv pip install without pipenv
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
 mkrunner   = <program> <args....> make a runner that sets/restores environment for
              host python commands
 
+[docker]
+
 mklauncher     = <program> <args....> make a simple launcher for python docker
+
 docker-update  = regenerate the Dockerfile from the .org file
 docker-build   = build the PythonSh docker layer
 docker-release = record a docker release with <MESSAGE>
 
+dockerfile = generate a pipfile with additional docker packages.
 mkrunner   = execute mkrunner.sh to build a runner
 
 [submodule]
+
 modinit             = initialize and pull all submodules
 modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
 modupdate <module>  = pull the latest version of the module
@@ -1409,11 +1447,13 @@ modrm  <submodule>  = delete a submodule
 modall              = update all submodules
 
 [version control]
+
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
 status     = git state, submodule state, diffstat for changes in tree
+since      = <DATE> pull logs since date, extra <ARGS...> are passed
 fetch      = fetch main, develop, and current branch
 pull       = pull current branch no ff
 staged     = show staged changes
@@ -1444,6 +1484,7 @@ release    = execute git flow release finish with VERSION
 upload     = push main and develop branches and tags to remote
 
 [misc]
+
 purge      = remove all the __pycache__ dirs
 HELP
     ;;

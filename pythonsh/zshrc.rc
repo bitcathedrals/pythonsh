@@ -84,6 +84,8 @@ function switch_global {
   return 0
 }
 
+# git
+
 alias status='git status'
 alias diff='git diff'
 alias stat='git diffstat'
@@ -95,3 +97,14 @@ alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
 alias merge='git merge --no-ff'
+
+# tmux
+
+alias t-reload='tmux source-file ~/.tmux.conf'
+
+alias ta='tmux attach-session'
+alias tl='tmux list-sessions'
+alias tn='tmux new-session -s'
+
+
+

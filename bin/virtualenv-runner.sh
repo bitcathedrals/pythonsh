@@ -12,43 +12,8 @@ export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 
-RESTORE=""
 
-if pyenv version | grep "system"
-then
-  pyenv activate $VENV
-  if [[ $? -ne 0 ]]
-  then
-    echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${ENVIRONMENT}. exiting."
-    exit 1
-  fi
-else
-  if pyenv version | grep -v "$VENV"
-  then
-    RESTORE=`pyenv version | cut -d ' ' -f 1`
+pyenv activate $VENV
 
-    pyenv activate $VENV 2>&1
+exec pyenv exec @ENTRYPOINT@ $@
 
-    if [[ $? -ne 0 ]]
-    then
-      echo >/dev/stderr "virtualenv-runner.sh: unable to activate ${VENV}. exiting."
-      exit 1
-    fi
-  fi
-fi
-
-pyenv exec @ENTRYPOINT@ $@
-exit_code=$?
-
-if [[ -n $RESTORE ]]
-then
-  pyenv activate $RESTORE
-
-  if [[ $? -ne 0 ]]
-  then
-    echo >/dev/stderr "virtualenv-runner.sh: unable to restore ${RESTORE}. exiting."
-    exit 1
-  fi
-fi
-
-exit $exit_code
