@@ -761,6 +761,9 @@ case $1 in
 
     pyenv exec python -m build
     ;;
+  "publish")
+    pyenv exec twine upload --repository-url cracker.local:8080 dist/*
+    ;;
   "buildset")
     build_buildset
     ;;
@@ -1421,6 +1424,7 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 
 [build]
 
+publish    = upload to cracker.local all packages in dist/*
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
