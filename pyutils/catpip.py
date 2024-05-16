@@ -356,7 +356,7 @@ def print_pyproject():
         if 'repository' in project:
             print(f'repository = "{project["repository"]}"')
 
-    if 'scripts' in project:
+    if 'scripts' in project and len(project['scripts']) > 0:
         print('[project.scripts]')
         for name, path in project['scripts'].items():
             print(f'{name} = "{path}"')
