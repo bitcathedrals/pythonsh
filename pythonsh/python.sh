@@ -643,6 +643,14 @@ case $1 in
 
     echo "bootstrap complete"
     ;;
+  "test-install")
+    # only use lockfile and dont install dev-packages, evidently sync
+    # does install dev-packages
+
+    pipenv install --ignore-pipfile
+
+    echo "test-deps complete"
+    ;;
   "pipfile")
     find_deps
     find_catpip
@@ -1399,7 +1407,8 @@ minimal          = pythonsh only bootstrap for projects with only pythonsh deps
 bootstrap        = two stage bootstrap generate pipfile, install source deps, install pkg deps
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
-
+test-install     = install packages only, from Pipfile.lock. This is for installing packages into the
+                   test environment
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
