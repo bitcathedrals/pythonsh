@@ -647,6 +647,8 @@ case $1 in
     # only use lockfile and dont install dev-packages, evidently sync
     # does install dev-packages
 
+    pyenv exec python -m pip install pipenv
+
     pipenv install --ignore-pipfile
 
     echo "test-deps complete"
