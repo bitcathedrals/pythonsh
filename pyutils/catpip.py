@@ -260,6 +260,20 @@ name = "pypi"
 
     return repo
 
+def validate_pipfile():
+    fail=False
+
+    for name, spec in release.items():
+        if name in build:
+            print(f'catpip.py: ERROR pkg %s in both release and build tables.' % name,
+                  file=sys.stderr)
+            fail=True
+
+    if fail:
+        print('catpip.py: ERROR found packages in both packages and dev-packages. aborting!',
+              file=sys.stderr)
+        sys.exit(1)
+
 def print_pipfile(dist=False):
     print(default_pypi())
 
@@ -371,6 +385,8 @@ def pipfile(pipdirs):
 
     compile(*pipdirs)
 
+    validate_pipfile()
+
     print_pipfile()
 
 def dockerfile(pipdirs):
@@ -379,6 +395,8 @@ def dockerfile(pipdirs):
     compile(*pipdirs)
 
     compile("docker/",dockerfile=True)
+
+    validate_pipfile()
 
     print_pipfile(dist=True)
 
@@ -392,6 +410,9 @@ def project(pipdirs):
     check_for_test()
 
     compile(*pipdirs)
+
+    validate_pipfile()
+
     load_project()
 
     print_pyproject()
