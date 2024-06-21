@@ -1,6 +1,6 @@
 #+LATEX_CLASS: article
-#+TITLE: Gauge Security Development Automation
-#+AUTHOR: Michael Mattie
+#+TITLE: Git & Python Development Automation
+#+AUTHOR: Mr. Mattie
 
 * Introduction
 
@@ -629,7 +629,6 @@ devil> [system] grail:develop(*) -> ./py.sh status-report
 (refactor) clean up formatting so it's easier to read
 (refactor) cleanup formatting
 (refactor) pull all the scripts and files for emacs from pythonsh and combine into compile-emacs.sh
-(refactor) refactor out mattie references and fix scheme repl auto start
 (refactor) minor whitespace changes
 (refactor) clean up lex-cache and check dwim-complete
 <devil> [system] grail:develop(*) ->
