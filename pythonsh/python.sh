@@ -105,20 +105,55 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
+  SSL_LOCATION=""
+
+  if [[ -d /usr/local/include/openssl ]]
+  then
+      SSL_LOCATION="--with-openssl=/usr/local LDFLAGS="-Wl,-rpath,/usr/local/lib" --with-openssl-rpath=auto"      
+  fi
+
+  export CONFIGURE_OPTS="--enable-optimizations $SSL_LOCATION"
 
   echo -n "Updating Python interpreter: ${VERSION}..."
 
-  if pyenv install -v --skip-existing $VERSION
-  then
-    echo "Success!"
-  else
-    show_all_python_versions
-    echo "FAILED! - likey a bad version - showing available versions"
-    exit 1
-  fi
+  (
+      export PATH="${PYENV_ROOT}/versions/${VERSION}/bin:${PATH}"
 
-  latest_virtualenv_python $VERSION
+      echo "PATH for $VERSION is $PATH"
+      echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+
+      ARCH=""
+
+      if [[ -x arch ]]
+      then
+          arch=$(arch)
+
+          if [[ $arch = "arm64" ]]
+          then
+             ARCH="arch -arm64"
+          fi
+      fi
+
+      eval "$ARCH pyenv install -v --skip-existing $VERSION"
+
+      compile_status=$?
+
+      if [[ $compile_status -eq 0 ]]
+      then
+          echo "Success!"
+      else
+          echo "pyenv install $VERSION FAILED with code $compile_status!"
+          exit 1
+      fi
+  )
+
+  if [[ $? -eq 0 ]]
+  then
+     latest_virtualenv_python $VERSION
+  else
+     echo "skipping virtual environment creation due to failed python $VERSION compile."
+     return 1
+  fi
 
   return 0
 }
@@ -534,6 +569,39 @@ case $1 in
     cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
 
+  "brew-upgrade")
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew upgrade
+    else
+       brew upgrade
+    fi
+  ;;
+
+  "brew-install")
+    shift
+
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew install $@
+    else
+       brew install --build-from-source $@
+    fi
+  ;;
+  "brew-rebuild")
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+      brew list | xargs arch -arm64 brew reinstall
+    else
+      brew list | xargs brew reinstall
+    fi
+  ;;
   #
   # virtual environments
   #
@@ -1386,8 +1454,10 @@ python.sh
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
-tools-custom  = install zshrc.cujstom
+tools-custom  = install zshrc.custom
 tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
+
+brew-upgrade  = upgrade brew packages
 
 [virtual commands]
 
