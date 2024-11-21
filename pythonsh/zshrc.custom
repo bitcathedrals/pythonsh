@@ -11,7 +11,7 @@ function set_macos_path_helper {
 function set_homebrew {
   # brew can be in three different locations
 
-  for brew_binary in "$HOME/homebrew/bin/brew" "/usr/local/bin/brew" "/opt/homebrew/bin/brew"
+  for brew_binary in "/usr/local/bin/brew" "$HOME/homebrew/bin/brew" 
   do
     if [[ -e $brew_binary ]]
     then
@@ -32,6 +32,25 @@ function set_homebrew {
 
   return 1
 }
+
+function set_emacs_brew {
+  # brew can be in three different locations
+
+  brew_binary="/opt/homebrew/bin/brew" 
+
+  if [[ -e $brew_binary ]]
+  then
+    eval $($brew_binary shellenv)
+    echo "set brew to emacs brew in /opt/"
+    return 0
+  else
+    echo "unable to find brew executable for emacs in /opt/"
+    return 0
+  fi
+
+  return 1
+}
+
 
 function unique_path {
   tac=`which tac`
