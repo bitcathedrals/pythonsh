@@ -93,6 +93,17 @@ function latest_virtualenv_python {
   return 0
 }
 
+function candidate_virtualenv_python {
+  VERSION=$1
+
+  CANDIDATE_PYTHON=`pyenv install -l | tr -s ' ' | sed -e 's,^ ,,' | grep -E "^$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V -r | head -n 1`
+  export CANDIDATE_PYTHON
+
+  echo "Python Candidate version: ${CANDIDATE_PYTHON}"
+
+  return 0
+}
+
 function show_all_python_versions {
   pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
 }
@@ -105,26 +116,25 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  SSL_LOCATION=""
+  system=$(uname)
 
-  if [[ -d /usr/local/include/openssl ]]
-  then
-      SSL_LOCATION="--with-openssl=/usr/local LDFLAGS="-Wl,-rpath,/usr/local/lib" --with-openssl-rpath=auto"      
-  fi
+  case $system in
+    "Darwin")
+       eval "$(/opt/dependencies/bin/brew shellenv)"
+     ;;
+  esac
 
-  export CONFIGURE_OPTS="--enable-optimizations $SSL_LOCATION"
+  export CONFIGURE_OPTS="--enable-optimizations"
 
-  echo -n "Updating Python interpreter: ${VERSION}..."
+  echo "Updating Python interpreter: ${VERSION}..."
 
   (
-      export PATH="${PYENV_ROOT}/versions/${VERSION}/bin:${PATH}"
-
-      echo "PATH for $VERSION is $PATH"
-      echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+      candidate_virtualenv_python ${VERSION}
+      export PATH="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}/bin:${PATH}"
 
       ARCH=""
 
-      if [[ -x arch ]]
+      if which arch
       then
           arch=$(arch)
 
@@ -142,7 +152,14 @@ function install_virtualenv_python {
       then
           echo "Success!"
       else
+          echo "ARCH is: $ARCH"
+          echo "Compile Version is: $CANDIDATE_VERSION"
+          echo "PATH for $VERSION is: $PATH"
+          echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+          echo "SSL_LOCATION is: $SSL_LOCATION"
+
           echo "pyenv install $VERSION FAILED with code $compile_status!"
+
           exit 1
       fi
   )
@@ -182,7 +199,7 @@ function install_project_virtualenv {
 
   install_virtualenv_python $VERSION || return 1
 
-  echo "creating project virtual environments"
+  echo "creating project virtual environments from $LATEST_PYTHON"
 
   if [[ -n $ENV_ONE ]]
   then
@@ -569,18 +586,26 @@ case $1 in
     cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
 
-  "brew-upgrade")
+  "tools-brew-init")
+    test -d /opt/homebrew || sudo mkdir -p /opt/homebrew
+    curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
+    sudo tar xJf /tmp/brew.xz --strip 1 -C /opt/homebrew
+    sudo chown -R mattie /opt/homebrew
+    ;;
+
+  "tools-brew-upgrade")
     ARCH=$(arch)
 
     if [[ $ARCH = "arm64" ]]
     then
+       arch -arm64 brew update
        arch -arm64 brew upgrade
     else
+       brew update
        brew upgrade
     fi
   ;;
-
-  "brew-install")
+  "tools-brew-install")
     shift
 
     ARCH=$(arch)
@@ -589,10 +614,10 @@ case $1 in
     then
        arch -arm64 brew install $@
     else
-       brew install --build-from-source $@
+       brew install $@
     fi
   ;;
-  "brew-rebuild")
+  "tools-brew-rebuild")
     ARCH=$(arch)
 
     if [[ $ARCH = "arm64" ]]
@@ -602,6 +627,44 @@ case $1 in
       brew list | xargs brew reinstall
     fi
   ;;
+
+  "dependencies-init")
+    test -d /opt/dependencies || sudo mkdir -p /opt/dependencies
+    curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
+    sudo tar xJf /tmp/brew.xz --strip 1 -C /opt/dependencies
+    sudo chown -R mattie /opt/dependencies
+  ;;
+
+  "dependencies-update")
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew update
+       arch -arm64 brew upgrade
+    else
+       brew update
+       brew upgrade
+    fi
+  ;;
+
+  "dependencies-install")
+    DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
+
+    ARCH=$(arch)
+
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       eval "arch -arm64 brew install $DEPS"
+    else
+       eval "brew install $DEPS"
+    fi
+  ;;
+
   #
   # virtual environments
   #
