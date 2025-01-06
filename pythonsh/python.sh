@@ -635,7 +635,7 @@ case $1 in
     sudo chown -R mattie /opt/dependencies
   ;;
 
-  "dependencies-update")
+  "dependencies-upgrade")
     eval $(/opt/dependencies/bin/brew shellenv)
 
     ARCH=$(arch)
@@ -651,6 +651,21 @@ case $1 in
   ;;
 
   "dependencies-install")
+    shift
+
+    ARCH=$(arch)
+
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       eval "arch -arm64 brew install $*"
+    else
+       eval "brew install $*"
+    fi
+  ;;
+
+  "dependencies-python")
     DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
 
     ARCH=$(arch)
@@ -1521,6 +1536,16 @@ tools-custom  = install zshrc.custom
 tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
 
 brew-upgrade  = upgrade brew packages
+
+tools-brew-init     = initialize the /opt/homebrew homebrew repository
+tools-brew-upgrade  = upgrade the /opt/homebrew repository
+tools-brew-install  = install into /opt/homebrew a list of packages
+tools-brew-rebuild  = rebuild packages in /opt/homebrew
+
+dependencies-init     = initialize /opt/dependencies for stable and minimal deps to compile against
+dependencies-upgrade  = upgrade /opt/dependencies 
+dependencies-install  = install into /opt/dependencies a list of packages
+dependencies-python   = install into /opt/dependencies python dependencies
 
 [virtual commands]
 
