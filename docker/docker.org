@@ -5,7 +5,7 @@ beginning, and update and install base packages needed to compile
 python.
 
 #+BEGIN_SRC docker-build :tangle Dockerfile.template
-FROM alpine:3.21.2
+FROM alpine:3.21.12
 
 LABEL docker-version="@DOCKER_VERSION@"
 LABEL timestamp="@TIMESTAMP@"
