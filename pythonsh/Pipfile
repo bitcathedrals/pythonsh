@@ -10,10 +10,12 @@ pytest = "*"
 pytest-ordering = "*"
 pytest-dependency = "*"
 
+version-parser = "*"
+
+setuptools = "*"
+
 pipenv = "*"
 pip = "*"
 
-version-parser = "*"
+twine = "*"
 
-[requires]
-python_version = "3.12"

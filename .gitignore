@@ -4,8 +4,9 @@ dist/
 buildset/
 docker/Dockerfile
 docker/Dockerfile.*
-**/*.tex
-**/*.log
-**/*.pdf
+docker/*.sh
+docs/*.tex
+docs/*.log
+docs/*.pdf
 
 

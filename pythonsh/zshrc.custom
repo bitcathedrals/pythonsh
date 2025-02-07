@@ -11,36 +11,74 @@ function set_macos_path_helper {
 function set_homebrew {
   # brew can be in three different locations
 
-  if [[ -d $HOME/homebrew ]]
+  for brew_binary in "/opt/homebrew/bin/brew" "/usr/local/bin/brew" "$HOME/homebrew/bin/brew" 
+  do
+    if [[ -e $brew_binary ]]
+    then
+      eval $($brew_binary shellenv)
+      return 0
+    fi
+  done
+
+  # try a path search
+
+  if command -v brew >/dev/null 2>&1
   then
-    eval $($HOME/homebrew/bin/brew shellenv)
-    return
+    brew_binary=`which brew`
+    eval $($brew_binary shellenv)
+
+    return 0
   fi
 
-  if [[ -x /usr/local/bin/brew ]]
-  then
-    eval $(/usr/local/bin/brew shellenv)
-    return
-  fi
-
-  if [[ -d /opt/homebrew/ ]]
-  then
-    eval $(/opt/homebrew/bin/brew shellenv)
-    return
-  fi
+  return 1
 }
 
-set_macos_path_helper
-set_homebrew
+function set_emacs_brew {
+  # brew can be in three different locations
 
-PATH="$HOME/tools/local/bin:$PATH"
-PATH="$HOME/code/utilities/bin:$PATH"
-PATH="$HOME/code/security/bin:$PATH"
-PATH="$HOME/code/pythonsh/bin:$PATH"
-PATH="$HOME/code/docker/bin:$PATH"
-PATH="$HOME/code/grail/bin:$PATH"
+  brew_binary="/opt/emacs/bin/brew" 
 
-export PATH
+  if [[ -e $brew_binary ]]
+  then
+    eval $($brew_binary shellenv)
+    echo "set brew to emacs brew in /opt/"
+    return 0
+  else
+    echo "unable to find brew executable for emacs in /opt/"
+    return 0
+  fi
+
+  return 1
+}
+
+
+function unique_path {
+  tac=`which tac`
+  if [[ $? -eq 0 ]]
+  then
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | $tac)
+  else
+    reversed_list=$(echo $PATH | /usr/bin/tr -s ":" | /usr/bin/tr -s ":" "\n" | sort -r)
+  fi
+
+  final=""
+
+  for path in $(echo $reversed_list | sed '/^$/d')
+  do
+    removed=$(echo $removed | /usr/bin/tail -n +1)
+
+    if echo "$removed" | /usr/bin/grep $path - >/dev/null 2>&1
+    then
+      echo /dev/stderr "unique_path - skipping: $path"
+    else
+#      echo /dev/stderr "unique_path - adding: $path"
+      final="$path:$final"
+    fi
+  done
+
+  PATH=$(echo "$final" | /usr/bin/tr "\n" ":" | /usr/bin/tr -s ":")
+  export PATH
+}
 
 function set_editor {
   EDITOR=/Applications/Emacs.app/Contents/MacOS/bin/emacsclient
@@ -66,17 +104,6 @@ function set_editor {
   echo >/dev/stderr "WARNING: zshrc.custom no editor found!"
   return 1
 }
-
-set_editor
-
-# if there is a file for crypto keys then add it
-if [[ -f $HOME/.crypto.sh ]]
-then
-  source $HOME/.crypto.sh
-fi
-
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
 
 function launch_ssh_agent {
   if [[ `uname` == "Darwin" ]]
@@ -109,6 +136,46 @@ function launch_ssh_agent {
   fi
 }
 
+function set_pyenv {
+  TOOLS=$HOME/tools
+  PYENV_ROOT="$TOOLS/pyenv"
+  PATH="$TOOLS/local/bin:$PATH"
+  PATH="$PYENV_ROOT/bin:$PATH"
+  PATH="$PYENV_ROOT/libexec:$PATH"
+
+  export PYENV_ROOT PATH
+
+  eval "$(pyenv init -)"
+}
+
+# quiet pipenv about installing into existing virtualenvs.
+export PIPENV_VERBOSITY=-1
+
+set_macos_path_helper
+set_homebrew
+set_pyenv
+
+CODE=$HOME/code
+
+PATH="$CODE/utilities/bin:$PATH"
+PATH="$CODE/security/bin:$PATH"
+PATH="$CODE/pythonsh/bin:$PATH"
+PATH="$CODE/docker/bin:$PATH"
+PATH="$CODE/grail/bin:$PATH"
+PATH="$CODE/pypi/bin:$PATH"
+PATH="$CODE/canary/bin:$PATH"
+PATH="$CODE/pastepipe/bin:$PATH"
+
+unique_path
+
+set_editor
+
 launch_ssh_agent
+
+# if there is a file for crypto keys then add it
+if [[ -f $HOME/.crypto.sh ]]
+then
+  source $HOME/.crypto.sh
+fi
 
 export ZSHRC_CUSTOM_LOADED="yes"

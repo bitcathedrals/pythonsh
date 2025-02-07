@@ -1,0 +1,78 @@
+* This is a tool for building a docker layer
+
+Start from alpine is it is very small. Add some labels at the
+beginning, and update and install base packages needed to compile
+python.
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.template
+FROM alpine:3.21.12
+
+LABEL docker-version="@DOCKER_VERSION@"
+LABEL timestamp="@TIMESTAMP@"
+
+RUN apk update && apk --no-cache add git gcc autoconf automake libtool openssl-dev bash build-base \
+sqlite-dev pkgconf linux-headers ca-certificates bzip2-dev zlib-dev ncurses-dev readline-dev \
+libffi-dev xz-dev shadow coreutils
+
+ENV SHELL=/bin/bash
+#+END_SRC
+
+Create a un-privelaged user, setup permissions, home directory, then
+set user for Dockerfile
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.template
+ENV USER=python
+ENV HOME=/home
+ENV PATH="/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin::"
+
+RUN adduser -D -h $HOME $USER && chmod 0775 $HOME && chmod ugo-s $HOME
+
+WORKDIR /home
+
+COPY Dockerfile py.sh python.sh in-venv.sh run-in-venv.sh install-pipenv.sh install.sh .
+RUN cd $HOME && chmod u+x *.sh && chown $USER *
+
+USER $USER
+#+END_SRC
+
+Setup the tool installation directories.
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.template
+ENV TMPDIR=$HOME/tmp
+RUN test -d $TMPDIR || mkdir -p $TMPDIR
+
+ARG TOOLS=$HOME/tools
+ENV TOOLS_LOCAL=$TOOLS/local
+ENV TOOLS_BIN=$TOOLS_LOCAL/bin
+
+RUN test -d $TOOLS_BIN || mkdir -p $TOOLS_BIN
+RUN bash ./py.sh tools-unix
+
+ENV PYENV_ROOT=$HOME/tools/pyenv
+ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/libexec:$TOOLS_BIN:$PATH"
+#+END_SRC
+
+Create the installation of pyenv, virtualenv
+
+Install the python virtual environment which involves compiling a
+interpreter.
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.template
+RUN bash py.sh global-virtual python
+RUN bash install-pipenv.sh python
+#+END_SRC
+
+Clean up after the build
+
+#+BEGIN_SRC docker-build :tangle Dockerfile.template
+RUN rm install-pipenv.sh python.sh py.sh && rm -rf $TMPDIR/*
+
+USER root
+
+RUN apk del git gcc autoconf automake libtool openssl-dev build-base \
+sqlite-dev pkgconf bzip2-dev zlib-dev ncurses-dev readline-dev \
+libffi-dev xz-dev
+
+USER python
+
+#+END_SRC

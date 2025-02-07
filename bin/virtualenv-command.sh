@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-VENV=@VENV@
+ENV="@VENV@"
 
 TOOLS=$HOME/tools
 PYENV_ROOT="$TOOLS/pyenv"
@@ -12,8 +12,12 @@ export PYENV_ROOT PATH
 
 eval "$(pyenv init -)"
 
+pyenv activate $ENV
 
-pyenv activate $VENV
+if [[ $? -ne 0 ]]
+then
+  echo "virtual-command.sh: pyenv activate $ENV failed! exiting."
+  exit 1
+fi
 
-exec pyenv exec @ENTRYPOINT@ $@
-
+exec pyenv exec $@
