@@ -1000,7 +1000,8 @@ case $1 in
   "docker-update")
     (cd docker && org-compile.sh docker.org)
     mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
-
+   ;;
+   "docker-commit")
     git add docker/docker.org
 
     timestamp=`date`
@@ -1605,6 +1606,7 @@ mkrunner   = <program> <args....> make a runner that sets/restores environment f
 mklauncher     = <program> <args....> make a simple launcher for python docker
 
 docker-update  = regenerate the Dockerfile from the .org file
+docker-commit  = commit the .org dockerfile
 docker-build   = build the PythonSh docker layer
 docker-release = record a docker release with <MESSAGE>
 
