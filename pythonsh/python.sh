@@ -1623,6 +1623,8 @@ modall              = update all submodules
 
 [version control]
 
+begin <name> = start feature branch <name>
+end   <name> = close feature branch <name>
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
