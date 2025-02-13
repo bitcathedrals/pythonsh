@@ -1186,7 +1186,7 @@ VENV
 
     if [[ -z $name ]]
     then
-      echo "pythonsh begin: requires a name as an argument"
+      echo "pythonsh begin: requires a name for a new feature branch as an argument"
       exit 1
     fi
 
@@ -1198,12 +1198,24 @@ VENV
 
     if [[ -z $name ]]
     then
-      echo "pythonsh end: requires a name as an argument"
+      echo "pythonsh end: requires the name of the feature branch to close"
       exit 1
     fi
 
     git flow feature finish $name
     ;;
+  "switch")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh switch: requires the name of the feature branch to switch to as an argument"
+      exit 1
+    fi
+
+    git checkout "feature/$name"
+    ;;    
   "beta")
     shift
 
@@ -1623,8 +1635,9 @@ modall              = update all submodules
 
 [version control]
 
-begin <name> = start feature branch <name>
-end   <name> = close feature branch <name>
+begin  <name> = start feature branch <name>
+end    <name> = close feature branch <name>
+switch <name> = switch to feature branch <name>
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
