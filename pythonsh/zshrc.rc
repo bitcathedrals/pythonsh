@@ -98,6 +98,10 @@ alias co='git checkout'
 alias branch='git branch'
 alias merge='git merge --no-ff'
 
+# ssh
+
+alias ssh-master='ssh -Nf'
+
 # tmux
 
 alias t-reload='tmux source-file ~/.tmux.conf'
