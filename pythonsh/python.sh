@@ -124,7 +124,7 @@ function install_virtualenv_python {
      ;;
   esac
 
-  export CONFIGURE_OPTS="--enable-optimizations"
+  export CC="clang"
 
   echo "Updating Python interpreter: ${VERSION}..."
 
