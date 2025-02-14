@@ -510,8 +510,14 @@ function check_python_environment {
 }
 
 case $1 in
+  "python-uninstall")
+    shift
+    version=$1
+
+    exec pyenv uninstall $version
+  ;;
   "version")
-    echo "pythonsh version is: 0.15.1"
+    echo "pythonsh version is: 1.1.1"
     ;;
   "tools-unix")
     # attempt to install git flow
@@ -1563,6 +1569,7 @@ dependencies-python   = install into /opt/dependencies python dependencies
 [virtual commands]
 
 python-versions  = list the available python versions
+python-uninstall <version> = uninstall version
 project-virtual  = create: dev and test virtual environments from settings in python.sh
 global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
 
