@@ -1004,8 +1004,45 @@ case $1 in
     mklauncher.sh $@
     ;;
   "docker-update")
+    # copy pythonsh files
+    cp py.sh python.sh docker/
+    cp python.sh docker/python.sh
+
+    # tangle the docker file
     (cd docker && org-compile.sh docker.org)
     mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
+
+    #
+    # copy over and generate run in environment scripts
+    #
+
+    cp bin/run-in-venv.sh docker/
+    cp bin/batch-in-venv.sh docker/install.sh
+    cp bin/run-in-venv.sh docker/install-pipenv.sh
+
+    cat >>docker/install.sh <<INSTALLER
+echo "HOME is \$HOME"
+echo "USER is \$USER"
+echo "PWD is \$PWD"
+echo -n "whoami is: "
+whoami
+
+pyenv exec pipenv install
+INSTALLER
+
+    cp bin/batch-in-venv.sh docker/in-venv.sh
+    cat >>docker/in-venv.sh <<VENV
+echo "HOME is \$HOME"
+echo "USER is \$USER"
+echo "PWD is \$PWD"
+echo -n "whoami is: "
+whoami
+
+source \$1
+VENV
+
+    # install pipenv
+    echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
    ;;
    "docker-commit")
     git add docker/docker.org
@@ -1028,35 +1065,7 @@ case $1 in
       exit 1
     fi
 
-    cp bin/run-in-venv.sh docker/
-    cp bin/batch-in-venv.sh docker/install.sh
-    cat >>docker/install.sh <<INSTALLER
-echo "HOME is \$HOME"
-echo "USER is \$USER"
-echo "PWD is \$PWD"
-echo -n "whoami is: "
-whoami
-
-pyenv exec pipenv install
-INSTALLER
-
-    cp bin/batch-in-venv.sh docker/in-venv.sh
-    cat >>docker/in-venv.sh <<VENV
-echo "HOME is \$HOME"
-echo "USER is \$USER"
-echo "PWD is \$PWD"
-echo -n "whoami is: "
-whoami
-
-source \$1
-VENV
-
     echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
-
-    cp py.sh python.sh docker/
-
-    cp bin/run-in-venv.sh docker/install-pipenv.sh
-    echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
 
     (cd docker && dock-build.sh build)
 
