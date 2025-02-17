@@ -165,6 +165,7 @@ PATH="$CODE/grail/bin:$PATH"
 PATH="$CODE/pypi/bin:$PATH"
 PATH="$CODE/canary/bin:$PATH"
 PATH="$CODE/pastepipe/bin:$PATH"
+PATH="$CODE/cppsh/bin:$PATH"
 
 unique_path
 
