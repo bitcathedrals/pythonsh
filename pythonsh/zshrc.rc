@@ -99,6 +99,41 @@ alias branch='git branch'
 alias merge='git merge --no-ff'
 alias revert='git checkout'
 
+# rsync
+
+function syncer {
+  dry_run=""
+
+  source=$1
+
+  if [[ "$source" == "-n" ]]
+  then
+    dry_run="-n"
+
+    shift
+    source=$1
+  fi
+
+  remote=$2
+
+  if [[ -z "$source" ]]
+  then
+    echo >/dev/stderr "syncer: source directory not given"
+  fi
+
+  if [[ ! -d "$source" ]]
+  then
+    echo >/dev/stderr "syncer: source directory does not exist or is not a directory"
+  fi
+
+  if [[ -z "$remote" ]]
+  then
+    echo >/dev/stderr "syncer: host not given"
+  fi
+
+  rsync "$dry_run" -arP "$source" "$remote" --delete-after
+}
+
 # ssh
 
 alias ssh-master='ssh -Nf'
