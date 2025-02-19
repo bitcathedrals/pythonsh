@@ -155,6 +155,16 @@ set_macos_path_helper
 set_homebrew
 set_pyenv
 
+if [[ `uname` == Darwin ]]
+then
+  binutils=$(ls -d /opt/homebrew/Cellar/binutils/*/bin)
+
+  if [[ -d $binutils ]]
+  then
+    PATH="$binutils:$PATH"
+  fi
+fi
+
 CODE=$HOME/code
 
 PATH="$CODE/utilities/bin:$PATH"

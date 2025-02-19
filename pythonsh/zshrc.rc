@@ -99,6 +99,7 @@ alias branch='git branch'
 alias merge='git merge --no-ff'
 alias revert='git checkout'
 
+
 # rsync
 
 function syncer {
@@ -133,6 +134,28 @@ function syncer {
 
   rsync "$dry_run" -arP "$source" "$remote" --delete-after
 }
+
+# reverse engineer
+
+# use strings
+
+if [[ `uname` == "Darwin" ]]
+then
+  alias ldd='otool -L'
+  alias llvm-dis-all='objdump --disassemble-all --line-numbers --x86-asm-syntax=intel'
+  alias llvm-dis='objdump -d'
+  alias llvm-dis-sym'objdump --line-numbers --x86-asm-syntax=intel disassemble='
+
+  alias llvm-list-sym='objdump -t'
+  alias llvm-list-dyn='objdump --dynamic-syms --show-all-symbols --demangle'
+
+  alias gnu-dis-all='gobjdump --disassemble-all'
+  alias gnu-dis='--disassemble'
+  alias gnu-dis-sym='--disassemble='
+
+  alias gnu-list-sym='gobjdump -t'
+  alias gnu-list-dyn='gobdump -T'
+fi
 
 # ssh
 

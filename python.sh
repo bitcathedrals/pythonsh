@@ -6,6 +6,7 @@ SOURCE=.
 
 BUILD_NAME=pythonsh
 
+DOCKER_IMAGE="pythonsh"
 DOCKER_VERSION="11"
 DOCKER_USER="codermattie"
 
