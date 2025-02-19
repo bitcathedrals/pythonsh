@@ -168,6 +168,3 @@ alias t-reload='tmux source-file ~/.tmux.conf'
 alias ta='tmux attach-session'
 alias tl='tmux list-sessions'
 alias tn='tmux new-session -s'
-
-
-
