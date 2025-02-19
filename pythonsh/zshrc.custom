@@ -157,11 +157,11 @@ set_pyenv
 
 if [[ `uname` == Darwin ]]
 then
-  binutils=$(ls -d /opt/homebrew/Cellar/binutils/*/bin)
+  binutils=$(find "/opt/homebrew/Cellar/binutils" -name "*" -depth 1 -print | sort -V -t '/' -k 5)
 
-  if [[ -d $binutils ]]
+  if [[ -d "${binutils}/bin" ]]
   then
-    PATH="$binutils:$PATH"
+    PATH="$PATH:${binutils}/bin"
   fi
 fi
 
