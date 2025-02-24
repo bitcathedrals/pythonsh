@@ -97,6 +97,70 @@ alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
 alias merge='git merge --no-ff'
+alias revert='git checkout'
+
+
+# rsync
+
+function syncer {
+  dry_run=""
+
+  source=$1
+
+  if [[ "$source" == "-n" ]]
+  then
+    dry_run="-n"
+
+    shift
+    source=$1
+  fi
+
+  remote=$2
+
+  if [[ -z "$source" ]]
+  then
+    echo >/dev/stderr "syncer: source directory not given"
+  fi
+
+  if [[ ! -d "$source" ]]
+  then
+    echo >/dev/stderr "syncer: source directory does not exist or is not a directory"
+  fi
+
+  if [[ -z "$remote" ]]
+  then
+    echo >/dev/stderr "syncer: host not given"
+  fi
+
+  echo "rsync $dry_run --delete-after -arP --exclude .git $source $remote"
+  eval "rsync $dry_run --delete-after -arP --exclude .git $source $remote"
+}
+
+# reverse engineer
+
+# use strings
+
+if [[ `uname` == "Darwin" ]]
+then
+  alias ldd='otool -L'
+  alias llvm-dis-all='objdump --disassemble-all --line-numbers --x86-asm-syntax=intel'
+  alias llvm-dis='objdump -d'
+  alias llvm-dis-sym'objdump --line-numbers --x86-asm-syntax=intel disassemble='
+
+  alias llvm-list-sym='objdump -t'
+  alias llvm-list-dyn='objdump --dynamic-syms --show-all-symbols --demangle'
+
+  alias gnu-dis-all='gobjdump --disassemble-all'
+  alias gnu-dis='--disassemble'
+  alias gnu-dis-sym='--disassemble='
+
+  alias gnu-list-sym='gobjdump -t'
+  alias gnu-list-dyn='gobdump -T'
+fi
+
+# ssh
+
+alias ssh-master='ssh -Nf'
 
 # tmux
 
@@ -105,6 +169,3 @@ alias t-reload='tmux source-file ~/.tmux.conf'
 alias ta='tmux attach-session'
 alias tl='tmux list-sessions'
 alias tn='tmux new-session -s'
-
-
-

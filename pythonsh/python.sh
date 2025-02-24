@@ -93,6 +93,17 @@ function latest_virtualenv_python {
   return 0
 }
 
+function candidate_virtualenv_python {
+  VERSION=$1
+
+  CANDIDATE_PYTHON=`pyenv install -l | tr -s ' ' | sed -e 's,^ ,,' | grep -E "^$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V -r | head -n 1`
+  export CANDIDATE_PYTHON
+
+  echo "Python Candidate version: ${CANDIDATE_PYTHON}"
+
+  return 0
+}
+
 function show_all_python_versions {
   pyenv install -l | sed -e 's,^ *,,' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -u -V
 }
@@ -105,20 +116,61 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  export PYTHON_CONFIGURE_OPTS="--enable-optimizations"
+  system=$(uname)
 
-  echo -n "Updating Python interpreter: ${VERSION}..."
+  case $system in
+    "Darwin")
+       eval "$(/opt/dependencies/bin/brew shellenv)"
+     ;;
+  esac
 
-  if pyenv install -v --skip-existing $VERSION
+  export CC="clang"
+
+  echo "Updating Python interpreter: ${VERSION}..."
+
+  (
+      candidate_virtualenv_python ${VERSION}
+      export PATH="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}/bin:${PATH}"
+
+      ARCH=""
+
+      if which arch
+      then
+          arch=$(arch)
+
+          if [[ $arch = "arm64" ]]
+          then
+             ARCH="arch -arm64"
+          fi
+      fi
+
+      eval "$ARCH pyenv install -v --skip-existing $VERSION"
+
+      compile_status=$?
+
+      if [[ $compile_status -eq 0 ]]
+      then
+          echo "Success!"
+      else
+          echo "ARCH is: $ARCH"
+          echo "Compile Version is: $CANDIDATE_VERSION"
+          echo "PATH for $VERSION is: $PATH"
+          echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+          echo "SSL_LOCATION is: $SSL_LOCATION"
+
+          echo "pyenv install $VERSION FAILED with code $compile_status!"
+
+          exit 1
+      fi
+  )
+
+  if [[ $? -eq 0 ]]
   then
-    echo "Success!"
+     latest_virtualenv_python $VERSION
   else
-    show_all_python_versions
-    echo "FAILED! - likey a bad version - showing available versions"
-    exit 1
+     echo "skipping virtual environment creation due to failed python $VERSION compile."
+     return 1
   fi
-
-  latest_virtualenv_python $VERSION
 
   return 0
 }
@@ -147,7 +199,7 @@ function install_project_virtualenv {
 
   install_virtualenv_python $VERSION || return 1
 
-  echo "creating project virtual environments"
+  echo "creating project virtual environments from $LATEST_PYTHON"
 
   if [[ -n $ENV_ONE ]]
   then
@@ -458,8 +510,14 @@ function check_python_environment {
 }
 
 case $1 in
+  "python-uninstall")
+    shift
+    version=$1
+
+    exec pyenv uninstall $version
+  ;;
   "version")
-    echo "pythonsh version is: 0.15.1"
+    echo "pythonsh version is: 1.1.1"
     ;;
   "tools-unix")
     # attempt to install git flow
@@ -533,6 +591,100 @@ case $1 in
     echo >/dev/stderr "installing standard prompt with pyenv and github support"
     cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
     ;;
+
+  "tools-brew-init")
+    test -d /opt/homebrew || sudo mkdir -p /opt/homebrew
+    curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
+    sudo tar xJf /tmp/brew.xz --strip 1 -C /opt/homebrew
+    sudo chown -R mattie /opt/homebrew
+    ;;
+
+  "tools-brew-upgrade")
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew update
+       arch -arm64 brew upgrade
+    else
+       brew update
+       brew upgrade
+    fi
+  ;;
+  "tools-brew-install")
+    shift
+
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew install $@
+    else
+       brew install $@
+    fi
+  ;;
+  "tools-brew-rebuild")
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+      brew list | xargs arch -arm64 brew reinstall
+    else
+      brew list | xargs brew reinstall
+    fi
+  ;;
+
+  "dependencies-init")
+    test -d /opt/dependencies || sudo mkdir -p /opt/dependencies
+    curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
+    sudo tar xJf /tmp/brew.xz --strip 1 -C /opt/dependencies
+    sudo chown -R mattie /opt/dependencies
+  ;;
+
+  "dependencies-upgrade")
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    ARCH=$(arch)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       arch -arm64 brew update
+       arch -arm64 brew upgrade
+    else
+       brew update
+       brew upgrade
+    fi
+  ;;
+
+  "dependencies-install")
+    shift
+
+    ARCH=$(arch)
+
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       eval "arch -arm64 brew install $*"
+    else
+       eval "brew install $*"
+    fi
+  ;;
+
+  "dependencies-python")
+    DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
+
+    ARCH=$(arch)
+
+    eval $(/opt/dependencies/bin/brew shellenv)
+
+    if [[ $ARCH = "arm64" ]]
+    then
+       eval "arch -arm64 brew install $DEPS"
+    else
+       eval "brew install $DEPS"
+    fi
+  ;;
 
   #
   # virtual environments
@@ -642,6 +794,16 @@ case $1 in
     $0 update || exit 1
 
     echo "bootstrap complete"
+    ;;
+  "test-install")
+    # only use lockfile and dont install dev-packages, evidently sync
+    # does install dev-packages
+
+    pyenv exec python -m pip install pipenv
+
+    pipenv install --ignore-pipfile
+
+    echo "test-deps complete"
     ;;
   "pipfile")
     find_deps
@@ -761,6 +923,9 @@ case $1 in
 
     pyenv exec python -m build
     ;;
+  "publish")
+    pyenv exec twine upload --repository-url http://cracker.wifi:8080 dist/*
+    ;;
   "buildset")
     build_buildset
     ;;
@@ -839,31 +1004,22 @@ case $1 in
     mklauncher.sh $@
     ;;
   "docker-update")
+    # copy pythonsh files
+    cp py.sh python.sh docker/
+    cp python.sh docker/python.sh
+
+    # tangle the docker file
     (cd docker && org-compile.sh docker.org)
     mkdocker.sh "${DOCKER_VERSION}" >docker/Dockerfile
 
-    git add docker/docker.org
-
-    timestamp=`date`
-    git commit -m "(update): generated Dockerfile @ \"$timestamp\""
-    ;;
-  "docker-build")
-    $0 check
-
-    if [[ -z $DOCKER_USER ]]
-    then
-      echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
-      exit 1
-    fi
-
-    if [[ -z $DOCKER_VERSION ]]
-    then
-      echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
-      exit 1
-    fi
+    #
+    # copy over and generate run in environment scripts
+    #
 
     cp bin/run-in-venv.sh docker/
     cp bin/batch-in-venv.sh docker/install.sh
+    cp bin/run-in-venv.sh docker/install-pipenv.sh
+
     cat >>docker/install.sh <<INSTALLER
 echo "HOME is \$HOME"
 echo "USER is \$USER"
@@ -885,12 +1041,31 @@ whoami
 source \$1
 VENV
 
-    echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
-
-    cp py.sh python.sh docker/
-
-    cp bin/run-in-venv.sh docker/install-pipenv.sh
+    # install pipenv
     echo "pyenv exec python -m pip install pipenv" >>docker/install-pipenv.sh
+   ;;
+   "docker-commit")
+    git add docker/docker.org
+
+    timestamp=`date`
+    git commit -m "(update): generated Dockerfile @ \"$timestamp\""
+    ;;
+  "docker-build")
+    $0 check
+
+    if [[ -z $DOCKER_USER ]]
+    then
+      echo >/dev/stderr "pythonsh - docker: DOCKER_USER needs to be set. exiting."
+      exit 1
+    fi
+
+    if [[ -z $DOCKER_VERSION ]]
+    then
+      echo >/dev/stderr "pythonsh - docker: DOCKER_VERSION needs to be set. exiting."
+      exit 1
+    fi
+
+    echo "pythonsh - docker: building docker[${DOCKER_VERSION}]"
 
     (cd docker && dock-build.sh build)
 
@@ -1026,7 +1201,7 @@ VENV
 
     if [[ -z $name ]]
     then
-      echo "pythonsh begin: requires a name as an argument"
+      echo "pythonsh begin: requires a name for a new feature branch as an argument"
       exit 1
     fi
 
@@ -1038,12 +1213,24 @@ VENV
 
     if [[ -z $name ]]
     then
-      echo "pythonsh end: requires a name as an argument"
+      echo "pythonsh end: requires the name of the feature branch to close"
       exit 1
     fi
 
     git flow feature finish $name
     ;;
+  "switch")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh switch: requires the name of the feature branch to switch to as an argument"
+      exit 1
+    fi
+
+    git checkout "feature/$name"
+    ;;    
   "beta")
     shift
 
@@ -1373,12 +1560,25 @@ python.sh
 tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
-tools-custom  = install zshrc.cujstom
+tools-custom  = install zshrc.custom
 tools-prompt  = install prompt support with pyeenv, git, and project in the prompt
+
+brew-upgrade  = upgrade brew packages
+
+tools-brew-init     = initialize the /opt/homebrew homebrew repository
+tools-brew-upgrade  = upgrade the /opt/homebrew repository
+tools-brew-install  = install into /opt/homebrew a list of packages
+tools-brew-rebuild  = rebuild packages in /opt/homebrew
+
+dependencies-init     = initialize /opt/dependencies for stable and minimal deps to compile against
+dependencies-upgrade  = upgrade /opt/dependencies 
+dependencies-install  = install into /opt/dependencies a list of packages
+dependencies-python   = install into /opt/dependencies python dependencies
 
 [virtual commands]
 
 python-versions  = list the available python versions
+python-uninstall <version> = uninstall version
 project-virtual  = create: dev and test virtual environments from settings in python.sh
 global-virtual   = (NAME, VERSION): create NAME virtual environment, VERSION defaults to PYTHON_VERSION
 
@@ -1396,7 +1596,8 @@ minimal          = pythonsh only bootstrap for projects with only pythonsh deps
 bootstrap        = two stage bootstrap generate pipfile, install source deps, install pkg deps
 pipfile          = generate a pipfile from all of the packages in the source tree + pythonsh + site-packages deps
 project          = generate a pyproject.toml file
-
+test-install     = install packages only, from Pipfile.lock. This is for installing packages into the
+                   test environment
 show-paths = list .pth source paths
 add-paths  = install .pth source paths into the python environment
 rm-paths   = remove .pth source paths
@@ -1421,6 +1622,7 @@ simple     = <pkg> do a simple pyenv pip install without pipenv
 
 [build]
 
+publish    = upload to cracker.local all packages in dist/*
 build      = build packages
 buildset   = build a package set
 mkrelease  = make the release environment
@@ -1432,6 +1634,7 @@ mkrunner   = <program> <args....> make a runner that sets/restores environment f
 mklauncher     = <program> <args....> make a simple launcher for python docker
 
 docker-update  = regenerate the Dockerfile from the .org file
+docker-commit  = commit the .org dockerfile
 docker-build   = build the PythonSh docker layer
 docker-release = record a docker release with <MESSAGE>
 
@@ -1448,6 +1651,9 @@ modall              = update all submodules
 
 [version control]
 
+begin  <name> = start feature branch <name>
+end    <name> = close feature branch <name>
+switch <name> = switch to feature branch <name>
 track <1> <2>  = set upstream tracking 1=remote 2=branch
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
