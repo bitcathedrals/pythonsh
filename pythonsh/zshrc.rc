@@ -132,7 +132,7 @@ function syncer {
     echo >/dev/stderr "syncer: host not given"
   fi
 
-  echo "rsync  --delete-after $dry_run -arP $source $remote"
+  echo "rsync $dry_run -arP --delete-after $source $remote"
   rsync "$dry_run" -arP --delete-after "$source" "$remote"
 }
 
