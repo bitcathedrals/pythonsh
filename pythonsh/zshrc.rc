@@ -133,7 +133,7 @@ function syncer {
   fi
 
   echo "rsync $dry_run --delete-after -arP $source $remote"
-  rsync "$dry_run" --delete-after -arP "$source" "$remote"
+  eval "rsync $dry_run --delete-after -arP $source $remote"
 }
 
 # reverse engineer
