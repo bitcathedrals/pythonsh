@@ -132,8 +132,8 @@ function syncer {
     echo >/dev/stderr "syncer: host not given"
   fi
 
-  echo "rsync $dry_run --delete-after -arP $source $remote"
-  eval "rsync $dry_run --delete-after -arP $source $remote"
+  echo "rsync $dry_run --delete-after -arP --exclude .git $source $remote"
+  eval "rsync $dry_run --delete-after -arP --exclude .git $source $remote"
 }
 
 # reverse engineer
