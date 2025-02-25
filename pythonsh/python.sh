@@ -1,6 +1,12 @@
 #! /usr/bin/env bash
 
-test -f python.sh && source python.sh
+if [[ ! -f python.sh ]]
+then
+  echo "python.sh not found! exiting"
+  exit 1
+fi
+
+source python.sh
 
 export PIPENV_VERBOSITY=-1
 
