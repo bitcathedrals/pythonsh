@@ -8,6 +8,18 @@ fi
 
 source python.sh
 
+if [[ -z "$VIRTUAL_PREFIX" ]]
+then
+  echo "python.sh: VIRTUAL_PREFIX not set"
+  exit 1
+fi
+
+if [[ -z "$PYTHON_VERSION" ]]
+then
+  echo "python.sh: PYTHON_VERSION not set"
+  exit 1
+fi
+
 export PIPENV_VERBOSITY=-1
 
 function add_src {
