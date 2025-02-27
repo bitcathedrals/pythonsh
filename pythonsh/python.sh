@@ -572,8 +572,7 @@ case $1 in
     TOOLS="$HOME/tools/"
     PYENV_ROOT="$TOOLS/pyenv"
 
-    test -d $TOOLS || mkdir $TOOLS
-    test -d "$TOOLS/local" || mkdir "$TOOLS/local"
+    test -d "$TOOLS/local" || mkdir -p "$TOOLS/local"
 
     if test -d $PYENV_ROOT && test -d $PYENV_ROOT/.git
     then
