@@ -1,6 +1,24 @@
 #! /usr/bin/env bash
 
-test -f python.sh && source python.sh
+if [[ ! -f python.sh ]]
+then
+  echo "python.sh not found! exiting"
+  exit 1
+fi
+
+source python.sh
+
+if [[ -z "$VIRTUAL_PREFIX" ]]
+then
+  echo "python.sh: VIRTUAL_PREFIX not set"
+  exit 1
+fi
+
+if [[ -z "$PYTHON_VERSION" ]]
+then
+  echo "python.sh: PYTHON_VERSION not set"
+  exit 1
+fi
 
 export PIPENV_VERBOSITY=-1
 
@@ -554,8 +572,7 @@ case $1 in
     TOOLS="$HOME/tools/"
     PYENV_ROOT="$TOOLS/pyenv"
 
-    test -d $TOOLS || mkdir $TOOLS
-    test -d "$TOOLS/local" || mkdir "$TOOLS/local"
+    test -d "$TOOLS/local" || mkdir -p "$TOOLS/local"
 
     if test -d $PYENV_ROOT && test -d $PYENV_ROOT/.git
     then
@@ -1132,6 +1149,15 @@ VENV
       exit 1
     fi
     ;;
+  "modsync")
+    if git pull --recurse-submodules
+    then
+      echo "pythonsh: update ok. please remember to test and commit."
+    else
+      echo "pythonsh: update failed. cleanup required."
+      exit 1
+    fi
+    ;;
   "modupdate")
     shift
 
@@ -1646,6 +1672,7 @@ mkrunner   = execute mkrunner.sh to build a runner
 modinit             = initialize and pull all submodules
 modadd <1> <2> <3>  = add a submodule where 1=repo 2=branch 3=localDir (commit after)
 modupdate <module>  = pull the latest version of the module
+modsync             = pull and sync all modules to checked out commits
 modrm  <submodule>  = delete a submodule
 modall              = update all submodules
 
