@@ -25,7 +25,7 @@ You are going to see the result of 20+ years of experience, and 4
 years of development baked into a mature, effective, and innovative
 tool.
 
-* Gauge Security (PythonSh) - Automation is Innovation.
+* PythonSh - Automation is Innovation.
 
 I have extensive experience in professional and personal projects with
 Python. From that experience clearly one of the most poorly thought
