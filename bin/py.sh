@@ -1,8 +1,16 @@
 #! /usr/bin/env bash
 
+# this will put us in bin/
+PYTHONSH=$(dirname $0)
+# this will put is in the pythonsh base directory
+PYTHONSH_BASE=$(dirname "$PYTHONSH")
+
+PYTHONSH_SHELL="${PYTHONSH_BASE}/shell/"
+
+# load local pythonsh configuaration
 if [[ ! -f python.sh ]]
 then
-  echo "python.sh not found! exiting"
+  echo "pythonsh: python.sh not found in current directory! exiting"
   exit 1
 fi
 
@@ -234,7 +242,7 @@ function install_project_virtualenv {
 }
 
 function find_deps {
-  pipdirs="pythonsh"
+  pipdirs="${PYTHONSH_BASE}/bootstrap"
 
   for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
@@ -274,22 +282,18 @@ function find_deps {
 }
 
 function find_catpip {
-  catpip="pythonsh/pyutils/catpip.py pipfile"
+  catpip="${PYTHONSH_BASE}/pyutils/catpip.py pipfile"
 
   if command -v catpip >/dev/null 2>&1
   then
     echo >/dev/stderr "pipfile: using installed catpip: catpip"
     catpip="catpip"
-  elif [[ -f pythonsh/pyutils/catpip.py ]]
+  elif [[ -f ${PYTHONSH_BASE}/pyutils/catpip.py ]]
   then
     echo >/dev/stderr "pipfile: using distributed catpip: pythonsh/pyutils/catpip.py"
     catpip="pythonsh/pyutils/catpip.py"
-  elif [[ -f pyutils/catpip.py ]]
-  then
-    echo >/dev/stderr "pipfile: using internal catpip: pyutils/catpip.py"
-    catpip="pyutils/catpip.py"
   else
-    echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+    echo >/dev/stderr "pythonsh: (pipfile): can\'t find catpip.py... exiting with error."
     exit 1
   fi
 }
@@ -338,7 +342,6 @@ function prepare_buildset_environment {
 
   $0 bootstrap
 }
-
 
 function build_buildset {
   echo >/dev/stderr "pythonsh - buildset: starting buildset $VERSION"
@@ -528,16 +531,10 @@ function check_python_environment {
 }
 
 case $1 in
-  "python-uninstall")
-    shift
-    version=$1
-
-    exec pyenv uninstall $version
-  ;;
   "version")
     echo "pythonsh version is: 1.1.1"
     ;;
-  "tools-unix")
+  "tools-python")
     # attempt to install git flow
 
     if [[ `uname` == "Darwin" ]]
@@ -550,7 +547,7 @@ case $1 in
         then
           ports install git-flow
         else
-          echo "pythonsh: tools-unix - cannot find a way to install git-flow: brew,ports"
+          echo "pythonsh: tools-python - cannot find a way to install git-flow: brew,ports"
         fi
       fi
     else
@@ -563,11 +560,11 @@ case $1 in
           sudo apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev gcc autoconf automake libtool autotools-dev make zlib1g zlib1g-dev
         fi
       else
-        echo "pythonsh: tools-unix - cannot find a way to install git-flow: all I know is apt"
+        echo "pythonsh: tools-python - cannot find a way to install git-flow: all I know is apt"
       fi
     fi
 
-    echo "installing pyenv for UNIX"
+    echo >/dev/stderr "pythonsh: installing tools for python"
 
     TOOLS="$HOME/tools/"
     PYENV_ROOT="$TOOLS/pyenv"
@@ -598,16 +595,16 @@ case $1 in
     fi
     ;;
   "tools-zshrc")
-    cp pythonsh/zshrc.rc $HOME/.zshrc
-    echo >/dev/stderr "replacing .zshrc with upstream version"
+    cp "${PYTHONSH_SHELL}/zshrc.rc" $HOME/.zshrc
+    echo >/dev/stderr "pythonsh: replaced .zshrc with upstream version"
     ;;
   "tools-custom")
-    echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-    cp pythonsh/zshrc.custom $HOME/.zshrc.custom
+    cp "${PYTHONSH_SHELL}/zshrc.custom" $HOME/.zshrc.custom
+    echo >/dev/stderr "pythonsh: replaced .zshrc.custom with upstream version"
     ;;
   "tools-prompt")
-    echo >/dev/stderr "installing standard prompt with pyenv and github support"
-    cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
+    cp "${PYTHONSH_SHELL}/zshrc.prompt" $HOME/.zshrc.prompt
+    echo >/dev/stderr "pythonsh: installed prompt with pyenv and github support"
     ;;
 
   "tools-brew-init")
@@ -651,7 +648,6 @@ case $1 in
       brew list | xargs brew reinstall
     fi
   ;;
-
   "dependencies-init")
     test -d /opt/dependencies || sudo mkdir -p /opt/dependencies
     curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
@@ -709,7 +705,13 @@ case $1 in
   #
   "python-versions")
     show_all_python_versions
-    ;;
+  ;;
+  "python-uninstall")
+    shift
+    version=$1
+
+    exec pyenv uninstall $version
+  ;;
   "project-virtual")
     install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
 
@@ -1570,12 +1572,21 @@ VENV
     done
     ;;
   "help"|""|*)
-    cat <<HELP
+    if [[ -n $2 ]]
+    then
+      filter="$2"
+    else
+      filter='\.*'
+    fi
+
+    echo "filter is $filter"
+
+    cat <<HELP | grep "$filter"
 python.sh
 
 [tools commands]
 
-tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
+tools-python  = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom  = install zshrc.custom
@@ -1711,7 +1722,7 @@ upload     = push main and develop branches and tags to remote
 
 purge      = remove all the __pycache__ dirs
 HELP
-    ;;
+  ;;
 esac
 
 exit 0
