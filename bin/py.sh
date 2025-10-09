@@ -6,6 +6,29 @@ PYTHONSH=$(dirname $0)
 PYTHONSH_BASE=$(dirname "$PYTHONSH")
 
 PYTHONSH_SHELL="${PYTHONSH_BASE}/shell/"
+PYTHONSH_UTILS="${PYTHONSH_BASE}/utils/"
+
+PYTHONSH_BREW=""
+
+PYTHONSH_SYSTEM=$(uname)
+PYTHON_ARCH=""
+PYTHON_ARCH_COMMAND=""
+
+case $PYTHONSH_SYSTEM in
+  "Darwin")
+    PYTHONSH_BREW="/opt/dependencies"
+
+    if which arch
+    then
+      PYTHONSH_ARCH=$(arch)
+
+      if [[ $PYTHONSH_ARCH == "arm64" ]]
+      then
+        PYTHON_ARCH_COMMAND="arch -arm64"
+      fi
+    fi
+  ;;
+esac
 
 # load local pythonsh configuaration
 if [[ ! -f python.sh ]]
@@ -68,6 +91,7 @@ function root_to_branch {
 function setup_pyenv {
   TOOLS=$HOME/tools
   PYENV_ROOT="$TOOLS/pyenv"
+
   PATH="$TOOLS/local/bin:$PATH"
   PATH="$PYENV_ROOT/bin:$PATH"
   PATH="$PYENV_ROOT/libexec:$PATH"
@@ -142,61 +166,54 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  system=$(uname)
+  candidate_virtualenv_python $VERSION
 
-  case $system in
+  BEST_PYTHON=$VERSION
+  BEST_VERSION=$CANDIDATE_PYTHON
+
+  echo "pythonsh: attempting install of python $BEST_PYTHON version $BEST_VERSION"
+  VERSION_LOCATION="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}"
+
+  CC="gcc"
+
+  case $PYTHONSH_SYSTEM in
     "Darwin")
-       eval "$(/opt/dependencies/bin/brew shellenv)"
-     ;;
+      eval $(${PYTHONSH_BREW}/bin/brew shellenv)
+      CC="clang"
+      export DYLD_LIBRARY_PATH="${VERSION_LOCATION}/lib:${DYLD_LIBRARY_PATH}"
+    ;;
   esac
 
-  export CC="clang"
+  CPPFLAGS="-I${VERSION_LOCATION}/include" 
+  LDFLAGS="-L${VERSION_LOCATION}/lib"
 
-  echo "Updating Python interpreter: ${VERSION}..."
+  PATH="${VERSION_LOCATION}/bin:${PATH}"
 
-  (
-      candidate_virtualenv_python ${VERSION}
-      export PATH="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}/bin:${PATH}"
+  export PPFLAGS LDFLAGS CC PATH BEST_PYTHON BEST_VERSION
 
-      ARCH=""
+  echo "Updating Python interpreter: ${BEST_VERSION}"
 
-      if which arch
-      then
-          arch=$(arch)
+ (
+    eval $PYTHONSH_ARCH_h pyenv install -v --skip-existing $BEST_VERSION
+    compile_status=$?
 
-          if [[ $arch = "arm64" ]]
-          then
-             ARCH="arch -arm64"
-          fi
-      fi
+    if [[ $compile_status -ne 0 ]]
+    then
+    echo "pythonsh: pyenv install $BEST_VERSION FAILED with code $compile_status"
 
-      eval "$ARCH pyenv install -v --skip-existing $VERSION"
+      echo "ARCH is: $PYTHONSH_ARCH"
 
-      compile_status=$?
+      echo "Compile Version is: $BEST_VERSION"
+      echo "PATH for $VERSION is: $PATH"
+      echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+      echo "SSL_LOCATION is: $SSL_LOCATION"
 
-      if [[ $compile_status -eq 0 ]]
-      then
-          echo "Success!"
-      else
-          echo "ARCH is: $ARCH"
-          echo "Compile Version is: $CANDIDATE_VERSION"
-          echo "PATH for $VERSION is: $PATH"
-          echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
-          echo "SSL_LOCATION is: $SSL_LOCATION"
+      return 1
+    fi
 
-          echo "pyenv install $VERSION FAILED with code $compile_status!"
-
-          exit 1
-      fi
+    echo "pythonsh: Success! version = ${BEST_VERSION}"
+    latest_virtualenv_python $BEST_VERSION
   )
-
-  if [[ $? -eq 0 ]]
-  then
-     latest_virtualenv_python $VERSION
-  else
-     echo "skipping virtual environment creation due to failed python $VERSION compile."
-     return 1
-  fi
 
   return 0
 }
@@ -204,6 +221,15 @@ function install_virtualenv_python {
 function install_virtualenv {
   LATEST=$1
   NAME=$2
+
+  echo "pythonsh: installing virtualenv $NAME"
+
+  pyenv virtualenvs | grep "$NAME" >/dev/null
+  if [[ $? -eq 0 ]]
+  then
+    echo "pythonsh: deleting existing virtual environment $NAME"
+    pyenv virtualenv-delete $NAME
+  fi
 
   pyenv virtualenv "$LATEST" "$NAME"
 
@@ -222,20 +248,50 @@ function install_project_virtualenv {
 
   ENV_ONE=$2
   ENV_TWO=$3
+  ENV_THREE=$4
 
-  install_virtualenv_python $VERSION || return 1
+  echo "pythonsh: install_project_virtualenv one = $ENV_ONE two = $ENV_TWO three = $ENV_THREE"
 
-  echo "creating project virtual environments from $LATEST_PYTHON"
-
-  if [[ -n $ENV_ONE ]]
+  install_virtualenv_python $VERSION
+  
+  if [[ $? -ne 0 ]]
   then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
-    install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
+    exit 1
   fi
+
+  echo "creating project virtual environments from $BEST_VERSION"
+
+  echo "pythonsh: building environment: $ENV_ONE from $BEST_VERSION"
+
+  install_virtualenv $BEST_VERSION $ENV_ONE
+   
+   if [[ $? -ne 0 ]]
+   then
+     exit 1
+  fi
+
   if [[ -n $ENV_TWO ]]
   then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
-    install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
+    echo "pythonsh: building environment: ${ENV_TWO} from $BEST_VERSION"
+
+    install_virtualenv $BEST_VERSION $ENV_TWO
+
+    if [[ $? -ne 0 ]]
+    then
+      exit 1
+    fi
+  fi
+
+  if [[ -n $ENV_THREE ]]
+  then
+    echo "pythonsh: building environment: ${ENV_THREE} from $BEST_VERSION"
+
+    install_virtualenv $BEST_VERSION $ENV_THREE
+
+    if [[ $? -ne 0 ]]
+    then
+      exit 1
+    fi
   fi
 
   return 0
@@ -244,6 +300,7 @@ function install_project_virtualenv {
 function find_deps {
   pipdirs="${PYTHONSH_BASE}/bootstrap"
 
+#  TODO: this will fail if SOURCE is not set.
   for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
     dep_dir="${SOURCE}/$dep_dir"
@@ -282,16 +339,15 @@ function find_deps {
 }
 
 function find_catpip {
-  catpip="${PYTHONSH_BASE}/pyutils/catpip.py pipfile"
+  catpip="${PYTHONSH_UTILS}/catpip.py"
 
   if command -v catpip >/dev/null 2>&1
   then
     echo >/dev/stderr "pipfile: using installed catpip: catpip"
     catpip="catpip"
-  elif [[ -f ${PYTHONSH_BASE}/pyutils/catpip.py ]]
+  elif [[ -f ${catpip} ]]
   then
-    echo >/dev/stderr "pipfile: using distributed catpip: pythonsh/pyutils/catpip.py"
-    catpip="pythonsh/pyutils/catpip.py"
+    echo >/dev/stderr "pipfile: using distributed catpip: ${catpip}"
   else
     echo >/dev/stderr "pythonsh: (pipfile): can\'t find catpip.py... exiting with error."
     exit 1
@@ -685,11 +741,15 @@ case $1 in
   ;;
 
   "dependencies-python")
+    OPT_DEP="/opt/dependences/"
+
     DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
 
     ARCH=$(arch)
 
-    eval $(/opt/dependencies/bin/brew shellenv)
+    eval $(${OPT_DEP}/bin/brew shellenv)
+
+    OPENSSL=$(${OPT_DEP}/bin/brew --prefix openssl)
 
     if [[ $ARCH = "arm64" ]]
     then
@@ -712,7 +772,7 @@ case $1 in
     exec pyenv uninstall $version
   ;;
   "project-virtual")
-    install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
+    install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
 
     echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
