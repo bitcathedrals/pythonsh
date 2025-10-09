@@ -7,6 +7,7 @@ PYTHONSH_BASE=$(dirname "$PYTHONSH")
 
 PYTHONSH_SHELL="${PYTHONSH_BASE}/shell/"
 PYTHONSH_UTILS="${PYTHONSH_BASE}/utils/"
+PYTHONSH_BOOTSTRAP="${PYTHONSH_BASE}/bootstrap"
 
 PYTHONSH_BREW=""
 
@@ -300,7 +301,12 @@ function install_project_virtualenv {
 function find_deps {
   pipdirs="${PYTHONSH_BASE}/bootstrap"
 
-#  TODO: this will fail if SOURCE is not set.
+  if [[ -z $SOURCE ]]
+  then
+    echo "pythonsh: warning no SOURCE setting in python.sh file. Rerun pipfile command to generate a new Pipfile"
+    return 0
+  fi
+
   for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
     dep_dir="${SOURCE}/$dep_dir"
@@ -851,7 +857,9 @@ case $1 in
 
     test -e pytest.ini || ln -s pythonsh/pytest.ini
 
-    pipfile="pythonsh/Pipfile"
+    pipfile="${PYTHONSH_BOOTSTRAP}/Pipfile"
+
+    echo >/dev/stderr "pythonsh: bootstrap Pipfile = $pipfile"
 
     pyenv exec python -m pip install pipenv ; PIPENV_PIPFILE="$pipfile" pyenv exec pipenv install --dev
     ;;
@@ -872,7 +880,7 @@ case $1 in
 
     $0 update || exit 1
 
-    echo "bootstrap complete"
+    echo >/dev/stderr "pythonsh: bootstrap complete"
     ;;
   "test-install")
     # only use lockfile and dont install dev-packages, evidently sync
@@ -882,7 +890,7 @@ case $1 in
 
     pipenv install --ignore-pipfile
 
-    echo "test-deps complete"
+    echo >/dev/stderr "pythonsh: test-deps complete"
     ;;
   "pipfile")
     find_deps
