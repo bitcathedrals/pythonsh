@@ -855,7 +855,7 @@ case $1 in
 
     test -f Pipfile.lock || touch Pipfile.lock
 
-    test -e pytest.ini || ln -s pythonsh/pytest.ini
+    test -e pytest.ini || cp ${PYTHONSH_BASE}pytest.ini .
 
     pipfile="${PYTHONSH_BOOTSTRAP}/Pipfile"
 
