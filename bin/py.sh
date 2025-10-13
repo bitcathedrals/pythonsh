@@ -99,6 +99,11 @@ function setup_pyenv {
 
   export PYENV_ROOT PATH
 
+  if ! command -v pyenv >/dev/null 2>&1
+    echo >/dev/stderr "py.sh: pyenv not found! will continue, but python commands will fail."
+    return 1
+  fi
+
   eval "$(pyenv init -)"
 
   if [[ $? -gt 0 ]]
