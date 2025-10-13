@@ -32,9 +32,9 @@ case $PYTHONSH_SYSTEM in
 esac
 
 # load local pythonsh configuaration
-if [[ ! -f python.sh ]]
+if ! [[ -f python.sh ]]
 then
-  echo "pythonsh: python.sh not found in current directory! exiting"
+  echo >/dev/stderr "py.sh: python.sh configuration not found in current directory... python commands will break!"
   exit 1
 fi
 
@@ -100,6 +100,7 @@ function setup_pyenv {
   export PYENV_ROOT PATH
 
   if ! command -v pyenv >/dev/null 2>&1
+  then
     echo >/dev/stderr "py.sh: pyenv not found! will continue, but python commands will fail."
     return 1
   fi
@@ -108,14 +109,20 @@ function setup_pyenv {
 
   if [[ $? -gt 0 ]]
   then
-    echo "could not execute pyenv init --shell. FAILED!"
-    return 1
+    echo >/dev/stderr "py.sh: pyenv init --shell. FAILED!"
+    return 2
   fi
 
   return 0
 }
 
 setup_pyenv
+
+if [[ $? -eq 2 ]]
+then
+  echo >/dev/stderr "py.sh: setup_pyenv had a hard fail. exiting!"
+  exit 1
+fi
 
 function deactivate_if_needed {
   ver=$(pyenv version)
