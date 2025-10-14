@@ -32,24 +32,22 @@ case $PYTHONSH_SYSTEM in
 esac
 
 # load local pythonsh configuaration
-if ! [[ -f python.sh ]]
+if [[ -f python.sh ]]
 then
-  echo >/dev/stderr "py.sh: python.sh configuration not found in current directory... python commands will break!"
-  exit 1
+  source python.sh
+else
+  echo >/dev/stderr "py.sh: WARNING python.sh configuration not found in current directory... python commands will break!"
 fi
 
-source python.sh
 
-if [[ -z "$VIRTUAL_PREFIX" ]]
+if ! [[ -z "$VIRTUAL_PREFIX" ]]
 then
-  echo "python.sh: VIRTUAL_PREFIX not set"
-  exit 1
+  echo >/dev/stderr "py.sh: WARNING - VIRTUAL_PREFIX not set, python commands will not work!"
 fi
 
-if [[ -z "$PYTHON_VERSION" ]]
+if ! [[ -z "$PYTHON_VERSION" ]]
 then
-  echo "python.sh: PYTHON_VERSION not set"
-  exit 1
+  echo >/dev/stderr "py.sh: WARNING - PYTHON_VERSION not set - python commands will not work!"
 fi
 
 export PIPENV_VERBOSITY=-1
