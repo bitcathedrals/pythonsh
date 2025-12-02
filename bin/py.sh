@@ -6,22 +6,26 @@ PYTHONSH=$(dirname $0)
 PYTHONSH_BASE=$(dirname "$PYTHONSH")
 
 PYTHONSH_SHELL="${PYTHONSH_BASE}/shell/"
-PYTHONSH_UTILS="${PYTHONSH_BASE}/utils/"
+PYTHONSH_UTILS="${PYTHONSH_BASE}/pyutils/"
 PYTHONSH_BOOTSTRAP="${PYTHONSH_BASE}/bootstrap"
 
 PYTHONSH_BREW=""
 
 PYTHONSH_SYSTEM=$(uname)
+
 PYTHON_ARCH=""
 PYTHON_ARCH_COMMAND=""
+
+EMACS_BREW="/opt/emacs/"
+DEP_BREW="/opt/dependencies/"
 
 case $PYTHONSH_SYSTEM in
   "Darwin")
     PYTHONSH_BREW="/opt/dependencies"
 
-    if which arch
+    if which arch >/dev/null 2>&1
     then
-      PYTHONSH_ARCH=$(arch)
+      PYTHON_ARCH=$(arch)
 
       if [[ $PYTHONSH_ARCH == "arm64" ]]
       then
@@ -40,12 +44,12 @@ else
 fi
 
 
-if ! [[ -z "$VIRTUAL_PREFIX" ]]
+if [[ -z "$VIRTUAL_PREFIX" ]]
 then
   echo >/dev/stderr "py.sh: WARNING - VIRTUAL_PREFIX not set, python commands will not work!"
 fi
 
-if ! [[ -z "$PYTHON_VERSION" ]]
+if [[ -z "$PYTHON_VERSION" ]]
 then
   echo >/dev/stderr "py.sh: WARNING - PYTHON_VERSION not set - python commands will not work!"
 fi
@@ -205,14 +209,14 @@ function install_virtualenv_python {
   echo "Updating Python interpreter: ${BEST_VERSION}"
 
  (
-    eval $PYTHONSH_ARCH_h pyenv install -v --skip-existing $BEST_VERSION
+    eval $PYTHONSH_ARCH pyenv install -v --skip-existing $BEST_VERSION
     compile_status=$?
 
     if [[ $compile_status -ne 0 ]]
     then
     echo "pythonsh: pyenv install $BEST_VERSION FAILED with code $compile_status"
 
-      echo "ARCH is: $PYTHONSH_ARCH"
+      echo "ARCH is: $PYTHON_ARCH"
 
       echo "Compile Version is: $BEST_VERSION"
       echo "PATH for $VERSION is: $PATH"
@@ -686,38 +690,16 @@ case $1 in
     ;;
 
   "tools-brew-upgrade")
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew update
-       arch -arm64 brew upgrade
-    else
-       brew update
-       brew upgrade
-    fi
+     $PYTHON_ARCH_COMMAND brew update
+     $PYTHON_ARCH_COMMAND brew upgrade
   ;;
   "tools-brew-install")
     shift
 
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew install $@
-    else
-       brew install $@
-    fi
+    $PYTHON_ARCH_COMMAND brew install $@
   ;;
   "tools-brew-rebuild")
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-      brew list | xargs arch -arm64 brew reinstall
-    else
-      brew list | xargs brew reinstall
-    fi
+    $PYTHON_ARCH_COMMAND brew list | xargs arch -arm64 brew reinstall
   ;;
   "dependencies-init")
     test -d /opt/dependencies || sudo mkdir -p /opt/dependencies
@@ -727,52 +709,27 @@ case $1 in
   ;;
 
   "dependencies-upgrade")
-    eval $(/opt/dependencies/bin/brew shellenv)
+    eval $(${DEP_BREW}bin/brew shellenv)
 
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew update
-       arch -arm64 brew upgrade
-    else
-       brew update
-       brew upgrade
-    fi
+    $PYTHON_ARCH_COMMAND brew update
+    $PYTHON_ARCH_COMMAND brew upgrade
   ;;
 
   "dependencies-install")
     shift
 
-    ARCH=$(arch)
-
-    eval $(/opt/dependencies/bin/brew shellenv)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       eval "arch -arm64 brew install $*"
-    else
-       eval "brew install $*"
-    fi
+    eval $(${DEP_BREW}bin/brew shellenv)
+    $PYTHON_ARCH_COMMAND brew install $*
   ;;
 
   "dependencies-python")
-    OPT_DEP="/opt/dependences/"
-
     DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
 
-    ARCH=$(arch)
+    eval $(${DEP_BREW}bin/brew shellenv)
 
-    eval $(${OPT_DEP}/bin/brew shellenv)
+    OPENSSL=$(${DEP_BREW}bin/brew --prefix openssl)
 
-    OPENSSL=$(${OPT_DEP}/bin/brew --prefix openssl)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       eval "arch -arm64 brew install $DEPS"
-    else
-       eval "brew install $DEPS"
-    fi
+    $PYTHON_ARCH_COMMAND brew install $DEPS
   ;;
 
   #
