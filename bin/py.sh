@@ -1585,12 +1585,12 @@ VENV
 
     git add $VER_PYTHONSH
 
-    echo ">>>commiting bump to to $VERSION"
+    echo ">>>commit with release notes for version $VERSION"
 
     # don't do a automatic commit so a release summary can be inserted
     git commit
 
-    echo "ready for release finish: please finish with ./py.sh release once you are ready"
+    echo "ready for release finish: please finish with py.sh release once you are ready"
     ;;
   "release")
     git flow release finish $VERSION || exit 1
@@ -1625,7 +1625,7 @@ VENV
     echo "filter is $filter"
 
     cat <<HELP | grep "$filter"
-python.sh
+py.sh
 
 [tools commands]
 
