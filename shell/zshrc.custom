@@ -80,12 +80,14 @@ function unique_path {
 }
 
 function set_editor {
-  EDITOR=run-emacs
-
   if [[ -x $EDITOR ]]
   then
-    export EDITOR
     return 0
+  fi
+
+  if command -v run-emacs >/dev/null 2>&1
+  then
+    export EDITOR=run-emacs
   fi
 
   if command -v emacsclient >/dev/null 2>&1
