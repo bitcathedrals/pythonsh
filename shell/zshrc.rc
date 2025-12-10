@@ -106,9 +106,13 @@ alias push='git push'
 alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
-alias merge='git merge --no-ff'
-alias revert='git checkout'
+alias revert='git restore'
 
+# pass files or branches
+alias ediff="git difftool"
+
+# initiate a merge
+alias emerge="git mergetool"
 
 # rsync
 
