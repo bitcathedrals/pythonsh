@@ -1258,6 +1258,7 @@ VENV
   #
   # version control
   #
+
   "begin")
     shift
     name=$1
@@ -1282,18 +1283,64 @@ VENV
 
     git flow feature finish $name
     ;;
-  "switch")
+
+  "features")
+    git flow feature
+    ;;
+
+  "bug")
     shift
     name=$1
 
     if [[ -z $name ]]
     then
-      echo "pythonsh switch: requires the name of the feature branch to switch to as an argument"
+      echo "pythonsh bug: requires a name for a new bug branch as an argument"
       exit 1
     fi
 
-    git checkout "feature/$name"
+    git flow bugfix start $name
+    ;;
+  "close")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh close: requires the name of the bugfix branch to close"
+      exit 1
+    fi
+
+    git flow bugfix finish $name
+    ;;
+
+  "bugfixes")
+    git checkout "bugfix/$name"
     ;;    
+
+  "goto")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh goto: requires the name of the bug or feature branch as an argument"
+      exit 1
+    fi
+
+    if git flow feature | grep "$name" >/dev/null 2>&1
+    then
+      exec git checkout "features/$name"
+    fi
+
+    if git flow bugfix | grep "$name" >/dev/null 2>&1
+    then
+      exec git checkout "bugfixes/$name"
+    fi
+
+    echo "pythonsh goto: \"$name\" not found in features or bugfixes"
+    exit 1
+    ;;    
+
   "beta")
     shift
 
@@ -1724,10 +1771,18 @@ modall              = update all submodules
 
 [version control]
 
-begin  <name> = start feature branch <name>
-end    <name> = close feature branch <name>
-switch <name> = switch to feature branch <name>
+begin    <name> = start feature branch <name>
+end      <name> = close feature branch <name>
+features        = list feature branches
+
+bug      <name> = start a bug branch
+close    <name> = finish a bugfix merging into develop
+bugfixes <name> = list bugfix branches
+
+goto     <name> = switch to feature or bugfix branch, searches branches
+
 track <1> <2>  = set upstream tracking 1=remote 2=branch
+
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
