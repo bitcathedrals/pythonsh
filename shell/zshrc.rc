@@ -114,6 +114,8 @@ alias ediff="git difftool"
 # initiate a merge
 alias emerge="git mergetool"
 
+alias goto='py.sh goto'
+
 # rsync
 
 function syncer {
