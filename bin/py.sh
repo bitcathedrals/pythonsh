@@ -617,11 +617,11 @@ case $1 in
     then
       if command -v brew >/dev/null 2>&1
       then
-        brew install git-flow
+        brew install git-flow-avh
       else
         if command -v ports >/dev/null 2>&1
         then
-          ports install git-flow
+          ports install git-flow-avh
         else
           echo "pythonsh: tools-python - cannot find a way to install git-flow: brew,ports"
         fi
@@ -1298,7 +1298,7 @@ VENV
       exit 1
     fi
 
-    git flow bugfix start $name
+    git flow bugfix start "$name"
     ;;
   "close")
     shift
