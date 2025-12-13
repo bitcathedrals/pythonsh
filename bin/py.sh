@@ -1327,6 +1327,11 @@ VENV
       exit 1
     fi
 
+    if [[ "$name" == "develop" || "$name" == "main" ]]
+    then
+      exec git checkout "$name"
+    fi
+
     if git flow feature | grep "$name" >/dev/null 2>&1
     then
       echo "py.sh checking out feature: $name" >/dev/stderr
