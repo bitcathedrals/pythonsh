@@ -1335,13 +1335,13 @@ VENV
     if git flow feature | grep "$name" >/dev/null 2>&1
     then
       echo "py.sh checking out feature: $name" >/dev/stderr
-      exec git checkout "feature/$name"
+      exec git checkout "feature/${name}"
     fi
 
     if git flow bugfix | grep "$name" >/dev/null 2>&1
     then
       echo "py.sh checking out bugfix: $name" >/dev/stderr
-      exec git checkout "bugfixe/$name"
+      exec git checkout "bugfix/${name}"
     fi
 
     echo "pythonsh goto: \"$name\" not found in features or bugfixes"
