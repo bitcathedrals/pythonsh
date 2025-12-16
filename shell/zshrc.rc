@@ -41,6 +41,12 @@ function switch_to_virtual {
 
   echo >/dev/stderr -n ">>>switching to: ${virt}..."
 
+  if [[ $type == "system" && $virt == "system" ]]
+  then
+    echo "reverting to system interpreter."
+    return 0
+  fi
+
   if eval $(pyenv-sh-activate "${virt}")
   then
     echo "completed."
@@ -79,7 +85,11 @@ function switch_global {
     return 1
   fi
 
-  switch_to_virtual "global:${1}" || return 1
+  switch_to_virtual "system" "$1" || return 1
+}
+
+function switch_system {
+  switch_to_virtual "system" "system" || return 1
 
   return 0
 }
@@ -96,9 +106,15 @@ alias push='git push'
 alias add='git add'
 alias co='git checkout'
 alias branch='git branch'
-alias merge='git merge --no-ff'
-alias revert='git checkout'
+alias revert='git restore'
 
+# pass files or branches
+alias ediff="git difftool"
+
+# initiate a merge
+alias emerge="git mergetool"
+
+alias goto='py.sh goto'
 
 # rsync
 

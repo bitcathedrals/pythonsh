@@ -1,23 +1,57 @@
 #! /usr/bin/env bash
 
-if [[ ! -f python.sh ]]
+# this will put us in bin/
+PYTHONSH=$(dirname $0)
+# this will put is in the pythonsh base directory
+PYTHONSH_BASE=$(dirname "$PYTHONSH")
+
+PYTHONSH_SHELL="${PYTHONSH_BASE}/shell/"
+PYTHONSH_UTILS="${PYTHONSH_BASE}/pyutils/"
+PYTHONSH_BOOTSTRAP="${PYTHONSH_BASE}/bootstrap"
+
+PYTHONSH_BREW=""
+
+PYTHONSH_SYSTEM=$(uname)
+
+PYTHON_ARCH=""
+PYTHON_ARCH_COMMAND=""
+
+EMACS_BREW="/opt/emacs/"
+DEP_BREW="/opt/dependencies/"
+
+case $PYTHONSH_SYSTEM in
+  "Darwin")
+    PYTHONSH_BREW="/opt/dependencies"
+
+    if which arch >/dev/null 2>&1
+    then
+      PYTHON_ARCH=$(arch)
+
+      if [[ $PYTHONSH_ARCH == "arm64" ]]
+      then
+        PYTHON_ARCH_COMMAND="arch -arm64"
+      fi
+    fi
+  ;;
+esac
+
+# load local pythonsh configuaration
+if [[ -f python.sh ]]
 then
-  echo "python.sh not found! exiting"
-  exit 1
+  source python.sh
+else
+  echo >/dev/stderr "py.sh: WARNING python.sh configuration not found in current directory... python commands will break!"
 fi
 
-source python.sh
 
 if [[ -z "$VIRTUAL_PREFIX" ]]
 then
-  echo "python.sh: VIRTUAL_PREFIX not set"
-  exit 1
+  echo >/dev/stderr "py.sh: WARNING - VIRTUAL_PREFIX not set, python commands will not work!"
 fi
 
 if [[ -z "$PYTHON_VERSION" ]]
 then
-  echo "python.sh: PYTHON_VERSION not set"
-  exit 1
+  echo >/dev/stderr "py.sh: WARNING - PYTHON_VERSION not set - python commands will not work!"
 fi
 
 export PIPENV_VERBOSITY=-1
@@ -60,24 +94,37 @@ function root_to_branch {
 function setup_pyenv {
   TOOLS=$HOME/tools
   PYENV_ROOT="$TOOLS/pyenv"
+
   PATH="$TOOLS/local/bin:$PATH"
   PATH="$PYENV_ROOT/bin:$PATH"
   PATH="$PYENV_ROOT/libexec:$PATH"
 
   export PYENV_ROOT PATH
 
+  if ! command -v pyenv >/dev/null 2>&1
+  then
+    echo >/dev/stderr "py.sh: pyenv not found! will continue, but python commands will fail."
+    return 1
+  fi
+
   eval "$(pyenv init -)"
 
   if [[ $? -gt 0 ]]
   then
-    echo "could not execute pyenv init --shell. FAILED!"
-    return 1
+    echo >/dev/stderr "py.sh: pyenv init --shell. FAILED!"
+    return 2
   fi
 
   return 0
 }
 
 setup_pyenv
+
+if [[ $? -eq 2 ]]
+then
+  echo >/dev/stderr "py.sh: setup_pyenv had a hard fail. exiting!"
+  exit 1
+fi
 
 function deactivate_if_needed {
   ver=$(pyenv version)
@@ -134,61 +181,54 @@ function install_virtualenv_python {
 
   VERSION=$1
 
-  system=$(uname)
+  candidate_virtualenv_python $VERSION
 
-  case $system in
+  BEST_PYTHON=$VERSION
+  BEST_VERSION=$CANDIDATE_PYTHON
+
+  echo "pythonsh: attempting install of python $BEST_PYTHON version $BEST_VERSION"
+  VERSION_LOCATION="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}"
+
+  CC="gcc"
+
+  case $PYTHONSH_SYSTEM in
     "Darwin")
-       eval "$(/opt/dependencies/bin/brew shellenv)"
-     ;;
+      eval $(${PYTHONSH_BREW}/bin/brew shellenv)
+      CC="clang"
+      export DYLD_LIBRARY_PATH="${VERSION_LOCATION}/lib:${DYLD_LIBRARY_PATH}"
+    ;;
   esac
 
-  export CC="clang"
+  CPPFLAGS="-I${VERSION_LOCATION}/include" 
+  LDFLAGS="-L${VERSION_LOCATION}/lib"
 
-  echo "Updating Python interpreter: ${VERSION}..."
+  PATH="${VERSION_LOCATION}/bin:${PATH}"
 
-  (
-      candidate_virtualenv_python ${VERSION}
-      export PATH="${PYENV_ROOT}/versions/${CANDIDATE_PYTHON}/bin:${PATH}"
+  export PPFLAGS LDFLAGS CC PATH BEST_PYTHON BEST_VERSION
 
-      ARCH=""
+  echo "Updating Python interpreter: ${BEST_VERSION}"
 
-      if which arch
-      then
-          arch=$(arch)
+ (
+    eval $PYTHONSH_ARCH pyenv install -v --skip-existing $BEST_VERSION
+    compile_status=$?
 
-          if [[ $arch = "arm64" ]]
-          then
-             ARCH="arch -arm64"
-          fi
-      fi
+    if [[ $compile_status -ne 0 ]]
+    then
+    echo "pythonsh: pyenv install $BEST_VERSION FAILED with code $compile_status"
 
-      eval "$ARCH pyenv install -v --skip-existing $VERSION"
+      echo "ARCH is: $PYTHON_ARCH"
 
-      compile_status=$?
+      echo "Compile Version is: $BEST_VERSION"
+      echo "PATH for $VERSION is: $PATH"
+      echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
+      echo "SSL_LOCATION is: $SSL_LOCATION"
 
-      if [[ $compile_status -eq 0 ]]
-      then
-          echo "Success!"
-      else
-          echo "ARCH is: $ARCH"
-          echo "Compile Version is: $CANDIDATE_VERSION"
-          echo "PATH for $VERSION is: $PATH"
-          echo "CONFIGURE_OPTS is: $CONFIGURE_OPTS"
-          echo "SSL_LOCATION is: $SSL_LOCATION"
+      return 1
+    fi
 
-          echo "pyenv install $VERSION FAILED with code $compile_status!"
-
-          exit 1
-      fi
+    echo "pythonsh: Success! version = ${BEST_VERSION}"
+    latest_virtualenv_python $BEST_VERSION
   )
-
-  if [[ $? -eq 0 ]]
-  then
-     latest_virtualenv_python $VERSION
-  else
-     echo "skipping virtual environment creation due to failed python $VERSION compile."
-     return 1
-  fi
 
   return 0
 }
@@ -196,6 +236,15 @@ function install_virtualenv_python {
 function install_virtualenv {
   LATEST=$1
   NAME=$2
+
+  echo "pythonsh: installing virtualenv $NAME"
+
+  pyenv virtualenvs | grep "$NAME" >/dev/null
+  if [[ $? -eq 0 ]]
+  then
+    echo "pythonsh: deleting existing virtual environment $NAME"
+    pyenv virtualenv-delete $NAME
+  fi
 
   pyenv virtualenv "$LATEST" "$NAME"
 
@@ -214,27 +263,63 @@ function install_project_virtualenv {
 
   ENV_ONE=$2
   ENV_TWO=$3
+  ENV_THREE=$4
 
-  install_virtualenv_python $VERSION || return 1
+  echo "pythonsh: install_project_virtualenv one = $ENV_ONE two = $ENV_TWO three = $ENV_THREE"
 
-  echo "creating project virtual environments from $LATEST_PYTHON"
-
-  if [[ -n $ENV_ONE ]]
+  install_virtualenv_python $VERSION
+  
+  if [[ $? -ne 0 ]]
   then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_ONE}...."
-    install_virtualenv $LATEST_PYTHON $ENV_ONE || return 1
+    exit 1
   fi
+
+  echo "creating project virtual environments from $BEST_VERSION"
+
+  echo "pythonsh: building environment: $ENV_ONE from $BEST_VERSION"
+
+  install_virtualenv $BEST_VERSION $ENV_ONE
+   
+   if [[ $? -ne 0 ]]
+   then
+     exit 1
+  fi
+
   if [[ -n $ENV_TWO ]]
   then
-    echo -n "pythonsh [${LATEST_PYTHON}] - building: ${ENV_TWO}...."
-    install_virtualenv $LATEST_PYTHON $ENV_TWO || return 1
+    echo "pythonsh: building environment: ${ENV_TWO} from $BEST_VERSION"
+
+    install_virtualenv $BEST_VERSION $ENV_TWO
+
+    if [[ $? -ne 0 ]]
+    then
+      exit 1
+    fi
+  fi
+
+  if [[ -n $ENV_THREE ]]
+  then
+    echo "pythonsh: building environment: ${ENV_THREE} from $BEST_VERSION"
+
+    install_virtualenv $BEST_VERSION $ENV_THREE
+
+    if [[ $? -ne 0 ]]
+    then
+      exit 1
+    fi
   fi
 
   return 0
 }
 
 function find_deps {
-  pipdirs="pythonsh"
+  pipdirs="${PYTHONSH_BASE}/bootstrap"
+
+  if [[ -z $SOURCE ]]
+  then
+    echo "pythonsh: warning no SOURCE setting in python.sh file. Rerun pipfile command to generate a new Pipfile"
+    return 0
+  fi
 
   for dep_dir in $(ls ${SOURCE} 2>/dev/null)
   do
@@ -274,22 +359,17 @@ function find_deps {
 }
 
 function find_catpip {
-  catpip="pythonsh/pyutils/catpip.py pipfile"
+  catpip="${PYTHONSH_UTILS}/catpip.py"
 
   if command -v catpip >/dev/null 2>&1
   then
     echo >/dev/stderr "pipfile: using installed catpip: catpip"
     catpip="catpip"
-  elif [[ -f pythonsh/pyutils/catpip.py ]]
+  elif [[ -f ${catpip} ]]
   then
-    echo >/dev/stderr "pipfile: using distributed catpip: pythonsh/pyutils/catpip.py"
-    catpip="pythonsh/pyutils/catpip.py"
-  elif [[ -f pyutils/catpip.py ]]
-  then
-    echo >/dev/stderr "pipfile: using internal catpip: pyutils/catpip.py"
-    catpip="pyutils/catpip.py"
+    echo >/dev/stderr "pipfile: using distributed catpip: ${catpip}"
   else
-    echo >/dev/stderr "pipfile: can\'t find catpip.py... exiting with error."
+    echo >/dev/stderr "pythonsh: (pipfile): can\'t find catpip.py... exiting with error."
     exit 1
   fi
 }
@@ -338,7 +418,6 @@ function prepare_buildset_environment {
 
   $0 bootstrap
 }
-
 
 function build_buildset {
   echo >/dev/stderr "pythonsh - buildset: starting buildset $VERSION"
@@ -528,29 +607,23 @@ function check_python_environment {
 }
 
 case $1 in
-  "python-uninstall")
-    shift
-    version=$1
-
-    exec pyenv uninstall $version
-  ;;
   "version")
     echo "pythonsh version is: 1.1.1"
     ;;
-  "tools-unix")
+  "tools-python")
     # attempt to install git flow
 
     if [[ `uname` == "Darwin" ]]
     then
       if command -v brew >/dev/null 2>&1
       then
-        brew install git-flow
+        brew install git-flow-avh
       else
         if command -v ports >/dev/null 2>&1
         then
-          ports install git-flow
+          ports install git-flow-avh
         else
-          echo "pythonsh: tools-unix - cannot find a way to install git-flow: brew,ports"
+          echo "pythonsh: tools-python - cannot find a way to install git-flow: brew,ports"
         fi
       fi
     else
@@ -563,11 +636,11 @@ case $1 in
           sudo apt install git-flow libbz2-dev liblzma-dev libncurses-dev libreadline-dev libssl-dev libsqlite3-dev libffi-dev gcc autoconf automake libtool autotools-dev make zlib1g zlib1g-dev
         fi
       else
-        echo "pythonsh: tools-unix - cannot find a way to install git-flow: all I know is apt"
+        echo "pythonsh: tools-python - cannot find a way to install git-flow: all I know is apt"
       fi
     fi
 
-    echo "installing pyenv for UNIX"
+    echo >/dev/stderr "pythonsh: installing tools for python"
 
     TOOLS="$HOME/tools/"
     PYENV_ROOT="$TOOLS/pyenv"
@@ -597,16 +670,16 @@ case $1 in
     fi
     ;;
   "tools-zshrc")
-    cp pythonsh/zshrc.rc $HOME/.zshrc
-    echo >/dev/stderr "replacing .zshrc with upstream version"
+    cp "${PYTHONSH_SHELL}/zshrc.rc" $HOME/.zshrc
+    echo >/dev/stderr "pythonsh: replaced .zshrc with upstream version"
     ;;
   "tools-custom")
-    echo >/dev/stderr "replacing .zshrc.custom with upstream version"
-    cp pythonsh/zshrc.custom $HOME/.zshrc.custom
+    cp "${PYTHONSH_SHELL}/zshrc.custom" $HOME/.zshrc.custom
+    echo >/dev/stderr "pythonsh: replaced .zshrc.custom with upstream version"
     ;;
   "tools-prompt")
-    echo >/dev/stderr "installing standard prompt with pyenv and github support"
-    cp pythonsh/zshrc.prompt $HOME/.zshrc.prompt
+    cp "${PYTHONSH_SHELL}/zshrc.prompt" $HOME/.zshrc.prompt
+    echo >/dev/stderr "pythonsh: installed prompt with pyenv and github support"
     ;;
 
   "tools-brew-init")
@@ -617,40 +690,17 @@ case $1 in
     ;;
 
   "tools-brew-upgrade")
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew update
-       arch -arm64 brew upgrade
-    else
-       brew update
-       brew upgrade
-    fi
+     $PYTHON_ARCH_COMMAND brew update
+     $PYTHON_ARCH_COMMAND brew upgrade
   ;;
   "tools-brew-install")
     shift
 
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew install $@
-    else
-       brew install $@
-    fi
+    $PYTHON_ARCH_COMMAND brew install $@
   ;;
   "tools-brew-rebuild")
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-      brew list | xargs arch -arm64 brew reinstall
-    else
-      brew list | xargs brew reinstall
-    fi
+    $PYTHON_ARCH_COMMAND brew list | xargs arch -arm64 brew reinstall
   ;;
-
   "dependencies-init")
     test -d /opt/dependencies || sudo mkdir -p /opt/dependencies
     curl -L https://github.com/Homebrew/brew/tarball/master >/tmp/brew.xz
@@ -659,48 +709,27 @@ case $1 in
   ;;
 
   "dependencies-upgrade")
-    eval $(/opt/dependencies/bin/brew shellenv)
+    eval $(${DEP_BREW}bin/brew shellenv)
 
-    ARCH=$(arch)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       arch -arm64 brew update
-       arch -arm64 brew upgrade
-    else
-       brew update
-       brew upgrade
-    fi
+    $PYTHON_ARCH_COMMAND brew update
+    $PYTHON_ARCH_COMMAND brew upgrade
   ;;
 
   "dependencies-install")
     shift
 
-    ARCH=$(arch)
-
-    eval $(/opt/dependencies/bin/brew shellenv)
-
-    if [[ $ARCH = "arm64" ]]
-    then
-       eval "arch -arm64 brew install $*"
-    else
-       eval "brew install $*"
-    fi
+    eval $(${DEP_BREW}bin/brew shellenv)
+    $PYTHON_ARCH_COMMAND brew install $*
   ;;
 
   "dependencies-python")
     DEPS="gnutls openssl readline ncurses gcc autoconf automake libtool pkg-config gettext"
 
-    ARCH=$(arch)
+    eval $(${DEP_BREW}bin/brew shellenv)
 
-    eval $(/opt/dependencies/bin/brew shellenv)
+    OPENSSL=$(${DEP_BREW}bin/brew --prefix openssl)
 
-    if [[ $ARCH = "arm64" ]]
-    then
-       eval "arch -arm64 brew install $DEPS"
-    else
-       eval "brew install $DEPS"
-    fi
+    $PYTHON_ARCH_COMMAND brew install $DEPS
   ;;
 
   #
@@ -708,9 +737,15 @@ case $1 in
   #
   "python-versions")
     show_all_python_versions
-    ;;
+  ;;
+  "python-uninstall")
+    shift
+    version=$1
+
+    exec pyenv uninstall $version
+  ;;
   "project-virtual")
-    install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" $@ || exit 1
+    install_project_virtualenv $PYTHON_VERSION "${VIRTUAL_PREFIX}_dev" "${VIRTUAL_PREFIX}_test" || exit 1
 
     echo "you need to run switch_dev, switch_test, or switch_release to activate the new environments."
     ;;
@@ -787,9 +822,11 @@ case $1 in
 
     test -f Pipfile.lock || touch Pipfile.lock
 
-    test -e pytest.ini || ln -s pythonsh/pytest.ini
+    test -e pytest.ini || cp ${PYTHONSH_BASE}pytest.ini .
 
-    pipfile="pythonsh/Pipfile"
+    pipfile="${PYTHONSH_BOOTSTRAP}/Pipfile"
+
+    echo >/dev/stderr "pythonsh: bootstrap Pipfile = $pipfile"
 
     pyenv exec python -m pip install pipenv ; PIPENV_PIPFILE="$pipfile" pyenv exec pipenv install --dev
     ;;
@@ -810,7 +847,7 @@ case $1 in
 
     $0 update || exit 1
 
-    echo "bootstrap complete"
+    echo >/dev/stderr "pythonsh: bootstrap complete"
     ;;
   "test-install")
     # only use lockfile and dont install dev-packages, evidently sync
@@ -820,7 +857,7 @@ case $1 in
 
     pipenv install --ignore-pipfile
 
-    echo "test-deps complete"
+    echo >/dev/stderr "pythonsh: test-deps complete"
     ;;
   "pipfile")
     find_deps
@@ -1221,6 +1258,7 @@ VENV
   #
   # version control
   #
+
   "begin")
     shift
     name=$1
@@ -1245,18 +1283,71 @@ VENV
 
     git flow feature finish $name
     ;;
-  "switch")
+
+  "features")
+    git flow feature
+    ;;
+
+  "bug")
     shift
     name=$1
 
     if [[ -z $name ]]
     then
-      echo "pythonsh switch: requires the name of the feature branch to switch to as an argument"
+      echo "pythonsh bug: requires a name for a new bug branch as an argument"
       exit 1
     fi
 
-    git checkout "feature/$name"
+    git flow bugfix start "$name"
+    ;;
+  "close")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh close: requires the name of the bugfix branch to close"
+      exit 1
+    fi
+
+    git flow bugfix finish $name
+    ;;
+
+  "bugfixes")
+    git checkout "bugfix/$name"
     ;;    
+
+  "goto")
+    shift
+    name=$1
+
+    if [[ -z $name ]]
+    then
+      echo "pythonsh goto: requires the name of the bug or feature branch as an argument"
+      exit 1
+    fi
+
+    if [[ "$name" == "develop" || "$name" == "main" ]]
+    then
+      exec git checkout "$name"
+    fi
+
+    if git flow feature | grep "$name" >/dev/null 2>&1
+    then
+      echo "py.sh checking out feature: $name" >/dev/stderr
+      exec git checkout "feature/${name}"
+    fi
+
+    if git flow bugfix | grep "$name" >/dev/null 2>&1
+    then
+      echo "py.sh checking out bugfix: $name" >/dev/stderr
+      exec git checkout "bugfix/${name}"
+    fi
+
+    echo "pythonsh goto: \"$name\" not found in features or bugfixes"
+    exit 1
+    ;;    
+
   "beta")
     shift
 
@@ -1548,12 +1639,12 @@ VENV
 
     git add $VER_PYTHONSH
 
-    echo ">>>commiting bump to to $VERSION"
+    echo ">>>commit with release notes for version $VERSION"
 
     # don't do a automatic commit so a release summary can be inserted
     git commit
 
-    echo "ready for release finish: please finish with ./py.sh release once you are ready"
+    echo "ready for release finish: please finish with py.sh release once you are ready"
     ;;
   "release")
     git flow release finish $VERSION || exit 1
@@ -1578,12 +1669,21 @@ VENV
     done
     ;;
   "help"|""|*)
-    cat <<HELP
-python.sh
+    if [[ -n $2 ]]
+    then
+      filter="$2"
+    else
+      filter='\.*'
+    fi
+
+    echo "filter is $filter"
+
+    cat <<HELP | grep "$filter"
+py.sh
 
 [tools commands]
 
-tools-unix    = install pyen and pyenv virtual from source on UNIX (call again to update)
+tools-python  = install pyen and pyenv virtual from source on UNIX (call again to update)
 
 tools-zshrc   = install hombrew, pyenv, and pyenv switching commands into .zshrc
 tools-custom  = install zshrc.custom
@@ -1678,10 +1778,18 @@ modall              = update all submodules
 
 [version control]
 
-begin  <name> = start feature branch <name>
-end    <name> = close feature branch <name>
-switch <name> = switch to feature branch <name>
+begin    <name> = start feature branch <name>
+end      <name> = close feature branch <name>
+features        = list feature branches
+
+bug      <name> = start a bug branch
+close    <name> = finish a bugfix merging into develop
+bugfixes <name> = list bugfix branches
+
+goto     <name> = switch to feature or bugfix branch, searches branches
+
 track <1> <2>  = set upstream tracking 1=remote 2=branch
+
 beta       = <feat> <msg> = create a beta tag with the devel branch feature and message
 info       = show branches, tracking, and status
 verify     = show log with signatures for verification
@@ -1720,7 +1828,7 @@ upload     = push main and develop branches and tags to remote
 
 purge      = remove all the __pycache__ dirs
 HELP
-    ;;
+  ;;
 esac
 
 exit 0
