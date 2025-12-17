@@ -107,34 +107,46 @@ function set_editor {
 }
 
 function launch_ssh_agent {
-  if [[ `uname` == "Darwin" ]]
+  # this can be used for per OS handling of OS, disabled for now
+  system=`uname`
+
+  case "$system" in
+    "Darwin")
+      if [[ `uname` == "Darwin" ]]
+      then
+        echo "ignoring ssh-agent launch on Darwin"
+        return
+      fi
+    ;;  
+  esac
+
+  if [[ "$TERM" == "eterm-color" ]]
   then
     return
   fi
 
-  if [[ $TERM == "eterm-color" ]]
+  if [[ -z $SSH_AGENT_PID ]]
   then
-    return
-  fi
-
-  if [[ -n "$SSH_CLIENT" ]]
-  then
-    return
-  fi
-
-  if [[ -z "$SSH_AGENT_PID" ]]
-  then
-    echo "ssh-agent: no SSH env var - starting a new ssh-agent."
+    echo "ssh-agent: no SSH_AGENT_PID env var - starting a new ssh-agent."
     eval $(ssh-agent -s)
-  else
+    return
+  fi
+
+  echo -n "ssh-agent: found ssh-agent debris..."
+
+  if pgrep -U $USER ssh-agent >/dev/null 2>&1
+  then
     if kill -0 $SSH_AGENT_PID >/dev/null 2>&1
     then
+      echo "live agent."
       return
-    else
-      echo >/dev/stderr "ssh-agent: dead agent - starting a new ssh-agent."
-      eval $(ssh-agent -s)
     fi
+
+    pkill -U $USER ssh-agent >/dev/nuill 2>&1
   fi
+
+  echo >/dev/stderr "dead agent(s). starting a new ssh-agent."
+  eval $(ssh-agent -s)
 }
 
 function set_pyenv {
