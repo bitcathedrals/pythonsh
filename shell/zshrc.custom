@@ -182,6 +182,9 @@ unique_path
 
 set_editor
 
+# this can be used for per OS handling of OS, disabled for now
+system=`uname`
+
 launch_ssh_agent
 
 # if there is a file for crypto keys then add it
