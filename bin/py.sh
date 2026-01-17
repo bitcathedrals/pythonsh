@@ -40,16 +40,16 @@ if [[ -f python.sh ]]
 then
   source python.sh
 else
-  echo >/dev/stderr "py.sh: WARNING python.sh configuration not found in current directory... python commands will break!"
+  echo >/dev/stderr "py.sh: WARNING python.sh configuration not found in current directory... all python commands will break!"
 fi
 
 
-if [[ -z "$VIRTUAL_PREFIX" ]]
+if [[ -z $VIRTUAL_PREFIX ]]
 then
   echo >/dev/stderr "py.sh: WARNING - VIRTUAL_PREFIX not set, python commands will not work!"
 fi
 
-if [[ -z "$PYTHON_VERSION" ]]
+if [[ -z $PYTHON_VERSION ]]
 then
   echo >/dev/stderr "py.sh: WARNING - PYTHON_VERSION not set - python commands will not work!"
 fi
@@ -1510,7 +1510,10 @@ VENV
   # release environment
   #
   "check")
-    check_python_environment
+    if [[ -n $VIRTUALENV_PREFIX ]]
+    then
+      check_python_environment
+    fi
 
     echo "===> remember to pull deps with update if warranted <==="
 
